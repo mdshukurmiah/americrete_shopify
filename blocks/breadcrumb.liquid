@@ -1,0 +1,702 @@
+{%- liquid
+  assign block_settings = block.settings
+
+  assign separator = '/'
+  if block_settings.separator == 'custom'
+    assign separator = block_settings.custom_separator
+  elsif block_settings.separator != blank
+    assign separator = block_settings.separator
+  endif
+
+  assign flex_alignment = 'flex-start'
+  if block_settings.alignment == 'center'
+    assign flex_alignment = 'center'
+  elsif block_settings.alignment == 'right'
+    assign flex_alignment = 'flex-end'
+  endif
+-%}
+
+<nav
+  class="breadcrumb-nav spacing-style {% if block_settings.type_preset == 'custom' %}custom-typography custom-font-size{% endif %}"
+  aria-label="Breadcrumb"
+  style="
+    {% render 'spacing-padding', settings: block_settings %}
+    {% render 'typography-style', settings: block_settings %}
+    {% if block_settings.text_color != blank %}
+      --breadcrumb-text-color: {{ block_settings.text_color }};
+      --breadcrumb-text-color-rgb: {{ block_settings.text_color.rgb }};
+    {% endif %}
+    {% if block_settings.active_color != blank %}
+      --breadcrumb-active-color: {{ block_settings.active_color }};
+    {% endif %}
+    {% if block_settings.separator_color != blank %}
+      --breadcrumb-separator-color: {{ block_settings.separator_color }};
+    {% endif %}
+    {% if block_settings.hover_color != blank %}
+      --breadcrumb-hover-color: {{ block_settings.hover_color }};
+    {% endif %}
+    --breadcrumb-gap: {{ block_settings.gap }}px;
+    --breadcrumb-alignment: {{ flex_alignment }};
+    --width: {{ block_settings.width }};
+    --max-width: var(--max-width--body-{{ block_settings.max_width }});
+  "
+  {{ block.shopify_attributes }}
+>
+  <ol class="breadcrumb-list">
+    <li class="breadcrumb-item">
+      <a href="{{ routes.root_url }}">{{ block_settings.home_label | default: 'Home' }}</a>
+    </li>
+
+    {%- if template.name == 'page' -%}
+      <li class="breadcrumb-separator" aria-hidden="true">{{ separator }}</li>
+      <li class="breadcrumb-item breadcrumb-item--active">
+        <span>{{ page.title }}</span>
+      </li>
+
+    {%- elsif template.name == 'collection' and collection.handle -%}
+      {%- if block_settings.include_shop_link -%}
+        <li class="breadcrumb-separator" aria-hidden="true">{{ separator }}</li>
+        <li class="breadcrumb-item">
+          <a href="{{ block_settings.shop_url | default: routes.collections_url }}">
+            {{- block_settings.shop_label | default: 'Shop' -}}
+          </a>
+        </li>
+      {%- endif -%}
+      <li class="breadcrumb-separator" aria-hidden="true">{{ separator }}</li>
+      <li class="breadcrumb-item breadcrumb-item--active">
+        <span>{{ collection.title }}</span>
+      </li>
+
+    {%- elsif template.name == 'list-collections' -%}
+      <li class="breadcrumb-separator" aria-hidden="true">{{ separator }}</li>
+      <li class="breadcrumb-item breadcrumb-item--active">
+        <span>{{ block_settings.shop_label | default: 'Collections' }}</span>
+      </li>
+
+    {%- elsif template.name == 'product' -%}
+      {%- if block_settings.include_shop_link -%}
+        <li class="breadcrumb-separator" aria-hidden="true">{{ separator }}</li>
+        <li class="breadcrumb-item">
+          <a href="{{ block_settings.shop_url | default: routes.collections_url }}">
+            {{- block_settings.shop_label | default: 'Shop' -}}
+          </a>
+        </li>
+      {%- endif -%}
+      {%- assign current_collection = collection | default: product.collections.first -%}
+      {%- if current_collection -%}
+        <li class="breadcrumb-separator" aria-hidden="true">{{ separator }}</li>
+        <li class="breadcrumb-item">
+          <a href="{{ current_collection.url }}">{{ current_collection.title }}</a>
+        </li>
+      {%- endif -%}
+      <li class="breadcrumb-separator" aria-hidden="true">{{ separator }}</li>
+      <li class="breadcrumb-item breadcrumb-item--active">
+        <span>{{ product.title }}</span>
+      </li>
+
+    {%- elsif template.name == 'blog' -%}
+      <li class="breadcrumb-separator" aria-hidden="true">{{ separator }}</li>
+      <li class="breadcrumb-item breadcrumb-item--active">
+        <span>{{ blog.title }}</span>
+      </li>
+
+    {%- elsif template.name == 'article' -%}
+      <li class="breadcrumb-separator" aria-hidden="true">{{ separator }}</li>
+      <li class="breadcrumb-item">
+        <a href="{{ blog.url }}">{{ blog.title }}</a>
+      </li>
+      <li class="breadcrumb-separator" aria-hidden="true">{{ separator }}</li>
+      <li class="breadcrumb-item breadcrumb-item--active">
+        <span>{{ article.title }}</span>
+      </li>
+
+    {%- elsif template.name == 'search' -%}
+      <li class="breadcrumb-separator" aria-hidden="true">{{ separator }}</li>
+      <li class="breadcrumb-item breadcrumb-item--active">
+        <span>Search</span>
+      </li>
+
+    {%- elsif template.name == 'cart' -%}
+      <li class="breadcrumb-separator" aria-hidden="true">{{ separator }}</li>
+      <li class="breadcrumb-item breadcrumb-item--active">
+        <span>Cart</span>
+      </li>
+
+    {%- else -%}
+      <li class="breadcrumb-separator" aria-hidden="true">{{ separator }}</li>
+      <li class="breadcrumb-item breadcrumb-item--active">
+        <span>{{ page_title }}</span>
+      </li>
+    {%- endif -%}
+  </ol>
+</nav>
+
+{% stylesheet %}
+  .breadcrumb-nav {
+    display: flex;
+    justify-content: var(--breadcrumb-alignment, flex-start);
+    width: var(--width, fit-content);
+    max-width: var(--max-width, 100%);
+    color: var(--breadcrumb-text-color, var(--color-foreground-secondary, #757575));
+
+    /* Inherit custom typography variables if custom preset is selected */
+    font-family: var(--font-family, inherit);
+    font-weight: var(--font-weight, inherit);
+    font-size: var(--font-size, inherit);
+    text-transform: var(--text-transform, inherit);
+    text-wrap: var(--text-wrap, inherit);
+    line-height: var(--line-height, inherit);
+    letter-spacing: var(--letter-spacing, inherit);
+  }
+
+  @media screen and (max-width: 749px) {
+    .breadcrumb-nav {
+      font-size: var(--font-size-mobile, var(--font-size, inherit));
+    }
+  }
+
+  .breadcrumb-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: var(--breadcrumb-gap, 12px);
+  }
+
+  .breadcrumb-item {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .breadcrumb-item a,
+  .breadcrumb-item span,
+  .breadcrumb-separator {
+    font-family: inherit;
+    font-weight: inherit;
+    font-size: inherit;
+    text-transform: inherit;
+    line-height: inherit;
+    letter-spacing: inherit;
+  }
+
+  .breadcrumb-item a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.15s ease-in-out;
+  }
+
+  .breadcrumb-item a:hover {
+    color: var(--breadcrumb-hover-color, var(--color-foreground, #000000));
+  }
+
+  .breadcrumb-separator {
+    display: inline-flex;
+    align-items: center;
+    user-select: none;
+    color: var(--breadcrumb-separator-color, var(--breadcrumb-text-color, var(--color-foreground-secondary, #757575)));
+    opacity: 0.8;
+  }
+
+  .breadcrumb-item--active {
+    font-weight: var(--font-weight-bold, 700);
+    color: var(--breadcrumb-active-color, var(--color-foreground, #000000));
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Breadcrumb",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Breadcrumb Labels & Links"
+    },
+    {
+      "type": "text",
+      "id": "home_label",
+      "label": "Home Link Label",
+      "default": "Home"
+    },
+    {
+      "type": "checkbox",
+      "id": "include_shop_link",
+      "label": "Include Shop/Collections Parent Link",
+      "default": true,
+      "info": "Appends a link to the collection list between Home and specific Collections/Products (e.g. Home / Shop / Collection / Product)"
+    },
+    {
+      "type": "text",
+      "id": "shop_label",
+      "label": "Shop Link Label",
+      "default": "Shop"
+    },
+    {
+      "type": "url",
+      "id": "shop_url",
+      "label": "Shop Link URL",
+      "info": "Leave blank to default to /collections"
+    },
+    {
+      "type": "header",
+      "content": "Separator"
+    },
+    {
+      "type": "select",
+      "id": "separator",
+      "label": "Separator Style",
+      "options": [
+        {
+          "value": "/",
+          "label": "Slash (/)"
+        },
+        {
+          "value": ">",
+          "label": "Greater Than (>)"
+        },
+        {
+          "value": "»",
+          "label": "Double Arrow (»)"
+        },
+        {
+          "value": "-",
+          "label": "Hyphen (-)"
+        },
+        {
+          "value": "custom",
+          "label": "Custom Character"
+        }
+      ],
+      "default": "/"
+    },
+    {
+      "type": "text",
+      "id": "custom_separator",
+      "label": "Custom Separator",
+      "visible_if": "{{ block.settings.separator == 'custom' }}"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Spacing between items",
+      "min": 4,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "header",
+      "content": "t:content.layout"
+    },
+    {
+      "type": "select",
+      "id": "width",
+      "label": "t:settings.width",
+      "options": [
+        {
+          "value": "fit-content",
+          "label": "t:options.fit"
+        },
+        {
+          "value": "100%",
+          "label": "t:options.fill"
+        }
+      ],
+      "default": "fit-content"
+    },
+    {
+      "type": "select",
+      "id": "max_width",
+      "label": "t:settings.max_width",
+      "options": [
+        {
+          "value": "narrow",
+          "label": "t:options.narrow"
+        },
+        {
+          "value": "normal",
+          "label": "t:options.normal"
+        },
+        {
+          "value": "none",
+          "label": "t:options.none"
+        }
+      ],
+      "default": "normal"
+    },
+    {
+      "type": "text_alignment",
+      "id": "alignment",
+      "label": "t:settings.alignment",
+      "default": "left",
+      "visible_if": "{{ block.settings.width == '100%' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.typography"
+    },
+    {
+      "type": "select",
+      "id": "type_preset",
+      "label": "t:settings.preset",
+      "options": [
+        {
+          "value": "rte",
+          "label": "t:options.default"
+        },
+        {
+          "value": "paragraph",
+          "label": "t:options.paragraph"
+        },
+        {
+          "value": "h1",
+          "label": "t:options.h1"
+        },
+        {
+          "value": "h2",
+          "label": "t:options.h2"
+        },
+        {
+          "value": "h3",
+          "label": "t:options.h3"
+        },
+        {
+          "value": "h4",
+          "label": "t:options.h4"
+        },
+        {
+          "value": "h5",
+          "label": "t:options.h5"
+        },
+        {
+          "value": "h6",
+          "label": "t:options.h6"
+        },
+        {
+          "value": "custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "custom",
+      "info": "t:info.edit_presets_in_theme_settings"
+    },
+    {
+      "type": "select",
+      "id": "font",
+      "label": "t:settings.font",
+      "options": [
+        {
+          "value": "var(--font-body--family)",
+          "label": "t:options.body"
+        },
+        {
+          "value": "var(--font-subheading--family)",
+          "label": "t:options.subheading"
+        },
+        {
+          "value": "var(--font-heading--family)",
+          "label": "t:options.heading"
+        },
+        {
+          "value": "var(--font-accent--family)",
+          "label": "t:options.accent"
+        }
+      ],
+      "default": "var(--font-body--family)",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "font_size",
+      "label": "t:settings.size",
+      "options": [
+        {
+          "value": "",
+          "label": "t:options.default"
+        },
+        {
+          "value": "0.625rem",
+          "label": "10px"
+        },
+        {
+          "value": "0.6875rem",
+          "label": "11px"
+        },
+        {
+          "value": "0.75rem",
+          "label": "12px"
+        },
+        {
+          "value": "0.8125rem",
+          "label": "13px"
+        },
+        {
+          "value": "0.875rem",
+          "label": "14px"
+        },
+        {
+          "value": "0.9375rem",
+          "label": "15px"
+        },
+        {
+          "value": "1rem",
+          "label": "16px"
+        },
+        {
+          "value": "1.0625rem",
+          "label": "17px"
+        },
+        {
+          "value": "1.125rem",
+          "label": "18px"
+        },
+        {
+          "value": "1.1875rem",
+          "label": "19px"
+        },
+        {
+          "value": "1.25rem",
+          "label": "20px"
+        }
+      ],
+      "default": "0.875rem",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "font_size_mobile",
+      "label": "Mobile font size",
+      "options": [
+        {
+          "value": "",
+          "label": "t:options.default"
+        },
+        {
+          "value": "0.625rem",
+          "label": "10px"
+        },
+        {
+          "value": "0.6875rem",
+          "label": "11px"
+        },
+        {
+          "value": "0.75rem",
+          "label": "12px"
+        },
+        {
+          "value": "0.8125rem",
+          "label": "13px"
+        },
+        {
+          "value": "0.875rem",
+          "label": "14px"
+        },
+        {
+          "value": "1rem",
+          "label": "16px"
+        }
+      ],
+      "default": "0.75rem",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "weight",
+      "label": "t:settings.weight",
+      "options": [
+        {
+          "value": "",
+          "label": "t:options.default"
+        },
+        {
+          "value": "100",
+          "label": "t:options.thin"
+        },
+        {
+          "value": "300",
+          "label": "t:options.light"
+        },
+        {
+          "value": "400",
+          "label": "t:options.regular"
+        },
+        {
+          "value": "500",
+          "label": "t:options.medium"
+        },
+        {
+          "value": "600",
+          "label": "t:options.semibold"
+        },
+        {
+          "value": "700",
+          "label": "t:options.bold"
+        },
+        {
+          "value": "900",
+          "label": "t:options.black"
+        }
+      ],
+      "default": "500",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "line_height",
+      "label": "t:settings.line_height",
+      "options": [
+        {
+          "value": "tight",
+          "label": "t:options.tight"
+        },
+        {
+          "value": "normal",
+          "label": "t:options.normal"
+        },
+        {
+          "value": "loose",
+          "label": "t:options.loose"
+        }
+      ],
+      "default": "normal",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "letter_spacing",
+      "label": "t:settings.letter_spacing",
+      "options": [
+        {
+          "value": "tight",
+          "label": "t:options.tight"
+        },
+        {
+          "value": "normal",
+          "label": "t:options.normal"
+        },
+        {
+          "value": "loose",
+          "label": "t:options.loose"
+        }
+      ],
+      "default": "loose",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "case",
+      "label": "t:settings.case",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:options.default"
+        },
+        {
+          "value": "uppercase",
+          "label": "t:options.uppercase"
+        }
+      ],
+      "default": "uppercase",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "wrap",
+      "label": "t:settings.wrap",
+      "options": [
+        {
+          "value": "pretty",
+          "label": "t:options.pretty"
+        },
+        {
+          "value": "balance",
+          "label": "t:options.balance"
+        },
+        {
+          "value": "nowrap",
+          "label": "t:options.none"
+        }
+      ],
+      "default": "pretty",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.appearance"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Base Text Color"
+    },
+    {
+      "type": "color",
+      "id": "active_color",
+      "label": "Active Crumb Color"
+    },
+    {
+      "type": "color",
+      "id": "separator_color",
+      "label": "Separator Color"
+    },
+    {
+      "type": "color",
+      "id": "hover_color",
+      "label": "Link Hover Color"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Breadcrumb",
+      "category": "t:categories.layout"
+    }
+  ]
+}
+{% endschema %}
