@@ -1,0 +1,404 @@
+{% liquid
+  assign block_settings = block.settings
+%}
+
+{% style %}
+  #block-{{ block.id }} .compare-table-v3 {
+    background: {% if block_settings.gradient_background != blank and block_settings.gradient_background != 'rgba(0,0,0,0)' %}{{ block_settings.gradient_background }}{% elsif block_settings.color_background != blank and block_settings.color_background != 'rgba(0,0,0,0)' %}{{ block_settings.color_background }}{% else %}#23310f{% endif %};
+    color: {{ block_settings.color_text | default: '#ffffff' }};
+  }
+
+  {% if block_settings.gradient_highlight != blank %}
+    #block-{{ block.id }} .highlight_words {
+      background-image: {{ block_settings.gradient_highlight }};
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+  {% else %}
+    #block-{{ block.id }} .highlight_words {
+      color: {{ block_settings.color_highlight | default: '#f4e7b6' }};
+    }
+  {% endif %}
+
+  #block-{{ block.id }} .compare-table-v3__layout {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #block-{{ block.id }} .compare-table-v3__table-wrap {
+    position: relative;
+    width: 100%;
+    max-width: {{ block_settings.table_max_width | default: 600 }}px;
+  }
+
+  #block-{{ block.id }} .compare-table-v3__table .compare-table-v3__header-wrap,  #block-{{ block.id }} .compare-table-v3__table .compare-table-v3__row  {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #block-{{ block.id }} .compare-table-v3__column {
+    position: relative;
+    overflow: visible;
+  }
+
+  #block-{{ block.id }} .compare-table-v3__column.left {
+    background: {{ block_settings.color_left_column | default: '#657a2b' }};
+    color: {{ block_settings.color_left_text | default: '#ffffff' }};
+    min-height: {{ block_settings.row_min_height | default: 86 }}px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  #block-{{ block.id }} .compare-table-v3__column.right {
+    background: {{ block_settings.color_right_column | default: '#f5f4f1' }};
+    color: {{ block_settings.color_right_text | default: '#1d1d1d' }};
+    min-height: {{ block_settings.row_min_height | default: 86 }}px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  #block-{{ block.id }} .compare-table-v3__floating-image {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% - 16px);
+    transform: translateX(-50%);
+    z-index: 2;
+    width: min(100%, {{ block_settings.column_image_width | default: 120 }}px);
+    pointer-events: none;
+  }
+
+  #block-{{ block.id }} .compare-table-v3__floating-image img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  #block-{{ block.id }} .compare-table-v3__header {
+    text-align: center;
+  }
+
+  #block-{{ block.id }} .compare-table-v3__column-title {
+    margin: 0;
+    font-size: 22px;
+    line-height: 1.15;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  #block-{{ block.id }} .compare-table-v3__header-wrap .compare-table-v3__column.right .compare-table-v3__column-title {
+    text-transform: none;
+  }
+  #block-{{ block.id }} .compare-table-v3__header-wrap .compare-table-v3__column{
+    border-radius: {{ block_settings.table_radius | default: 6 }}px {{ block_settings.table_radius | default: 6 }}px 0 0;
+    min-height: unset;
+  }
+  #block-{{ block.id }} .compare-table-v3__body-wrap .compare-table-v3__row:last-child .compare-table-v3__column{
+    border-radius: 0 0 {{ block_settings.table_radius | default: 6 }}px {{ block_settings.table_radius | default: 6 }}px;
+  }
+  #block-{{ block.id }} .compare-table-v3__row {
+    border-top: 1px solid {{ block_settings.color_row_divider | default: '#d9d5cb' }};
+  }
+
+  #block-{{ block.id }} .compare-table-v3__header + .compare-table-v3__row {
+    border-top: 0;
+  }
+
+  #block-{{ block.id }} .compare-table-v3__cell-icon {
+    width: {{ block_settings.row_icon_size | default: 28 }}px;
+    height: {{ block_settings.row_icon_size | default: 28 }}px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: currentColor;
+  }
+
+  #block-{{ block.id }} .compare-table-v3__cell-icon svg,
+  #block-{{ block.id }} .compare-table-v3__cell-icon img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  #block-{{ block.id }} .compare-table-v3__cell-icon img {
+    object-fit: contain;
+  }
+
+  #block-{{ block.id }} .compare-table-v3__cell-icon svg {
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  #block-{{ block.id }} .compare-table-v3__cell-text {
+    font-size: 16px;
+    line-height: 1.3;
+    font-weight: 500;
+  }
+
+  @media only screen and (max-width: 989px) {
+    #block-{{ block.id }} .compare-table-v3__table-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+  }
+
+  @media only screen and (max-width: 589px) {
+
+    #block-{{ block.id }} .compare-table-v3__table {
+      gap: 6px;
+    }
+
+    #block-{{ block.id }} .compare-table-v3__column-title {
+      font-size: 18px;
+    }
+
+    #block-{{ block.id }} .compare-table-v3__row {
+    }
+
+    #block-{{ block.id }} .compare-table-v3__cell-text {
+      font-size: 14px;
+    }
+  }
+{% endstyle %}
+
+<div class="compare-table-v3" id="block-{{ block.id }}">
+  <div class="page-width">
+    <div class="compare-table-v3__layout">
+      <div class="compare-table-v3__table-wrap" data-aos>
+        <div class="compare-table-v3__table">
+          <div class="compare-table-v3__header-wrap">
+            <div class="compare-table-v3__column left">
+              {% if block_settings.left_image != blank %}
+                <div class="compare-table-v3__floating-image">
+                  {{ block_settings.left_image | image_url: width: 800 | image_tag: loading: 'lazy' }}
+                </div>
+              {% endif %}
+              {% if block_settings.left_title != blank %}
+                <div class="compare-table-v3__header">
+                  <h3 class="compare-table-v3__column-title">{{ block_settings.left_title }}</h3>
+                </div>
+              {% endif %}
+            </div>
+            <div class="compare-table-v3__column right">
+              {% if block_settings.right_image != blank %}
+                <div class="compare-table-v3__floating-image">
+                  {{ block_settings.right_image | image_url: width: 800 | image_tag: loading: 'lazy' }}
+                </div>
+              {% endif %}
+              {% if block_settings.right_title != blank %}
+                <div class="compare-table-v3__header">
+                  <h3 class="compare-table-v3__column-title">{{ block_settings.right_title }}</h3>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="compare-table-v3__body-wrap">
+            {% content_for 'blocks' %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Compare Table",
+  "tag": null,
+  "class": "compare-table",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Table Columns"
+    },
+    {
+      "type": "image_picker",
+      "id": "left_image",
+      "label": "Left column floating image"
+    },
+    {
+      "type": "text",
+      "id": "left_title",
+      "label": "Left column title",
+      "default": "RESILIA"
+    },
+    {
+      "type": "image_picker",
+      "id": "right_image",
+      "label": "Right column floating image"
+    },
+    {
+      "type": "text",
+      "id": "right_title",
+      "label": "Right column title",
+      "default": "Other Brands"
+    },
+    {
+      "type": "range",
+      "id": "column_image_width",
+      "min": 60,
+      "max": 220,
+      "step": 10,
+      "unit": "px",
+      "label": "Column image width",
+      "default": 120
+    },
+    {
+      "type": "range",
+      "id": "table_radius",
+      "min": 0,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "label": "Table corner radius",
+      "default": 6
+    },
+    {
+      "type": "range",
+      "id": "row_min_height",
+      "min": 72,
+      "max": 180,
+      "step": 2,
+      "unit": "px",
+      "label": "Row minimum height",
+      "default": 86
+    },
+    {
+      "type": "range",
+      "id": "row_icon_size",
+      "min": 16,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "label": "Row icon size",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "table_max_width",
+      "min": 320,
+      "max": 1200,
+      "step": 10,
+      "unit": "px",
+      "label": "Table maximum width",
+      "default": 600
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "color_text",
+      "label": "Body text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "color_background",
+      "label": "Background",
+      "default": "#1f2b0c"
+    },
+    {
+      "type": "color_background",
+      "id": "gradient_background",
+      "label": "Background gradient"
+    },
+    {
+      "type": "color",
+      "id": "color_left_column",
+      "label": "Left column background",
+      "default": "#657a2b"
+    },
+    {
+      "type": "color",
+      "id": "color_right_column",
+      "label": "Right column background",
+      "default": "#f5f4f1"
+    },
+    {
+      "type": "color",
+      "id": "color_left_text",
+      "label": "Left column text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "color_right_text",
+      "label": "Right column text",
+      "default": "#1d1d1d"
+    },
+    {
+      "type": "color",
+      "id": "color_row_divider",
+      "label": "Row divider",
+      "default": "#d9d5cb"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "_compare-row"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Compare Table",
+      "blocks": [
+        {
+          "type": "_compare-row",
+          "settings": {
+            "left_text": "Clinically-Studied Ingredients",
+            "right_text": "Trend-Based Blends"
+          }
+        },
+        {
+          "type": "_compare-row",
+          "settings": {
+            "left_icon_svg": "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 3.5 18.5 6v5.5c0 4-2.3 6.8-6.5 8-4.2-1.2-6.5-4-6.5-8V6Z'/><path d='m9.5 11.8 1.8 1.8 3.2-3.2'/></svg>",
+            "left_text": "3rd-Party Tested",
+            "right_text": "No Test Proof"
+          }
+        },
+        {
+          "type": "_compare-row",
+          "settings": {
+            "left_icon_svg": "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M8 5h8'/><path d='M10 5v4l-4 7.5A2 2 0 0 0 7.8 20h8.4A2 2 0 0 0 18 16.5L14 9V5'/><path d='M9 13h6'/><path d='M8 16h8'/></svg>",
+            "left_text": "Allergen-Free & Clean",
+            "right_text": "Fillers & Additives"
+          }
+        },
+        {
+          "type": "_compare-row",
+          "settings": {
+            "left_icon_svg": "<svg viewBox='0 0 24 24' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><path d='M3.5 12h17'/><path d='M12 3.5c2.7 2.3 4.2 5.3 4.2 8.5S14.7 18.2 12 20.5c-2.7-2.3-4.2-5.3-4.2-8.5S9.3 5.8 12 3.5Z'/></svg>",
+            "left_text": "Global Certified Facilities",
+            "right_text": "Low-Quality Manufacturing"
+          }
+        },
+        {
+          "type": "_compare-row",
+          "settings": {
+            "left_icon_svg": "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M5 10.5c2 0 3.5-1.5 3.5-3.5 2 0 3.5 1.5 3.5 3.5'/><path d='M13 9c0 2 1.5 3.5 3.5 3.5 0 2-1.5 3.5-3.5 3.5'/><path d='M8 14c1.4 2 3.1 3 5 3 3 0 4.5-2.2 4.5-5.5-2.5 0-4.3-1.2-5.5-3.5-1 2.2-2.3 3.6-4 4.2'/><path d='M14.5 6.5h4'/><path d='M16.5 4.5v4'/><text x='6.5' y='20' font-size='4.2' fill='currentColor' stroke='none'>VEGAN</text></svg>",
+            "left_text": "Vegan & Gluten-Free",
+            "right_text": "Sugar, Flavors, Binders"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

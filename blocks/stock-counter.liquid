@@ -1,0 +1,441 @@
+{% liquid
+  assign block_settings = block.settings
+  assign percent_sold = block_settings.percent_sold | default: 89
+
+  if percent_sold < 0
+    assign percent_sold = 0
+  elsif percent_sold > 100
+    assign percent_sold = 100
+  endif
+
+  assign sold_text = block_settings.sold_text | default: '[[percent]]% sold'
+  assign sold_text = sold_text | replace: '[[percent]]', percent_sold
+  assign sold_text = sold_text | replace: '{{percent}}', percent_sold
+  assign duration_hours = block_settings.duration_hours | default: 2
+  assign duration_minutes = block_settings.duration_minutes | default: 4
+  assign duration_secs = block_settings.duration_seconds | default: 8
+
+  assign duration_seconds = duration_hours | times: 3600
+  assign duration_minutes_seconds = duration_minutes | times: 60
+  assign duration_seconds = duration_seconds | plus: duration_minutes_seconds
+  assign duration_seconds = duration_seconds | plus: duration_secs
+
+  if duration_seconds <= 0
+    assign duration_seconds = 60
+  endif
+%}
+
+<style>
+  .stock-counter--{{ block.id }} {
+    --stock-counter-title-color: {{ block_settings.title_color | default: '#000000' }};
+    --stock-counter-subtitle-color: {{ block_settings.subtitle_color | default: '#111827' }};
+    --stock-counter-bar-track: {{ block_settings.bar_track_color | default: '#f1f1f1' }};
+    --stock-counter-bar-fill: {{ block_settings.bar_fill_color | default: '#e58ca0' }};
+    --stock-counter-meta-color: {{ block_settings.meta_color | default: '#000000' }};
+    --stock-counter-timer-color: {{ block_settings.timer_color | default: '#e58ca0' }};
+    --stock-counter-margin-top: {{ block_settings.margin_top | default: 0 }}px;
+    --stock-counter-margin-bottom: {{ block_settings.margin_bottom | default: 0 }}px;
+    {% render 'spacing-style', settings: block_settings %}
+  }
+</style>
+
+<stock-counter
+  class="stock-counter-block stock-counter--{{ block.id }} spacing-style"
+  data-product-id="{{ closest.product.id | default: product.id }}"
+  data-block-id="{{ block.id }}"
+  data-duration-seconds="{{ duration_seconds }}"
+  data-reset-on-expire="{{ block_settings.reset_on_expire }}"
+  {{ block.shopify_attributes }}
+>
+  <div class="stock-counter">
+    {%- if block_settings.title != blank -%}
+      <div class="stock-counter__title">{{ block_settings.title }}</div>
+    {%- endif -%}
+    {%- if block_settings.subtitle != blank -%}
+      <div class="stock-counter__subtitle">{{ block_settings.subtitle }}</div>
+    {%- endif -%}
+
+    <div
+      class="stock-counter__bar"
+      role="progressbar"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="{{ percent_sold }}"
+    >
+      <div class="stock-counter__bar-fill" style="width: {{ percent_sold }}%"></div>
+    </div>
+
+    <div class="stock-counter__meta">
+      <div class="stock-counter__sold">{{ sold_text }}</div>
+      <div class="stock-counter__ends">
+        {%- if block_settings.ends_in_text != blank -%}
+          <span class="stock-counter__ends-label">{{ block_settings.ends_in_text }}</span>
+        {%- endif -%}
+        <span class="stock-counter__timer" data-stock-counter-timer>00:00:00</span>
+      </div>
+    </div>
+  </div>
+</stock-counter>
+
+<script>
+  (() => {
+    class StockCounter extends HTMLElement {
+      connectedCallback() {
+        const productId = this.dataset.productId;
+        const blockId = this.dataset.blockId;
+        const durationSeconds = parseInt(this.dataset.durationSeconds, 10);
+        const resetOnExpire = String(this.dataset.resetOnExpire) === 'true';
+        const timerEl = this.querySelector('[data-stock-counter-timer]');
+
+        if (!productId || !blockId || !timerEl || !Number.isFinite(durationSeconds) || durationSeconds <= 0) return;
+
+        const storageKey = `stock-counter-state-${productId}`;
+        const now = Date.now();
+        let expiresAt = now + durationSeconds * 1000;
+
+        const safeJsonParse = (value) => {
+          try {
+            return JSON.parse(value);
+          } catch (e) {
+            return null;
+          }
+        };
+
+        try {
+          const saved = safeJsonParse(localStorage.getItem(storageKey) || 'null');
+          const savedExpiresAt = saved && typeof saved.expiresAt === 'number' ? saved.expiresAt : null;
+          const savedDuration = saved && typeof saved.durationSeconds === 'number' ? saved.durationSeconds : null;
+
+          if (savedExpiresAt && savedDuration === durationSeconds && savedExpiresAt > now) {
+            expiresAt = savedExpiresAt;
+          } else {
+            localStorage.setItem(storageKey, JSON.stringify({ expiresAt, durationSeconds }));
+          }
+        } catch (e) {
+          // ignore localStorage failures
+        }
+
+        const pad2 = (n) => String(n).padStart(2, '0');
+        const format = (totalSeconds) => {
+          const hours = Math.floor(totalSeconds / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          const seconds = totalSeconds % 60;
+          return `${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`;
+        };
+
+        const tick = () => {
+          const remainingMs = expiresAt - Date.now();
+          const remainingSeconds = Math.max(0, Math.floor(remainingMs / 1000));
+          timerEl.textContent = format(remainingSeconds);
+
+          if (remainingSeconds <= 0) {
+            if (resetOnExpire) {
+              expiresAt = Date.now() + durationSeconds * 1000;
+              try {
+                localStorage.setItem(storageKey, JSON.stringify({ expiresAt, durationSeconds }));
+              } catch (e) {}
+            } else {
+              try {
+                localStorage.removeItem(storageKey);
+              } catch (e) {}
+              clearInterval(this._stockCounterInterval);
+              this._stockCounterInterval = null;
+            }
+          }
+        };
+
+        tick();
+        this._stockCounterInterval = setInterval(tick, 1000);
+      }
+
+      disconnectedCallback() {
+        if (this._stockCounterInterval) clearInterval(this._stockCounterInterval);
+        this._stockCounterInterval = null;
+      }
+    }
+
+    if (!customElements.get('stock-counter')) {
+      customElements.define('stock-counter', StockCounter);
+    }
+  })();
+</script>
+
+{% stylesheet %}
+  .stock-counter-block {
+    display: block;
+    width: 100%;
+    margin-top: var(--stock-counter-margin-top, 0px);
+    margin-bottom: var(--stock-counter-margin-bottom, 0px);
+  }
+
+  .stock-counter {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .stock-counter__title {
+    font-size: 16px;
+    line-height: 1.2;
+    font-weight: 600;
+    color: var(--stock-counter-title-color);
+  }
+
+  .stock-counter__subtitle {
+    font-size: 13px;
+    line-height: 1.35;
+    color: var(--stock-counter-subtitle-color);
+    opacity: 0.9;
+  }
+
+  .stock-counter__sold {
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .stock-counter__bar {
+    height: 10px;
+    border-radius: 9999px;
+    background: var(--stock-counter-bar-track);
+    overflow: hidden;
+  }
+
+  .stock-counter__bar-fill {
+    height: 100%;
+    border-radius: 9999px;
+    background: var(--stock-counter-bar-fill);
+    width: 0;
+    transition: width 300ms ease;
+  }
+
+  .stock-counter__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 20px;
+    line-height: 1.2;
+    color: var(--stock-counter-meta-color);
+  }
+
+  .stock-counter__ends {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    color: var(--stock-counter-timer-color);
+    white-space: nowrap;
+  }
+
+  .stock-counter__ends-label {
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .stock-counter__timer {
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+
+  @media (max-width: 767px) {
+    .stock-counter__meta {
+      font-size: 18px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Stock counter",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Selling out fast"
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "Due to high demand, limited quantities available"
+    },
+    {
+      "type": "range",
+      "id": "percent_sold",
+      "label": "Percent sold",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 89
+    },
+    {
+      "type": "header",
+      "content": "Counter time"
+    },
+    {
+      "type": "paragraph",
+      "content": "Set the countdown start time for each visitor"
+    },
+    {
+      "type": "range",
+      "id": "duration_hours",
+      "label": "Hours",
+      "min": 0,
+      "max": 48,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "type": "range",
+      "id": "duration_minutes",
+      "label": "Minutes",
+      "min": 0,
+      "max": 59,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "duration_seconds",
+      "label": "Seconds",
+      "min": 0,
+      "max": 59,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "type": "checkbox",
+      "id": "reset_on_expire",
+      "label": "Restart countdown when expired",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "sold_text",
+      "label": "Sold text (use [[percent]])",
+      "default": "[[percent]]% sold"
+    },
+    {
+      "type": "text",
+      "id": "ends_in_text",
+      "label": "Ends label",
+      "default": "Ends in"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Title color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "subtitle_color",
+      "label": "Subtitle color",
+      "default": "#111827"
+    },
+    {
+      "type": "color",
+      "id": "bar_track_color",
+      "label": "Bar track",
+      "default": "#f1f1f1"
+    },
+    {
+      "type": "color",
+      "id": "bar_fill_color",
+      "label": "Bar fill",
+      "default": "#e58ca0"
+    },
+    {
+      "type": "color",
+      "id": "meta_color",
+      "label": "Meta text color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "timer_color",
+      "label": "Timer color",
+      "default": "#e58ca0"
+    },
+    {
+      "type": "header",
+      "content": "Layout & Spacing"
+    },
+    {
+      "type": "range",
+      "id": "margin_top",
+      "label": "Margin Top",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "margin_bottom",
+      "label": "Margin Bottom",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Stock counter"
+    }
+  ]
+}
+{% endschema %}

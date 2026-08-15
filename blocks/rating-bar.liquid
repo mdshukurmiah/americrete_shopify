@@ -1,0 +1,500 @@
+{% liquid
+  assign block_settings = block.settings
+
+  assign raw_rating = block_settings.rating | default: 48
+  if raw_rating > 5
+    assign rating_float = raw_rating | times: 1.0 | divided_by: 10.0
+  else
+    assign rating_float = raw_rating | times: 1.0
+  endif
+
+  assign full_stars = rating_float | floor
+  assign decimal_part = rating_float | minus: full_stars
+%}
+
+<style>
+  .rating-bar--{{ block.id }} {
+    --rb-star-color: {{ block_settings.star_color | default: '#8B4614' }};
+    --rb-text-color: {{ block_settings.text_color | default: 'inherit' }};
+    --rb-font-size: {{ block_settings.font_size | default: 13 }}px;
+    --rb-font-size-mobile: {{ block_settings.font_size_mobile | default: block_settings.font_size | default: 13 }}px;
+    --rb-star-size: {{ block_settings.star_size | default: 14 }}px;
+    --rb-gap: {{ block_settings.gap_size | default: 6 }}px;
+    --rb-star-gap: {{ block_settings.star_gap | default: 2 }}px;
+    --rb-margin-top: {{ block_settings.margin_top | default: 0 }}px;
+    --rb-margin-bottom: {{ block_settings.margin_bottom | default: 0 }}px;
+    {% render 'spacing-style', settings: block_settings %}
+  }
+</style>
+
+<div
+  class="rating-bar-block rating-bar--{{ block.id }} spacing-style"
+  {{ block.shopify_attributes }}
+>
+  <div class="rating-bar__stars">
+    {%- comment -%} Full stars {%- endcomment -%}
+    {%- for i in (1..full_stars) -%}
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="rating-bar__star rating-bar__star--full"
+        viewBox="0 0 24 24"
+      >
+        <path d="M12 2.5l2.94 5.96 6.58.96-4.76 4.64 1.12 6.56L12 17.52 6.12 20.62l1.12-6.56L2.48 9.42l6.58-.96L12 2.5z"/>
+      </svg>
+    {%- endfor -%}
+
+    {%- comment -%} Half star if needed {%- endcomment -%}
+    {%- if decimal_part >= 0.25 and decimal_part <= 0.75 -%}
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="rating-bar__star rating-bar__star--half"
+        viewBox="0 0 24 24"
+      >
+        <defs>
+          <clipPath id="rb-star-half-{{ block.id }}">
+            <rect x="0" y="0" width="12" height="24"></rect>
+          </clipPath>
+        </defs>
+        <path class="rating-bar__outline" d="M12 2.5l2.94 5.96 6.58.96-4.76 4.64 1.12 6.56L12 17.52 6.12 20.62l1.12-6.56L2.48 9.42l6.58-.96L12 2.5z"/>
+        <path class="rating-bar__fill" clip-path="url(#rb-star-half-{{ block.id }})" d="M12 2.5l2.94 5.96 6.58.96-4.76 4.64 1.12 6.56L12 17.52 6.12 20.62l1.12-6.56L2.48 9.42l6.58-.96L12 2.5z"/>
+      </svg>
+      {%- assign remaining_stars = 4 | minus: full_stars -%}
+    {%- elsif decimal_part > 0.75 -%}
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="rating-bar__star rating-bar__star--full"
+        viewBox="0 0 24 24"
+      >
+        <path d="M12 2.5l2.94 5.96 6.58.96-4.76 4.64 1.12 6.56L12 17.52 6.12 20.62l1.12-6.56L2.48 9.42l6.58-.96L12 2.5z"/>
+      </svg>
+      {%- assign remaining_stars = 4 | minus: full_stars -%}
+    {%- else -%}
+      {%- assign remaining_stars = 5 | minus: full_stars -%}
+    {%- endif -%}
+
+    {%- comment -%} Empty stars {%- endcomment -%}
+    {%- if remaining_stars > 0 -%}
+      {%- for i in (1..remaining_stars) -%}
+        <svg
+          aria-hidden="true"
+          focusable="false"
+          class="rating-bar__star rating-bar__star--empty"
+          viewBox="0 0 24 24"
+        >
+          <path d="M12 2.5l2.94 5.96 6.58.96-4.76 4.64 1.12 6.56L12 17.52 6.12 20.62l1.12-6.56L2.48 9.42l6.58-.96L12 2.5z"/>
+        </svg>
+      {%- endfor -%}
+    {%- endif -%}
+  </div>
+
+  {% if block_settings.rating_number != blank or block_settings.review_count != blank %}
+    <span class="rating-bar__text">
+      {% if block_settings.rating_number != blank %}
+        <b>{{ block_settings.rating_number }}</b>
+      {% endif %}
+      {% if block_settings.review_count != blank %}
+        based on <b>{{ block_settings.review_count }}</b> {{ block_settings.review_text }}
+      {% endif %}
+    </span>
+  {% endif %}
+</div>
+
+{% stylesheet %}
+  .rating-bar-block {
+    display: flex;
+    align-items: center;
+    gap: var(--rb-gap, 6px);
+    font-size: var(--rb-font-size, 13px);
+    line-height: 1;
+    color: var(--rb-text-color, inherit);
+    margin-top: var(--rb-margin-top, 0px);
+    margin-bottom: var(--rb-margin-bottom, 0px);
+  }
+
+  .rating-bar__stars {
+    display: flex;
+    align-items: center;
+    gap: var(--rb-star-gap, 2px);
+    color: var(--rb-star-color, #8b4614);
+    font-size: var(--rb-star-size, 14px);
+    flex-shrink: 0;
+  }
+
+  .rating-bar__star {
+    width: 1em;
+    height: 1em;
+    display: block;
+    flex: 0 0 auto;
+  }
+
+  .rating-bar__star--full,
+  .rating-bar__fill {
+    fill: currentColor;
+  }
+
+  .rating-bar__star--empty,
+  .rating-bar__outline {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linejoin: round;
+  }
+
+  .rating-bar__text {
+    line-height: 1.2;
+  }
+
+  @media screen and (max-width: 749px) {
+    .rating-bar-block {
+      font-size: var(--rb-font-size-mobile, var(--rb-font-size, 13px));
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Rating Bar",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Rating Content"
+    },
+    {
+      "type": "range",
+      "id": "rating",
+      "label": "Star rating",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "default": 48,
+      "info": "Set as whole number (4.8 = 48)"
+    },
+    {
+      "type": "text",
+      "id": "rating_number",
+      "label": "Rating number",
+      "default": "4.8/5"
+    },
+    {
+      "type": "text",
+      "id": "review_count",
+      "label": "Review count",
+      "default": "1700+"
+    },
+    {
+      "type": "text",
+      "id": "review_text",
+      "label": "Review text",
+      "default": "reviews"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "star_color",
+      "label": "Star color",
+      "default": "#8B4614"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color"
+    },
+    {
+      "type": "header",
+      "content": "Sizing & Spacing"
+    },
+    {
+      "type": "range",
+      "id": "font_size",
+      "label": "Font size",
+      "min": 10,
+      "max": 50,
+      "step": 1,
+      "default": 13,
+      "unit": "px"
+    },
+    {
+      "type": "select",
+      "id": "font_size_mobile",
+      "label": "Font size mobile",
+      "options": [
+          {
+            "value": "",
+            "label": "t:options.default"
+          },
+          {
+            "value": "0.625rem",
+            "label": "10px"
+          },
+          {
+            "value": "0.6875rem",
+            "label": "11px"
+          },
+          {
+            "value": "0.75rem",
+            "label": "12px"
+          },
+          {
+            "value": "0.8125rem",
+            "label": "13px"
+          },
+          {
+            "value": "0.875rem",
+            "label": "14px"
+          },
+          {
+            "value": "0.9375rem",
+            "label": "15px"
+          },
+          {
+            "value": "1rem",
+            "label": "16px"
+          },
+          {
+            "value": "1.0625rem",
+            "label": "17px"
+          },
+          {
+            "value": "1.125rem",
+            "label": "18px"
+          },
+          {
+            "value": "1.1875rem",
+            "label": "19px"
+          },
+          {
+            "value": "1.25rem",
+            "label": "20px"
+          },
+          {
+            "value": "1.3125rem",
+            "label": "21px"
+          },
+          {
+            "value": "1.375rem",
+            "label": "22px"
+          },
+          {
+            "value": "1.4375rem",
+            "label": "23px"
+          },
+          {
+            "value": "1.5rem",
+            "label": "24px"
+          },
+          {
+            "value": "1.5625rem",
+            "label": "25px"
+          },
+          {
+            "value": "1.625rem",
+            "label": "26px"
+          },
+          {
+            "value": "1.6875rem",
+            "label": "27px"
+          },
+          {
+            "value": "1.75rem",
+            "label": "28px"
+          },
+          {
+            "value": "1.8125rem",
+            "label": "29px"
+          },
+          {
+            "value": "1.875rem",
+            "label": "30px"
+          },
+          {
+            "value": "1.9375rem",
+            "label": "31px"
+          },
+          {
+            "value": "2rem",
+            "label": "32px"
+          },
+          {
+            "value": "2.0625rem",
+            "label": "33px"
+          },
+          {
+            "value": "2.125rem",
+            "label": "34px"
+          },
+          {
+            "value": "2.1875rem",
+            "label": "35px"
+          },
+          {
+            "value": "2.25rem",
+            "label": "36px"
+          },
+          {
+            "value": "2.3125rem",
+            "label": "37px"
+          },
+          {
+            "value": "2.375rem",
+            "label": "38px"
+          },
+          {
+            "value": "2.4375rem",
+            "label": "39px"
+          },
+          {
+            "value": "2.5rem",
+            "label": "40px"
+          },
+          {
+            "value": "2.5625rem",
+            "label": "41px"
+          },
+          {
+            "value": "2.625rem",
+            "label": "42px"
+          },
+          {
+            "value": "2.6875rem",
+            "label": "43px"
+          },
+          {
+            "value": "2.75rem",
+            "label": "44px"
+          },
+          {
+            "value": "2.8125rem",
+            "label": "45px"
+          },
+          {
+            "value": "2.875rem",
+            "label": "46px"
+          },
+          {
+            "value": "2.9375rem",
+            "label": "47px"
+          },
+          {
+            "value": "3rem",
+            "label": "48px"
+          },
+          {
+            "value": "3.0625rem",
+            "label": "49px"
+          },
+          {
+            "value": "3.125rem",
+            "label": "50px"
+          }
+        ],
+      "default": ""
+    },
+    {
+      "type": "range",
+      "id": "star_size",
+      "label": "Star size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "default": 14,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "gap_size",
+      "label": "Element gap",
+      "min": 2,
+      "max": 20,
+      "step": 1,
+      "default": 6,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "star_gap",
+      "label": "Star gap",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "default": 2,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "margin_top",
+      "label": "Top margin",
+      "min": -50,
+      "max": 50,
+      "step": 1,
+      "default": 0,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "margin_bottom",
+      "label": "Bottom margin",
+      "min": -50,
+      "max": 50,
+      "step": 1,
+      "default": 0,
+      "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Rating Bar"
+    }
+  ]
+}
+{% endschema %}

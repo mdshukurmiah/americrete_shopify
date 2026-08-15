@@ -1,0 +1,447 @@
+{% liquid
+  assign block_settings = block.settings
+
+  assign star_count = 0
+  if block_settings.icon == 'star-5'
+    assign star_count = 5
+  elsif block_settings.icon == 'star-4'
+    assign star_count = 4
+  elsif block_settings.icon == 'star-3'
+    assign star_count = 3
+  elsif block_settings.icon == 'star-2'
+    assign star_count = 2
+  elsif block_settings.icon == 'star-1'
+    assign star_count = 1
+  endif
+-%}
+
+{% style %}
+  .review-card--{{ block.id }} {
+    {% if block_settings.bg_color != blank %}
+      --rc-bg: {{ block_settings.bg_color }};
+    {% endif %}
+    {% if block_settings.border_color != blank %}
+      --rc-border: {{ block_settings.border_color }};
+    {% endif %}
+    --rc-radius: {{ block_settings.corner_radious | default: 12 }}px;
+    {% if block_settings.icon_color != blank %}
+      --rc-stars-color: {{ block_settings.icon_color }};
+    {% endif %}
+    {% if block_settings.title_color != blank %}
+      --rc-title-color: {{ block_settings.title_color }};
+    {% endif %}
+    {% if block_settings.text_color != blank %}
+      --rc-text-color: {{ block_settings.text_color }};
+    {% endif %}
+    --rc-heading-size: {{ block_settings.review_heading_font_size | default: 24 }}px;
+    --rc-content-size: {{ block_settings.content_font_size | default: 16 }}px;
+    --rc-author-name-size: {{ block_settings.author_font_size | default: 18 }}px;
+    --rc-author-bio-size: {{ block_settings.author_bio_font_size | default: 12 }}px;
+  }
+{% endstyle %}
+
+{% stylesheet %}
+  .review-card-wrapper {
+    width: 100%;
+  }
+
+  .review-card__heading {
+    font-size: var(--rc-heading-size, 24px);
+    color: var(--rc-title-color, inherit);
+    margin-bottom: 16px;
+    line-height: 1.3;
+  }
+
+  .review-card__box {
+    padding: 1.25rem;
+    border: 1px solid var(--rc-border, #e5e7eb);
+    border-radius: var(--rc-radius, 12px);
+    background-color: var(--rc-bg, #ffffff);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .review-card__top {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .review-card__avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 9999px;
+    object-fit: cover;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .review-card__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .review-card__author-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .review-card__header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .review-card__author-name {
+    margin: 0;
+    font-size: var(--rc-author-name-size, 18px);
+    color: var(--rc-title-color, inherit);
+    font-weight: 600;
+  }
+
+  .review-card__stars {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+  }
+
+  .review-card__star {
+    width: 18px;
+    height: 18px;
+    fill: var(--rc-stars-color, #fbe04c);
+    color: var(--rc-stars-color, #fbe04c);
+  }
+
+  .review-card__author-bio {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--rc-author-bio-size, 12px);
+    color: var(--rc-title-color, inherit);
+    opacity: 0.85;
+  }
+
+  .review-card__bio-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    fill: currentColor;
+  }
+
+  .review-card__image {
+    width: 100%;
+    border-radius: calc(var(--rc-radius, 12px) / 2);
+    overflow: hidden;
+  }
+
+  .review-card__image img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .review-card__content {
+    font-size: var(--rc-content-size, 16px);
+    color: var(--rc-text-color, inherit);
+    line-height: 1.5;
+  }
+
+  .review-card__content > * {
+    margin: 0;
+  }
+
+  @media (max-width: 749px) {
+    .review-card__heading {
+      font-size: max(14px, calc(var(--rc-heading-size) - 4px));
+    }
+    .review-card__author-name {
+      font-size: max(13px, calc(var(--rc-author-name-size) - 3px));
+    }
+    .review-card__content {
+      font-size: max(13px, calc(var(--rc-content-size) - 2px));
+    }
+    .review-card__star {
+      width: 15px;
+      height: 15px;
+    }
+  }
+{% endstylesheet %}
+
+<div
+  class="
+    review-card-wrapper
+    review-card--{{ block.id }}
+    spacing-style
+    size-style
+  "
+  style="{% render 'spacing-style', settings: block_settings %}{% render 'size-style', settings: block_settings %}"
+  {{ block.shopify_attributes }}
+>
+  {% if block_settings.review_heading != blank %}
+    <div class="review-card__heading text-{{ block_settings.alignment }}">
+      {{ block_settings.review_heading }}
+    </div>
+  {% endif %}
+
+  <div class="review-card__box">
+    <div class="review-card__top">
+      {% if block_settings.author_image != blank %}
+        <div class="review-card__avatar">
+          {{
+            block_settings.author_image
+            | image_url: width: 150
+            | image_tag: loading: 'lazy', alt: block_settings.author_name
+          }}
+        </div>
+      {% endif %}
+
+      <div class="review-card__author-info">
+        {% if star_count > 0 or block_settings.author_name != blank %}
+          <div class="review-card__header-row">
+            {% if block_settings.author_name != blank %}
+              <h4 class="review-card__author-name">{{ block_settings.author_name }}</h4>
+            {% endif %}
+
+            {% if star_count > 0 %}
+              <div class="review-card__stars">
+                {% for i in (1..star_count) %}
+                  <svg
+                    class="review-card__star"
+                    viewBox="0 0 19 18"
+                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M8.90137 1.03809L6.40137 6.03809L0.901367 7.03809L4.40137 11.5381L3.40137 17.0381L8.90137 14.5381L14.4014 17.0381L13.4014 11.5381L17.4014 7.03809L11.9014 6.03809L8.90137 1.03809Z" fill="currentColor" stroke="currentColor"/>
+                  </svg>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if block_settings.author_bio != blank %}
+          <div class="review-card__author-bio">
+            <svg class="review-card__bio-icon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"></path>
+            </svg>
+            <span>{{ block_settings.author_bio }}</span>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if block_settings.image != blank %}
+      <div class="review-card__image">
+        {{ block_settings.image | image_url: width: 600 | image_tag: loading: 'lazy' }}
+      </div>
+    {% endif %}
+
+    {% if block_settings.testimonial_content != blank %}
+      <div class="review-card__content">
+        {{ block_settings.testimonial_content }}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Review card",
+  "tag": null,
+  "settings": [
+    {
+      "type": "inline_richtext",
+      "id": "review_heading",
+      "label": "Heading",
+      "default": "Customer review"
+    },
+    {
+      "type": "text_alignment",
+      "id": "alignment",
+      "label": "Text alignment",
+      "default": "center"
+    },
+    {
+      "type": "range",
+      "id": "review_heading_font_size",
+      "min": 12,
+      "max": 60,
+      "step": 1,
+      "label": "Heading font size",
+      "default": 24,
+      "unit": "px"
+    },
+    {
+      "type": "select",
+      "id": "icon",
+      "label": "Stars rating",
+      "default": "star-5",
+      "options": [
+        {
+          "value": "none",
+          "label": "None"
+        },
+        {
+          "value": "star-5",
+          "label": "5 Stars"
+        },
+        {
+          "value": "star-4",
+          "label": "4 Stars"
+        },
+        {
+          "value": "star-3",
+          "label": "3 Stars"
+        },
+        {
+          "value": "star-2",
+          "label": "2 Stars"
+        },
+        {
+          "value": "star-1",
+          "label": "1 Star"
+        }
+      ]
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Review image"
+    },
+    {
+      "type": "richtext",
+      "id": "testimonial_content",
+      "label": "Content",
+      "default": "<p>“I absolutely love this product! The quality is amazing and it exceeded my expectations.”</p>"
+    },
+    {
+      "type": "range",
+      "id": "content_font_size",
+      "min": 10,
+      "max": 40,
+      "step": 1,
+      "label": "Content font size",
+      "default": 16,
+      "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Author"
+    },
+    {
+      "type": "image_picker",
+      "id": "author_image",
+      "label": "Avatar"
+    },
+    {
+      "type": "text",
+      "id": "author_name",
+      "label": "Name",
+      "default": "Sarah M."
+    },
+    {
+      "type": "range",
+      "id": "author_font_size",
+      "min": 10,
+      "max": 40,
+      "step": 1,
+      "label": "Author font size",
+      "default": 18,
+      "unit": "px"
+    },
+    {
+      "type": "text",
+      "id": "author_bio",
+      "label": "Bio / Badge",
+      "default": "Verified Buyer"
+    },
+    {
+      "type": "range",
+      "id": "author_bio_font_size",
+      "min": 8,
+      "max": 24,
+      "step": 1,
+      "label": "Bio font size",
+      "default": 12,
+      "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Colors & Radius"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border color",
+      "default": "#e5e7eb"
+    },
+    {
+      "type": "range",
+      "id": "corner_radious",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "label": "Corner radius",
+      "default": 12,
+      "unit": "px"
+    },
+    {
+      "type": "color",
+      "id": "icon_color",
+      "label": "Stars color",
+      "default": "#FBE04C"
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Title / Author color",
+      "default": "#111827"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Description color",
+      "default": "#374151"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Review card"
+    }
+  ]
+}
+{% endschema %}

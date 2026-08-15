@@ -1,0 +1,195 @@
+<div class="badge-block" {{ block.shopify_attributes }}>
+  <div
+    class="badge"
+    style="--badge-size: {{ block.settings.badge_size }}px; --badge-background: {{ block.settings.badge_color }}; --badge-number-color: {{ block.settings.number_color }}; --badge-text-color: {{ block.settings.text_color }}; --badge-number-size: {{ block.settings.number_size }}px; --badge-text-size: {{ block.settings.text_size }}px;"
+  >
+    <div class="badge-svg">
+      <svg
+        width="var(--badge-size)"
+        height="var(--badge-size)"
+        viewBox="0 0 340 340"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+            fill="var(--badge-background)"
+            d="
+            M170,20
+            C182,20 188,38 199,41
+            C210,44 224,30 234,35
+            C244,40 243,58 252,65
+            C261,72 279,67 286,75
+            C293,83 285,100 290,110
+            C295,120 313,123 316,134
+            C319,145 304,156 304,170
+            C304,184 319,195 316,206
+            C313,217 295,220 290,230
+            C285,240 293,257 286,265
+            C279,273 261,268 252,275
+            C243,282 244,300 234,305
+            C224,310 210,296 199,299
+            C188,302 182,320 170,320
+            C158,320 152,302 141,299
+            C130,296 116,310 106,305
+            C96,300 97,282 88,275
+            C79,268 61,273 54,265
+            C47,257 55,240 50,230
+            C45,220 27,217 24,206
+            C21,195 36,184 36,170
+            C36,156 21,145 24,134
+            C27,123 45,120 50,110
+            C55,100 47,83 54,75
+            C61,67 79,72 88,65
+            C97,58 96,40 106,35
+            C116,30 130,44 141,41
+            C152,38 158,20 170,20
+            Z
+            "
+        />
+      </svg>
+    </div>
+    {% if block.settings.number != blank %}
+      <span class="badge-number">{{ block.settings.number }}</span>
+    {% endif %}
+    {% if block.settings.badge_text != blank %}
+      <span class="badge-label">{{ block.settings.badge_text }}</span>
+    {% endif %}
+  </div>
+</div>
+{% style %}
+  .badge-block {
+    margin-bottom: 22px;
+  }
+
+  .badge {
+    width: var(--badge-size);
+    aspect-ratio: 1;
+    color: var(--badge-number-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 16px;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+  }
+  .badge-svg {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+  }
+
+  .text-left .badge {
+    margin-left: 0;
+    margin-right: auto;
+  }
+
+  .text-right .badge {
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  .badge-number {
+    display: block;
+    color: var(--badge-number-color);
+    font-size: var(--badge-number-size);
+    font-weight: 500;
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    z-index: 2;
+  }
+
+  .badge-label {
+    display: block;
+    margin-top: 2px;
+    color: var(--badge-text-color);
+    font-size: var(--badge-text-size);
+    font-weight: 500;
+    line-height: 1;
+    text-transform: uppercase;
+    z-index: 2;
+  }
+{% endstyle %}
+{% schema %}
+{
+  "name": "Badge",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "number",
+      "label": "Badge number/text (top line)",
+      "default": "100%"
+    },
+    {
+      "type": "text",
+      "id": "badge_text",
+      "label": "Badge label (bottom line)",
+      "default": "Organic"
+    },
+    {
+      "type": "header",
+      "content": "Sizing"
+    },
+    {
+      "type": "range",
+      "id": "badge_size",
+      "min": 60,
+      "max": 240,
+      "step": 5,
+      "unit": "px",
+      "label": "Badge size",
+      "default": 120
+    },
+    {
+      "type": "range",
+      "id": "number_size",
+      "min": 12,
+      "max": 80,
+      "step": 1,
+      "unit": "px",
+      "label": "Number font size",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "text_size",
+      "min": 8,
+      "max": 30,
+      "step": 1,
+      "unit": "px",
+      "label": "Label font size",
+      "default": 12
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "badge_color",
+      "label": "Badge background color",
+      "default": "#23310f"
+    },
+    {
+      "type": "color",
+      "id": "number_color",
+      "label": "Number color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Label color",
+      "default": "#ffffff"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Badge"
+    }
+  ]
+}
+{% endschema %}

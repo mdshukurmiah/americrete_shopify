@@ -1,0 +1,467 @@
+{% liquid
+  assign block_settings = block.settings
+-%}
+
+{% style %}
+  .counter-up--{{ block.id }} {
+    --cu-number-size: {{ block_settings.number_font_size | default: 48 }}px;
+    --cu-number-size-mobile: {{ block_settings.number_font_size_mobile | default: block_settings.number_font_size | default: 36 }}px;
+    --cu-prefix-size: {{ block_settings.prefix_font_size | default: 36 }}px;
+    --cu-suffix-size: {{ block_settings.suffix_font_size | default: 36 }}px;
+
+    {% if block_settings.number_color != blank %}
+      --cu-number-color: {{ block_settings.number_color }};
+    {% endif %}
+    {% if block_settings.prefix_color != blank %}
+      --cu-prefix-color: {{ block_settings.prefix_color }};
+    {% endif %}
+    {% if block_settings.suffix_color != blank %}
+      --cu-suffix-color: {{ block_settings.suffix_color }};
+    {% endif %}
+
+    --cu-prefix-gap: {{ block_settings.prefix_gap | default: 4 }}px;
+    --cu-suffix-gap: {{ block_settings.suffix_gap | default: 4 }}px;
+  }
+
+  .counter-up--{{ block.id }} .counter-up__number {
+    font-weight: {{ block_settings.number_font_weight | default: '700' }} !important;
+    {% if block_settings.number_color != blank %}
+      color: {{ block_settings.number_color }} !important;
+    {% endif %}
+  }
+
+  .counter-up--{{ block.id }} .counter-up__prefix {
+    font-weight: {{ block_settings.prefix_font_weight | default: '700' }} !important;
+    {% if block_settings.prefix_color != blank %}
+      color: {{ block_settings.prefix_color }} !important;
+    {% endif %}
+  }
+
+  .counter-up--{{ block.id }} .counter-up__suffix {
+    font-weight: {{ block_settings.suffix_font_weight | default: '700' }} !important;
+    {% if block_settings.suffix_color != blank %}
+      color: {{ block_settings.suffix_color }} !important;
+    {% endif %}
+  }
+{% endstyle %}
+
+{% stylesheet %}
+  counter-up {
+    display: inline-flex;
+    align-items: baseline;
+    width: 100%;
+  }
+
+  counter-up.justify-left {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  counter-up.justify-center {
+    justify-content: center;
+    text-align: center;
+  }
+
+  counter-up.justify-right {
+    justify-content: flex-end;
+    text-align: right;
+  }
+
+  .counter-up__prefix {
+    font-size: var(--cu-prefix-size, 36px);
+    color: var(--cu-prefix-color, inherit);
+    margin-right: var(--cu-prefix-gap, 4px);
+    line-height: 1;
+  }
+
+  .counter-up__number {
+    font-size: var(--cu-number-size-mobile, 36px);
+    color: var(--cu-number-color, inherit);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .counter-up__suffix {
+    font-size: var(--cu-suffix-size, 36px);
+    color: var(--cu-suffix-color, inherit);
+    margin-left: var(--cu-suffix-gap, 4px);
+    line-height: 1;
+  }
+
+  @media (min-width: 750px) {
+    .counter-up__number {
+      font-size: var(--cu-number-size, 48px);
+    }
+  }
+{% endstylesheet %}
+
+<counter-up
+  class="
+    counter-up-block
+    counter-up--{{ block.id }}
+    justify-{{ block_settings.alignment | default: 'center' }}
+    spacing-style
+    size-style
+    {% if block_settings.hide_mobile %}hidden--mobile{% endif %}
+    {% if block_settings.hide_desktop %}hidden--desktop{% endif %}
+  "
+  style="{% render 'spacing-style', settings: block_settings %}{% render 'size-style', settings: block_settings %}"
+  data-target="{{ block_settings.counter_number | default: '100' }}"
+  {{ block.shopify_attributes }}
+>
+  {% if block_settings.prefix != blank %}
+    <span
+      class="counter-up__prefix"
+      style="font-weight: {{ block_settings.prefix_font_weight | default: '700' }}!important;{% if block_settings.prefix_color != blank %}color: {{ block_settings.prefix_color }}!important;{% endif %}"
+    >
+      {{- block_settings.prefix -}}
+    </span>
+  {% endif %}
+
+  <span
+    class="counter-up__number"
+    ref="number"
+    style="font-weight: {{ block_settings.number_font_weight | default: '700' }}!important;{% if block_settings.number_color != blank %}color: {{ block_settings.number_color }}!important;{% endif %}"
+  >
+    {{- block_settings.counter_number | default: '100' -}}
+  </span>
+
+  {% if block_settings.suffix != blank %}
+    <span
+      class="counter-up__suffix"
+      style="font-weight: {{ block_settings.suffix_font_weight | default: '700' }}!important;{% if block_settings.suffix_color != blank %}color: {{ block_settings.suffix_color }}!important;{% endif %}"
+    >
+      {{- block_settings.suffix -}}
+    </span>
+  {% endif %}
+</counter-up>
+
+<script>
+  if (!customElements.get('counter-up')) {
+    customElements.define(
+      'counter-up',
+      class CounterUp extends HTMLElement {
+        connectedCallback() {
+          this.numberEl = this.querySelector('[ref="number"]');
+          this.targetStr = this.getAttribute('data-target') || '0';
+          this.targetNum = parseFloat(this.targetStr.replace(/,/g, '')) || 0;
+          this.hasDecimals = this.targetStr.includes('.');
+          this.decimals = this.hasDecimals ? (this.targetStr.split('.')[1] || '').length : 0;
+          this.animated = false;
+
+          this.observer = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting && !this.animated) {
+                  this.animated = true;
+                  this.animateCount();
+                }
+              });
+            },
+            { threshold: 0.2 }
+          );
+
+          this.observer.observe(this);
+        }
+
+        disconnectedCallback() {
+          if (this.observer) this.observer.disconnect();
+        }
+
+        animateCount() {
+          if (!this.numberEl) return;
+
+          const duration = 2000;
+          const startTime = performance.now();
+          const target = this.targetNum;
+          const decimals = this.decimals;
+
+          const update = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            // Ease out cubic
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+            const currentVal = target * easeOut;
+
+            this.numberEl.textContent = this.formatNumber(currentVal, decimals);
+
+            if (progress < 1) {
+              requestAnimationFrame(update);
+            } else {
+              this.numberEl.textContent = this.formatNumber(target, decimals);
+            }
+          };
+
+          requestAnimationFrame(update);
+        }
+
+        formatNumber(num, decimals) {
+          if (decimals > 0) {
+            return num.toFixed(decimals);
+          }
+          return Math.round(num).toLocaleString('en-US');
+        }
+      }
+    );
+  }
+</script>
+
+{% schema %}
+{
+  "name": "Counter up",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Counter Values"
+    },
+    {
+      "type": "text",
+      "id": "counter_number",
+      "label": "Counter number",
+      "default": "100"
+    },
+    {
+      "type": "text",
+      "id": "prefix",
+      "label": "Prefix"
+    },
+    {
+      "type": "text",
+      "id": "suffix",
+      "label": "Suffix",
+      "default": "+"
+    },
+    {
+      "type": "header",
+      "content": "Font Sizes"
+    },
+    {
+      "type": "range",
+      "id": "number_font_size",
+      "min": 12,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "label": "Number font size (Desktop)",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "number_font_size_mobile",
+      "min": 12,
+      "max": 80,
+      "step": 2,
+      "unit": "px",
+      "label": "Number font size (Mobile)",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "prefix_font_size",
+      "min": 12,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "label": "Prefix font size",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "suffix_font_size",
+      "min": 12,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "label": "Suffix font size",
+      "default": 36
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "number_color",
+      "label": "Number color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "prefix_color",
+      "label": "Prefix color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "suffix_color",
+      "label": "Suffix color",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "Gaps & Alignment"
+    },
+    {
+      "type": "range",
+      "id": "prefix_gap",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "label": "Gap between prefix and number",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "suffix_gap",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "label": "Gap between number and suffix",
+      "default": 4
+    },
+    {
+      "type": "text_alignment",
+      "id": "alignment",
+      "label": "Alignment",
+      "default": "center"
+    },
+    {
+      "type": "header",
+      "content": "Font Weights"
+    },
+    {
+      "type": "select",
+      "id": "number_font_weight",
+      "label": "Number font weight",
+      "default": "700",
+      "options": [
+        {
+          "value": "400",
+          "label": "Normal (400)"
+        },
+        {
+          "value": "500",
+          "label": "Medium (500)"
+        },
+        {
+          "value": "600",
+          "label": "Semi Bold (600)"
+        },
+        {
+          "value": "700",
+          "label": "Bold (700)"
+        },
+        {
+          "value": "800",
+          "label": "Extra Bold (800)"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "prefix_font_weight",
+      "label": "Prefix font weight",
+      "default": "700",
+      "options": [
+        {
+          "value": "400",
+          "label": "Normal (400)"
+        },
+        {
+          "value": "500",
+          "label": "Medium (500)"
+        },
+        {
+          "value": "600",
+          "label": "Semi Bold (600)"
+        },
+        {
+          "value": "700",
+          "label": "Bold (700)"
+        },
+        {
+          "value": "800",
+          "label": "Extra Bold (800)"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "suffix_font_weight",
+      "label": "Suffix font weight",
+      "default": "700",
+      "options": [
+        {
+          "value": "400",
+          "label": "Normal (400)"
+        },
+        {
+          "value": "500",
+          "label": "Medium (500)"
+        },
+        {
+          "value": "600",
+          "label": "Semi Bold (600)"
+        },
+        {
+          "value": "700",
+          "label": "Bold (700)"
+        },
+        {
+          "value": "800",
+          "label": "Extra Bold (800)"
+        }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "Visibility"
+    },
+    {
+      "type": "checkbox",
+      "id": "hide_mobile",
+      "label": "Hide for mobile",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "hide_desktop",
+      "label": "Hide for desktop",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Counter up"
+    }
+  ]
+}
+{% endschema %}

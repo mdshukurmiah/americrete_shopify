@@ -1,0 +1,80 @@
+{% liquid
+  assign block_settings = block.settings
+%}
+<div id="block-{{ block.id }}">
+  <div
+    class="wellness-journey__step"
+    style="--step-badge-bg: {{ block_settings.badge_background }}; --step-badge-text: {{ block_settings.badge_text }}; --step-dot: {{ block_settings.dot_color }};"
+    {{ block.shopify_attributes }}
+  >
+    <span class="wellness-journey__dot"></span>
+    {% if block_settings.title != blank %}
+      <div class="wellness-journey__badge">{{ block_settings.title }}</div>
+    {% endif %}
+    {% if block_settings.items != blank %}
+      {% if block_settings.list_icon != blank %}
+        {% style %}
+          #block-{{ block.id }} .wellness-journey__step ul li {
+            background-image: url('{{ block_settings.list_icon | image_url }}');
+            background-repeat: no-repeat;
+            background-size: 20px;
+            padding-left: 28px;
+            background-position: left center;
+            list-style: none;
+          }
+          #block-{{ block.id }} .wellness-journey__step ul {
+            list-style: none;
+            margin-left: 0;
+          }
+        {% endstyle %}
+      {% endif %}
+      <div class="rte">
+        {{ block_settings.items }}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Timeline step",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Step title",
+      "default": "Week 1: Early Shifts"
+    },
+    {
+      "type": "richtext",
+      "id": "items",
+      "label": "Items",
+      "default": "<ul><li>Digestion starts to feel lighter*</li><li>Bloating begins to settle*</li><li>Mornings feel a little easier*</li></ul>"
+    },
+    {
+      "type": "image_picker",
+      "id": "list_icon",
+      "label": "List icon"
+    },
+    {
+      "type": "color",
+      "id": "badge_background",
+      "label": "Badge background",
+      "default": "#109d7a"
+    },
+    {
+      "type": "color",
+      "id": "badge_text",
+      "label": "Badge text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "dot_color",
+      "label": "Dot color",
+      "default": "#109d7a"
+    }
+  ]
+}
+{% endschema %}

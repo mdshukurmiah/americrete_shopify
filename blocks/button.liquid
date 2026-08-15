@@ -1,0 +1,625 @@
+
+{% liquid
+  assign btn_link = block.settings.link
+  if block.settings.link_with_section
+    assign btn_link = block.settings.link | append: block.settings.section_id
+  endif
+%}
+
+{% render 'button', link: btn_link %}
+
+{% schema %}
+{
+  "name": "t:names.button",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "label",
+      "label": "t:settings.label",
+      "default": "t:text_defaults.button_label"
+    },
+    {
+      "type": "url",
+      "id": "link",
+      "label": "t:settings.link"
+    },
+    {
+      "type": "checkbox",
+      "id": "open_in_new_tab",
+      "label": "t:settings.open_new_tab",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "link_with_section",
+      "label": "Link with section?",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "section_id",
+      "label": "Section id",
+      "visible_if": "{{ block.settings.link_with_section }}"
+    },
+    {
+      "type": "select",
+      "id": "style_class",
+      "label": "t:settings.style",
+      "options": [
+        {
+          "value": "button",
+          "label": "t:options.primary"
+        },
+        {
+          "value": "button-secondary",
+          "label": "t:options.secondary"
+        },
+        {
+          "value": "button-unstyled",
+          "label": "t:options.link"
+        },
+        {
+          "value": "button-custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "button",
+      "info": "t:info.edit_button_style_in_theme_settings"
+    },
+    {
+      "type": "header",
+      "content": "t:content.button_colors",
+      "visible_if": "{{ block.settings.style_class == \"button-custom\" }}"
+    },
+    {
+      "type": "color",
+      "id": "custom_button_background",
+      "label": "t:settings.background",
+      "default": "{{ settings.color_palette.foreground }}",
+      "alpha": true,
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "color",
+      "id": "custom_button_text",
+      "label": "t:settings.text",
+      "default": "{{ settings.color_palette.background }}",
+      "alpha": true,
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "color",
+      "id": "custom_button_border",
+      "label": "t:settings.borders",
+      "default": "{{ settings.color_palette.background }}",
+      "alpha": true,
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "header",
+      "content": "Button padding",
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "range",
+      "id": "button_padding_vertical",
+      "label": "Vertical padding",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 12,
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "range",
+      "id": "button_padding_horizontal",
+      "label": "Horizontal padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 20,
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "header",
+      "content": "Border radius",
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "range",
+      "id": "button_border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 4,
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "text",
+      "id": "button_custom_width",
+      "label": "Button width (e.g. 200px, 100%)",
+      "placeholder": "e.g. 200px or 100%",
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.typography",
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "font_size",
+      "label": "t:settings.size",
+      "options": [
+          {
+            "value": "",
+            "label": "t:options.default"
+          },
+          {
+            "value": "0.625rem",
+            "label": "10px"
+          },
+          {
+            "value": "0.6875rem",
+            "label": "11px"
+          },
+          {
+            "value": "0.75rem",
+            "label": "12px"
+          },
+          {
+            "value": "0.8125rem",
+            "label": "13px"
+          },
+          {
+            "value": "0.875rem",
+            "label": "14px"
+          },
+          {
+            "value": "0.9375rem",
+            "label": "15px"
+          },
+          {
+            "value": "1rem",
+            "label": "16px"
+          },
+          {
+            "value": "1.0625rem",
+            "label": "17px"
+          },
+          {
+            "value": "1.125rem",
+            "label": "18px"
+          },
+          {
+            "value": "1.1875rem",
+            "label": "19px"
+          },
+          {
+            "value": "1.25rem",
+            "label": "20px"
+          },
+          {
+            "value": "1.3125rem",
+            "label": "21px"
+          },
+          {
+            "value": "1.375rem",
+            "label": "22px"
+          },
+          {
+            "value": "1.4375rem",
+            "label": "23px"
+          },
+          {
+            "value": "1.5rem",
+            "label": "24px"
+          },
+          {
+            "value": "1.5625rem",
+            "label": "25px"
+          },
+          {
+            "value": "1.625rem",
+            "label": "26px"
+          },
+          {
+            "value": "1.6875rem",
+            "label": "27px"
+          },
+          {
+            "value": "1.75rem",
+            "label": "28px"
+          },
+          {
+            "value": "1.8125rem",
+            "label": "29px"
+          },
+          {
+            "value": "1.875rem",
+            "label": "30px"
+          },
+          {
+            "value": "1.9375rem",
+            "label": "31px"
+          },
+          {
+            "value": "2rem",
+            "label": "32px"
+          },
+          {
+            "value": "2.0625rem",
+            "label": "33px"
+          },
+          {
+            "value": "2.125rem",
+            "label": "34px"
+          },
+          {
+            "value": "2.1875rem",
+            "label": "35px"
+          },
+          {
+            "value": "2.25rem",
+            "label": "36px"
+          },
+          {
+            "value": "2.3125rem",
+            "label": "37px"
+          },
+          {
+            "value": "2.375rem",
+            "label": "38px"
+          },
+          {
+            "value": "2.4375rem",
+            "label": "39px"
+          },
+          {
+            "value": "2.5rem",
+            "label": "40px"
+          },
+          {
+            "value": "2.5625rem",
+            "label": "41px"
+          },
+          {
+            "value": "2.625rem",
+            "label": "42px"
+          },
+          {
+            "value": "2.6875rem",
+            "label": "43px"
+          },
+          {
+            "value": "2.75rem",
+            "label": "44px"
+          },
+          {
+            "value": "2.8125rem",
+            "label": "45px"
+          },
+          {
+            "value": "2.875rem",
+            "label": "46px"
+          },
+          {
+            "value": "2.9375rem",
+            "label": "47px"
+          },
+          {
+            "value": "3rem",
+            "label": "48px"
+          },
+          {
+            "value": "3.0625rem",
+            "label": "49px"
+          },
+          {
+            "value": "3.125rem",
+            "label": "50px"
+          }
+        ],
+      "default": "",
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "font_size_mobile",
+      "label": "Mobile font size",
+      "options": [
+          {
+            "value": "",
+            "label": "t:options.default"
+          },
+          {
+            "value": "0.625rem",
+            "label": "10px"
+          },
+          {
+            "value": "0.6875rem",
+            "label": "11px"
+          },
+          {
+            "value": "0.75rem",
+            "label": "12px"
+          },
+          {
+            "value": "0.8125rem",
+            "label": "13px"
+          },
+          {
+            "value": "0.875rem",
+            "label": "14px"
+          },
+          {
+            "value": "0.9375rem",
+            "label": "15px"
+          },
+          {
+            "value": "1rem",
+            "label": "16px"
+          },
+          {
+            "value": "1.0625rem",
+            "label": "17px"
+          },
+          {
+            "value": "1.125rem",
+            "label": "18px"
+          },
+          {
+            "value": "1.1875rem",
+            "label": "19px"
+          },
+          {
+            "value": "1.25rem",
+            "label": "20px"
+          },
+          {
+            "value": "1.3125rem",
+            "label": "21px"
+          },
+          {
+            "value": "1.375rem",
+            "label": "22px"
+          },
+          {
+            "value": "1.4375rem",
+            "label": "23px"
+          },
+          {
+            "value": "1.5rem",
+            "label": "24px"
+          },
+          {
+            "value": "1.5625rem",
+            "label": "25px"
+          },
+          {
+            "value": "1.625rem",
+            "label": "26px"
+          },
+          {
+            "value": "1.6875rem",
+            "label": "27px"
+          },
+          {
+            "value": "1.75rem",
+            "label": "28px"
+          },
+          {
+            "value": "1.8125rem",
+            "label": "29px"
+          },
+          {
+            "value": "1.875rem",
+            "label": "30px"
+          },
+          {
+            "value": "1.9375rem",
+            "label": "31px"
+          },
+          {
+            "value": "2rem",
+            "label": "32px"
+          },
+          {
+            "value": "2.0625rem",
+            "label": "33px"
+          },
+          {
+            "value": "2.125rem",
+            "label": "34px"
+          },
+          {
+            "value": "2.1875rem",
+            "label": "35px"
+          },
+          {
+            "value": "2.25rem",
+            "label": "36px"
+          },
+          {
+            "value": "2.3125rem",
+            "label": "37px"
+          },
+          {
+            "value": "2.375rem",
+            "label": "38px"
+          },
+          {
+            "value": "2.4375rem",
+            "label": "39px"
+          },
+          {
+            "value": "2.5rem",
+            "label": "40px"
+          },
+          {
+            "value": "2.5625rem",
+            "label": "41px"
+          },
+          {
+            "value": "2.625rem",
+            "label": "42px"
+          },
+          {
+            "value": "2.6875rem",
+            "label": "43px"
+          },
+          {
+            "value": "2.75rem",
+            "label": "44px"
+          },
+          {
+            "value": "2.8125rem",
+            "label": "45px"
+          },
+          {
+            "value": "2.875rem",
+            "label": "46px"
+          },
+          {
+            "value": "2.9375rem",
+            "label": "47px"
+          },
+          {
+            "value": "3rem",
+            "label": "48px"
+          },
+          {
+            "value": "3.0625rem",
+            "label": "49px"
+          },
+          {
+            "value": "3.125rem",
+            "label": "50px"
+          }
+        ],
+      "default": "",
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "weight",
+      "label": "t:settings.weight",
+      "options": [
+        {
+          "value": "",
+          "label": "t:options.default"
+        },
+        {
+          "value": "100",
+          "label": "t:options.thin"
+        },
+        {
+          "value": "300",
+          "label": "t:options.light"
+        },
+        {
+          "value": "400",
+          "label": "t:options.regular"
+        },
+        {
+          "value": "500",
+          "label": "t:options.medium"
+        },
+        {
+          "value": "600",
+          "label": "t:options.semibold"
+        },
+        {
+          "value": "700",
+          "label": "t:options.bold"
+        },
+        {
+          "value": "900",
+          "label": "t:options.black"
+        }
+      ],
+      "default": "",
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "color",
+      "id": "link_text_color",
+      "label": "t:settings.link_text_color",
+      "placeholder": "t:settings.default",
+      "visible_if": "{{ block.settings.style_class == 'button-unstyled' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.size"
+    },
+    {
+      "type": "select",
+      "id": "width",
+      "label": "t:settings.width_desktop",
+      "options": [
+        {
+          "value": "fit-content",
+          "label": "t:options.fit_content"
+        },
+        {
+          "value": "custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "fit-content"
+    },
+    {
+      "type": "range",
+      "id": "custom_width",
+      "label": "t:settings.custom_width",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.width == \"custom\" }}"
+    },
+    {
+      "type": "select",
+      "id": "width_mobile",
+      "label": "t:settings.width_mobile",
+      "options": [
+        {
+          "value": "fit-content",
+          "label": "t:options.fit_content"
+        },
+        {
+          "value": "custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "fit-content"
+    },
+    {
+      "type": "range",
+      "id": "custom_width_mobile",
+      "label": "t:settings.custom_width",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.width_mobile == \"custom\" }}"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:names.button",
+      "category": "t:categories.basic",
+      "settings": {
+        "link": "shopify://collections/all"
+      }
+    }
+  ]
+}
+{% endschema %}

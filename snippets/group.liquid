@@ -1,0 +1,159 @@
+{%- doc -%}
+  Renders block content for all blocks that extend the group block.
+
+  @param {string} children - The DOM content of the group block.
+  @param {object} settings - The settings of the group block.
+  @param {string} shopify_attributes - String with Shopify attributes for the editor.
+  @param {string} [class] - Custom classes for the group block.
+  @param {string} [style] - Custom inline styles for the group block.
+  @param {string} [background_color] - The background color of the group block.
+  @param {string} [block_id] - The ID of the group block.
+
+  @example
+  {% render 'group', children: children, settings: block.settings, shopify_attributes: block.shopify_attributes %}
+{%- enddoc -%}
+
+{% liquid
+  assign skip_contrast = false
+  if settings.background_media != blank and settings.background_media != 'none'
+    assign skip_contrast = true
+  endif
+%}
+{% render 'contrast-override', background_color: background_color, section_id: block_id, skip_contrast: skip_contrast %}
+
+<div
+  id="group-block--{{ block_id }}"
+  class="
+    group-block
+    group-block--{{ block_id }}
+    {% if settings.enable_sticky %}group-block--sticky{% endif %}
+    {% if settings.hide_mobile %}hidden--mobile{% endif %}
+    {% if settings.hide_desktop %}hidden--desktop{% endif %}
+    group-block--height-{{ settings.height }}
+    group-block--width-{{ settings.width }}
+    border-style
+    spacing-style
+    size-style
+    {{ class }}
+    {% if background_color != blank %} color-custom-{{ block_id }}{% endif %}
+  "
+  style="
+    {% if settings.enable_sticky %}--sticky-top-offset: {{ settings.sticky_top_offset | default: 0 }}px;{% endif %}
+    {% render 'border-override', settings: settings %}
+    {% render 'spacing-style', settings: settings %}
+    {% render 'size-style', settings: settings %}
+    {{ style }}
+  "
+  {{ shopify_attributes }}
+  data-testid="group-block"
+>
+  {%- if settings.link != blank -%}
+    <a
+      href="{{ settings.link }}"
+      class="group-block__link"
+      {% if settings.open_in_new_tab %}
+        target="_blank" rel="noopener"
+      {% endif %}
+    ></a>
+  {%- endif -%}
+
+  <div class="group-block__media-wrapper">
+    {% render 'background-media',
+      background_media: settings.background_media,
+      background_video: settings.video,
+      background_video_position: settings.video_position,
+      background_image: settings.background_image,
+      background_image_position: settings.background_image_position,
+      placeholder: settings.placeholder
+    %}
+    {% if settings.toggle_overlay %}
+      {% render 'overlay', settings: settings, layer: '0' %}
+    {% endif %}
+  </div>
+
+  <div
+    class="
+      group-block-content
+      {% if request.design_mode %}group-block-content--design-mode{% endif %}
+      {% if settings.display == 'grid' %}
+        layout-panel-grid
+      {% else %}
+        layout-panel-flex
+        layout-panel-flex--{{ settings.content_direction | default: 'column' }}
+        {% if settings.vertical_on_mobile %} mobile-column{% endif %}
+      {% endif %}
+    "
+    style="
+      {% if settings.display == 'grid' %}
+        --grid-desktop-columns: {{ settings.desktop_columns | default: 3 }};
+        --grid-mobile-columns: {{ settings.mobile_columns | default: 1 }};
+        {% render 'gap-style', value: settings.gap %}
+        {% if settings.gap_mobile != blank %}--gap-mobile: {{ settings.gap_mobile }}px;{% endif %}
+      {% else %}
+        {% render 'layout-panel-style', settings: settings %}
+      {% endif %}
+    "
+  >
+    {{- children -}}
+  </div>
+</div>
+
+{% if settings.custom_css != blank %}
+  {% style %}
+    {% if settings.custom_css contains 'selector' %}
+      {% assign target_selector = '.group-block--' | append: block_id %}
+      {{ settings.custom_css | replace: 'selector', target_selector }}
+    {% else %}
+      .group-block--{{ block_id }} {
+        {{ settings.custom_css }}
+      }
+    {% endif %}
+  {% endstyle %}
+{% endif %}
+
+{% stylesheet %}
+  @media screen and (min-width: 750px) {
+    .group-block--sticky {
+      position: sticky;
+      top: var(--sticky-top-offset, 0px);
+      z-index: 10;
+    }
+  }
+
+  .layout-panel-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--grid-mobile-columns, 1), minmax(0, 1fr));
+    gap: var(--gap-mobile, var(--gap, 12px));
+  }
+
+  @media screen and (min-width: 750px) {
+    .layout-panel-grid {
+      grid-template-columns: repeat(var(--grid-desktop-columns, 3), minmax(0, 1fr));
+      gap: var(--gap, 12px);
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .layout-panel-flex {
+      gap: var(--gap-mobile, var(--gap, 12px));
+    }
+  }
+
+  .group-block__link {
+    position: absolute;
+    inset: 0;
+  }
+
+  .group-block__link ~ :is(.group-block-content, .group-block__media-wrapper) {
+    pointer-events: none;
+
+    :is(a, button, input, textarea, select) {
+      pointer-events: auto;
+    }
+  }
+
+  /* Needs the .group-block__link ~ to be specific enough to take effect. */
+  .group-block__link ~ .group-block-content--design-mode {
+    pointer-events: auto;
+  }
+{% endstylesheet %}

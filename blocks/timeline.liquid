@@ -1,0 +1,415 @@
+{% liquid
+  assign block_settings = block.settings
+%}
+
+{% style %}
+  #block-{{ block.id }} .timeline-block {
+    --color-heading: {{ block_settings.color_heading | default: '#06080c' }};
+    --color-text: {{ block_settings.color_text | default: '#4a566c' }};
+    --color-line: {{ block_settings.color_line | default: '#109d7a' }};
+    --color-list: {{ block_settings.color_list | default: '#4a566c' }};
+    --color-bg: {% if block_settings.gradient_background != blank %}{{ block_settings.gradient_background }}{% elsif block_settings.color_background != blank %}{{ block_settings.color_background }}{% else %}#ffffff{% endif %};
+
+    background: var(--color-bg);
+    color: var(--color-text);
+    padding-block-start: {{ block_settings.padding-block-start | default: 72 }}px;
+    padding-block-end: {{ block_settings.padding-block-end | default: 72 }}px;
+  }
+{% endstyle %}
+
+<div id="block-{{ block.id }}">
+  <advanced-timeline class="timeline-block" {{ block.shopify_attributes }}>
+    <div class="timeline-block__timeline">
+      <span class="timeline-block__timeline-progress" aria-hidden="true"></span>
+      {% content_for 'blocks' %}
+    </div>
+  </advanced-timeline>
+</div>
+
+<script>
+  (function () {
+    class AdvancedTimeline extends HTMLElement {
+      connectedCallback() {
+        this.timeline = this.querySelector('.timeline-block__timeline');
+        this.progress = this.querySelector('.timeline-block__timeline-progress');
+        this.currentProgressRatio = 0;
+        this.targetProgressRatio = 0;
+        this.animationFrame = null;
+        this._initialized = false;
+
+        this._waitForSteps();
+
+        this._observer = new MutationObserver(() => this._tryInit());
+        if (this.timeline) {
+          this._observer.observe(this.timeline, { childList: true, subtree: true });
+        }
+      }
+
+      disconnectedCallback() {
+        if (this._onScroll) {
+          window.removeEventListener('scroll', this._onScroll);
+          const pageWrapper = document.querySelector('.page-wrapper');
+          if (pageWrapper) {
+            pageWrapper.removeEventListener('scroll', this._onScroll);
+          }
+        }
+        if (this._onResize) {
+          window.removeEventListener('resize', this._onResize);
+        }
+        if (this.animationFrame) {
+          cancelAnimationFrame(this.animationFrame);
+          this.animationFrame = null;
+        }
+        if (this._observer) {
+          this._observer.disconnect();
+          this._observer = null;
+        }
+        if (this._pollFrame) {
+          cancelAnimationFrame(this._pollFrame);
+          this._pollFrame = null;
+        }
+      }
+
+      _waitForSteps(attempts = 0) {
+        if (this._tryInit()) return;
+        if (attempts < 20) {
+          this._pollFrame = requestAnimationFrame(() => this._waitForSteps(attempts + 1));
+        }
+      }
+
+      _tryInit() {
+        this.steps = Array.from(this.querySelectorAll('.wellness-journey__step'));
+        if (!this.timeline || !this.progress || !this.steps.length) return false;
+
+        if (!this._initialized) {
+          this._initialized = true;
+          this._onScroll = this.updateTimeline.bind(this);
+          this._onResize = this.updateTimeline.bind(this);
+          
+          window.addEventListener('scroll', this._onScroll, { passive: true });
+          const pageWrapper = document.querySelector('.page-wrapper');
+          if (pageWrapper) {
+            pageWrapper.addEventListener('scroll', this._onScroll, { passive: true });
+          }
+          window.addEventListener('resize', this._onResize);
+        }
+
+        this.updateTimeline();
+        return true;
+      }
+
+      clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+      }
+
+      renderProgress() {
+        this.currentProgressRatio += (this.targetProgressRatio - this.currentProgressRatio) * 0.2;
+
+        if (Math.abs(this.targetProgressRatio - this.currentProgressRatio) < 0.001) {
+          this.currentProgressRatio = this.targetProgressRatio;
+        }
+
+        const rect = this.timeline.getBoundingClientRect();
+        this.progress.style.height = this.currentProgressRatio * rect.height + 'px';
+
+        if (Math.abs(this.targetProgressRatio - this.currentProgressRatio) >= 0.001) {
+          this.animationFrame = requestAnimationFrame(() => this.renderProgress());
+        } else {
+          this.animationFrame = null;
+        }
+      }
+
+      updateTimeline() {
+        if (!this.steps || !this.steps.length) return;
+        const rect = this.timeline.getBoundingClientRect();
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+        const lineY = viewportHeight * 0.5;
+        let currentIndex = -1;
+
+        this.steps.forEach((step, index) => {
+          const stepDotY = step.getBoundingClientRect().top + 10;
+          step.classList.remove('is-active', 'is-complete', 'is-current');
+          if (stepDotY <= lineY) {
+            step.classList.add('is-complete');
+            currentIndex = index;
+          }
+        });
+
+        if (currentIndex < 0) currentIndex = 0;
+
+        this.steps[currentIndex].classList.add('is-current', 'is-active');
+
+        const activeDot = this.steps[currentIndex].querySelector('.wellness-journey__dot');
+        if (activeDot) {
+          const dotRect = activeDot.getBoundingClientRect();
+          const dotCenter = dotRect.top - rect.top + dotRect.height / 2;
+          const progressRatio = currentIndex === this.steps.length - 1 ? 1 : this.clamp(dotCenter / rect.height, 0, 1);
+          this.targetProgressRatio = progressRatio;
+          if (!this.animationFrame) {
+            this.animationFrame = requestAnimationFrame(() => this.renderProgress());
+          }
+        }
+      }
+    }
+
+    if (!customElements.get('advanced-timeline')) {
+      customElements.define('advanced-timeline', AdvancedTimeline);
+    }
+  })();
+</script>
+
+{% stylesheet %}
+  .timeline-block {
+    display: block;
+    width: 100%;
+  }
+
+  /* ── Timeline column ── */
+  .timeline-block__timeline {
+    position: relative;
+    padding-left: 44px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .timeline-block__timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 14px;
+    bottom: 18px;
+    width: 3px;
+    background: color-mix(in srgb, var(--color-line) 18%, transparent);
+  }
+
+  .timeline-block__timeline-progress {
+    position: absolute;
+    left: 8px;
+    top: 14px;
+    width: 3px;
+    height: 0;
+    background: var(--color-line);
+    transition: height 0.18s linear;
+    z-index: 1;
+  }
+
+  /* ── Step items (child block) ── */
+  .wellness-journey__step {
+    position: relative;
+    padding-bottom: 26px;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+
+  .wellness-journey__step:last-child {
+    padding-bottom: 0;
+  }
+
+  .wellness-journey__step.is-active,
+  .wellness-journey__step.is-complete,
+  .wellness-journey__step.is-current {
+    opacity: 1;
+  }
+
+  .wellness-journey__dot {
+    position: absolute;
+    left: -44px;
+    top: 4px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--step-dot);
+    transform: scale(0.72);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+    z-index: 2;
+  }
+
+  .wellness-journey__step.is-complete .wellness-journey__dot,
+  .wellness-journey__step.is-active .wellness-journey__dot,
+  .wellness-journey__step.is-current .wellness-journey__dot {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px var(--color-bg, #fff), 0 0 0 9px color-mix(in srgb, var(--step-dot) 14%, transparent);
+  }
+
+  .wellness-journey__step.is-active .wellness-journey__dot,
+  .wellness-journey__step.is-current .wellness-journey__dot {
+    background: var(--color-heading);
+    box-shadow: 0 0 0 6px var(--color-bg, #fff), 0 0 0 9px color-mix(in srgb, var(--color-heading) 14%, transparent);
+  }
+
+  .wellness-journey__badge {
+    display: block;
+    margin-bottom: 16px;
+    padding: 10px 36px;
+    border-radius: 8px;
+    background: var(--step-badge-bg);
+    color: var(--step-badge-text);
+    font-size: 18px;
+    line-height: 1.1;
+    font-weight: 700;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
+  }
+
+  .wellness-journey__step.is-complete .wellness-journey__badge,
+  .wellness-journey__step.is-active .wellness-journey__badge,
+  .wellness-journey__step.is-current .wellness-journey__badge {
+    background: var(--color-heading);
+    color: var(--color-bg, #fff);
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--color-heading) 18%, transparent);
+  }
+
+  .timeline-block__timeline .rte li {
+    position: relative;
+    margin-bottom: 16px;
+    font-size: 18px;
+    line-height: 1.45;
+    color: var(--color-list);
+  }
+
+  .timeline-block__timeline .rte li:last-child {
+    margin-bottom: 0;
+  }
+
+  @media only screen and (max-width: 589px) {
+    .timeline-block__timeline .rte li,
+    .timeline-block__timeline .rte {
+      font-size: 14px;
+    }
+
+    .timeline-block__timeline {
+      padding-left: 34px;
+    }
+
+    .timeline-block__timeline::before {
+      left: 7px;
+    }
+
+    .timeline-block__timeline-progress {
+      left: 7px;
+    }
+
+    .wellness-journey__dot {
+      left: -34px;
+      width: 16px;
+      height: 16px;
+    }
+
+    .wellness-journey__badge {
+      padding: 12px 18px;
+      font-size: 14px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Timeline",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "color_text",
+      "label": "Text",
+      "default": "#4a566c"
+    },
+    {
+      "type": "color",
+      "id": "color_background",
+      "label": "Background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color_background",
+      "id": "gradient_background",
+      "label": "Background gradient"
+    },
+    {
+      "type": "color",
+      "id": "color_heading",
+      "label": "Active step background",
+      "default": "#06080c"
+    },
+    {
+      "type": "color",
+      "id": "color_line",
+      "label": "Timeline line",
+      "default": "#109d7a"
+    },
+    {
+      "type": "color",
+      "id": "color_list",
+      "label": "Timeline list text",
+      "default": "#4a566c"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 180,
+      "step": 2,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 180,
+      "step": 2,
+      "unit": "px",
+      "default": 72
+    }
+  ],
+  "blocks": [
+    {
+      "type": "_timeline-step"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Timeline",
+      "blocks": [
+        {
+          "type": "_timeline-step",
+          "settings": {
+            "title": "Week 1: Early Shifts"
+          }
+        },
+        {
+          "type": "_timeline-step",
+          "settings": {
+            "title": "Week 2: Energy Returns"
+          }
+        },
+        {
+          "type": "_timeline-step",
+          "settings": {
+            "title": "Week 3: Gut + Immune Sync",
+            "badge_background": "#041b14",
+            "dot_color": "#041b14",
+            "items": "<ul><li>Improved regularity and gut comfort*</li><li>Your body feels like it's finally in balance*</li><li>You feel more \"in control\" of your health*</li></ul>"
+          }
+        },
+        {
+          "type": "_timeline-step",
+          "settings": {
+            "title": "Week 4+: Long-Term Balance",
+            "badge_background": "#000000",
+            "dot_color": "#000000",
+            "items": "<ul><li>Steady energy becomes your new normal*</li><li>Cravings and crashes feel like they're in the past*</li></ul>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

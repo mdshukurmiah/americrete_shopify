@@ -1,0 +1,425 @@
+{% liquid
+  assign block_settings = block.settings
+  assign slide_count = block.blocks.size
+
+  # Custom classes and layout widths
+  assign slideshow_class = 'testimonial-carousel '
+  if block_settings.color_background != blank
+    render 'contrast-override', background_color: block_settings.color_background, section_id: block.id
+    assign slideshow_class = slideshow_class | append: ' color-custom-' | append: block.id
+  endif
+
+  assign slideshow_gutters = null
+  if block_settings.full_width == false
+    assign slideshow_gutters = 'start end'
+  endif
+
+  assign show_arrows = true
+  if block_settings.show_arrows == false
+    assign show_arrows = false
+  endif
+
+  assign show_dots = true
+  if block_settings.show_dots == false
+    assign show_dots = false
+  endif
+%}
+
+{% capture blocks_content %}
+  {% content_for 'blocks' %}
+{% endcapture %}
+
+{%- style -%}
+  #block-{{ block.id }}{
+      width: 100%;
+  }
+    #block-{{ block.id }} .testimonial-carousel-wrapper {
+      background: {% if block_settings.gradient_background != blank %}{{ block_settings.gradient_background }}{% elsif block_settings.color_background != blank %}{{ block_settings.color_background }}{% else %}transparent{% endif %};
+      color: {{ block_settings.color_text | default: '#1c1d1d' }};
+      padding-block-start: {{ block_settings.padding-block-start | default: 72 }}px;
+      padding-block-end: {{ block_settings.padding-block-end | default: 72 }}px;
+    }
+
+    #block-{{ block.id }} .testimonial-card__verified-badge {
+      color: {{ block_settings.color_verified | default: '#225b32' }};
+    }
+
+    /* ── Custom width logic ── */
+    #block-{{ block.id }} slideshow-slides {
+      --slideshow-gap: {{ block_settings.column_gap | default: 24 }}px;
+    }
+
+    #block-{{ block.id }} slideshow-slides > slideshow-slide {
+      flex: 0 0 auto;
+      width: calc(
+        (100% - ({{ block_settings.column_gap | default: 24 }}px * ({{ block_settings.mobile_columns | default: 1 }} - 1))) /
+          {{ block_settings.mobile_columns | default: 1 }}
+      );
+    }
+
+    @media screen and (min-width: 750px) {
+      #block-{{ block.id }} slideshow-slides > slideshow-slide {
+        width: calc(
+          (100% - ({{ block_settings.column_gap | default: 24 }}px * ({{ block_settings.columns | default: 3 }} - 1))) /
+            {{ block_settings.columns | default: 3 }}
+        );
+      }
+    }
+
+    /* ── Arrow & dot color overrides ── */
+    {% if block_settings.color_arrows != blank %}
+      #block-{{ block.id }} slideshow-arrows .slideshow-control {
+        color: {{ block_settings.color_arrows }};
+        border-color: {{ block_settings.color_arrows }};
+      }
+    {% endif %}
+
+    {% if block_settings.color_dots != blank %}
+      #block-{{ block.id }} slideshow-controls button {
+        --color: {{ block_settings.color_dots }};
+        --color-active: {{ block_settings.color_dots }};
+        --color-hover: {{ block_settings.color_dots }};
+      }
+    {% endif %}
+{%- endstyle -%}
+<div id="block-{{ block.id }}">
+  <div class="testimonial-carousel-wrapper force-full-width" {{ block.shopify_attributes }}>
+    <div class="{% if block_settings.full_width == false %}page-width{% endif %}">
+      {%- if slide_count > 0 -%}
+        {%- if show_dots -%}
+          {%- capture dots_controls -%}
+            {%- render 'slideshow-controls', style: 'dots', item_count: slide_count -%}
+          {%- endcapture -%}
+        {%- endif -%}
+        {% render 'slideshow',
+          class: slideshow_class,
+          slides: blocks_content,
+          controls: dots_controls,
+          show_arrows: show_arrows,
+          icon_style: 'arrow',
+          auto_hide_controls: false,
+          infinite: true,
+          initial_slide: 0,
+          slide_count: slide_count,
+          slide_position: 'stretch',
+          slideshow_gutters: slideshow_gutters
+        %}
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .testimonial-carousel slideshow-slides {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .testimonial-carousel slideshow-slides::-webkit-scrollbar {
+    display: none;
+  }
+
+  .testimonial-carousel slideshow-slide {
+    scroll-snap-align: start;
+  }
+
+  /* ── Card Styling ── */
+  .testimonial-card {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    padding: 32px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    text-align: center;
+  }
+
+  .testimonial-card__blockquote {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+  }
+
+  .testimonial-card__image-container {
+    width: 65px;
+    height: 65px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    background: #f4f4f4;
+  }
+
+  .testimonial-card__image-container--round {
+    border-radius: 50%;
+  }
+
+  .testimonial-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .testimonial-card__title {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .testimonial-card__rating {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .testimonial-card__stars {
+    color: #ffd700;
+    font-size: 16px;
+    letter-spacing: 2px;
+  }
+
+  .testimonial-card__start-count {
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0.8;
+  }
+
+  .testimonial-card__quote-icon {
+    opacity: 0.3;
+  }
+
+  .testimonial-card__text {
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 24px;
+    flex-grow: 1;
+    color: inherit;
+  }
+
+  .testimonial-card__meta {
+    margin-top: auto;
+    font-style: normal;
+  }
+
+  .testimonial-card__author {
+    font-weight: 700;
+    font-size: 16px;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .testimonial-card__author-info {
+    font-size: 14px;
+    opacity: 0.7;
+    margin: 0 0 8px 0;
+  }
+
+  .testimonial-card__verified {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* Carousel navigation tweaks */
+  .testimonial-carousel slideshow-arrows {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  .testimonial-carousel .slideshow-control {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .testimonial-carousel .slideshow-control:hover {
+    background: #f4f4f4;
+    border-color: rgba(0, 0, 0, 0.2);
+  }
+
+  .testimonial-carousel .slideshow-control[disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Testimonial Carousel",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width",
+      "label": "Full width layout",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "columns",
+      "label": "Slides per row (desktop)",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "mobile_columns",
+      "label": "Slides per row (mobile)",
+      "min": 1,
+      "max": 3,
+      "step": 1,
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "column_gap",
+      "label": "Column gap",
+      "min": 8,
+      "max": 48,
+      "step": 4,
+      "default": 24,
+      "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Navigation"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_arrows",
+      "label": "Show arrows",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_dots",
+      "label": "Show dots",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "color_arrows",
+      "label": "Arrow color"
+    },
+    {
+      "type": "color",
+      "id": "color_dots",
+      "label": "Dot color"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "color_text",
+      "label": "Text color",
+      "default": "#1c1d1d"
+    },
+    {
+      "type": "color",
+      "id": "color_background",
+      "label": "Background color",
+      "default": "#f9f9f9"
+    },
+    {
+      "type": "color_background",
+      "id": "gradient_background",
+      "label": "Background gradient"
+    },
+    {
+      "type": "color",
+      "id": "color_verified",
+      "label": "Verified badge color",
+      "default": "#225b32"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 180,
+      "step": 2,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 180,
+      "step": 2,
+      "unit": "px",
+      "default": 72
+    }
+  ],
+  "blocks": [
+    {
+      "type": "_testimonial"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Testimonial Carousel",
+      "blocks": [
+        {
+          "type": "_testimonial",
+          "settings": {
+            "author": "Sarah Jenkins",
+            "testimonial_title": "Absolutely love it!",
+            "testimonial": "<p>This product has completely transformed my daily routine. Highly recommend to everyone!</p>"
+          }
+        },
+        {
+          "type": "_testimonial",
+          "settings": {
+            "author": "Mark R.",
+            "testimonial_title": "Great value & quality",
+            "testimonial": "<p>Outstanding build quality and fast shipping. Will definitely buy again.</p>"
+          }
+        },
+        {
+          "type": "_testimonial",
+          "settings": {
+            "author": "Jessica M.",
+            "testimonial_title": "Best purchase this year",
+            "testimonial": "<p>Customer support was super helpful and the product exceeded my expectations.</p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

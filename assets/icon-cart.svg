@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 64 64"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="3"
+     stroke-linecap="miter"
+     stroke-linejoin="miter">
+  <title>icon-cart</title>
+
+  <path d="M14 17.44h46.79l-7.94 25.61H20.96l-9.65-35.1H3"/>
+
+  <circle cx="27" cy="53" r="2" fill="currentColor"/>
+  <circle cx="47" cy="53" r="2" fill="currentColor"/>
+</svg>

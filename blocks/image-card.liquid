@@ -1,0 +1,382 @@
+{% liquid
+  assign block_id = block.id
+  assign img = block.settings.image
+  assign ratio = '1'
+
+  case block.settings.image_ratio
+    when 'square'
+      assign ratio = '1 / 1'
+    when 'portrait'
+      assign ratio = '4 / 5'
+    when 'landscape'
+      assign ratio = '16 / 9'
+    when '2/3'
+      assign ratio = '2 / 3'
+    when '3/2'
+      assign ratio = '3 / 2'
+    when '3/4'
+      assign ratio = '3 / 4'
+    when '4/3'
+      assign ratio = '4 / 3'
+    when 'adapt'
+      if img != blank
+        assign ratio = img.aspect_ratio
+      else
+        assign ratio = '16 / 9'
+      endif
+  endcase
+%}
+
+<div
+  class="image-card-block image-card-block--{{ block_id }}"
+  style="
+    --ic-bg-color: {{ block.settings.card_bg_color | default: 'transparent' }};
+    --ic-border-color: {{ block.settings.card_border_color | default: 'transparent' }};
+    --ic-border-width: {{ block.settings.card_border_width | default: 0 }}px;
+    --ic-corner-radius: {{ block.settings.card_corner_radius | default: 16 }}px;
+    --ic-image-corner-radius: {{ block.settings.image_corner_radius | default: 12 }}px;
+    --ic-padding: {{ block.settings.card_padding | default: 24 }}px;
+    --ic-text-color: {{ block.settings.card_text_color | default: 'inherit' }};
+    --ic-text-alignment: {{ block.settings.alignment | default: 'left' }};
+    --ic-image-ratio: {{ ratio }};
+
+    --ic-title-font-size: {{ block.settings.title_font_size }}px;
+    --ic-title-font-size-mobile: {{ block.settings.title_font_size_mobile | default: block.settings.title_font_size }}px;
+    --ic-title-font-weight: {{ block.settings.title_font_weight }};
+    --ic-title-font-family: {{ block.settings.title_font_family }};
+
+    --ic-desc-font-size: {{ block.settings.desc_font_size }}px;
+    --ic-desc-font-size-mobile: {{ block.settings.desc_font_size_mobile | default: block.settings.desc_font_size }}px;
+    --ic-desc-font-weight: {{ block.settings.desc_font_weight }};
+    --ic-desc-font-family: {{ block.settings.desc_font_family }};
+  "
+  {{ block.shopify_attributes }}
+>
+  <div class="image-card__image-wrapper">
+    {% if img != blank %}
+      {{
+        img
+        | image_url: width: 1600
+        | image_tag:
+          width: img.width,
+          height: img.height,
+          widths: '360, 540, 720, 900, 1200, 1600',
+          class: 'image-card__image',
+          loading: 'lazy'
+      }}
+    {% else %}
+      <div class="image-card__placeholder">
+        {{ 'image' | placeholder_svg_tag: 'placeholder-svg' }}
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="image-card__content">
+    {% if block.settings.title != blank %}
+      <h3 class="image-card__title">{{ block.settings.title }}</h3>
+    {% endif %}
+
+    {% if block.settings.description != blank %}
+      <div class="image-card__description">
+        {{ block.settings.description }}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% stylesheet %}
+  .image-card-block {
+    background-color: var(--ic-bg-color);
+    border: var(--ic-border-width) solid var(--ic-border-color);
+    border-radius: var(--ic-corner-radius);
+    padding: var(--ic-padding);
+    color: var(--ic-text-color);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  .image-card__image-wrapper {
+    width: 100%;
+    aspect-ratio: var(--ic-image-ratio);
+    overflow: hidden;
+    border-radius: var(--ic-image-corner-radius);
+    margin-bottom: 1rem;
+    position: relative;
+  }
+
+  .image-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .image-card__placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .image-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: var(--ic-text-alignment, left);
+  }
+
+  .image-card__title {
+    margin: 0;
+    color: inherit;
+    font-size: var(--ic-title-font-size);
+    font-weight: var(--ic-title-font-weight);
+    font-family: var(--ic-title-font-family);
+    line-height: 1.3;
+  }
+
+  .image-card__description {
+    color: inherit;
+    font-size: var(--ic-desc-font-size);
+    font-weight: var(--ic-desc-font-weight);
+    font-family: var(--ic-desc-font-family);
+    line-height: 1.5;
+
+    p {
+      margin: 0;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .image-card__title {
+      font-size: var(--ic-title-font-size-mobile, var(--ic-title-font-size));
+    }
+    .image-card__description {
+      font-size: var(--ic-desc-font-size-mobile, var(--ic-desc-font-size));
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Image card",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Media Settings"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    },
+    {
+      "type": "select",
+      "id": "image_ratio",
+      "label": "Image aspect ratio",
+      "options": [
+        { "value": "adapt", "label": "Adapt to image" },
+        { "value": "square", "label": "Square (1:1)" },
+        { "value": "portrait", "label": "Portrait (4:5)" },
+        { "value": "landscape", "label": "Landscape (16:9)" },
+        { "value": "2/3", "label": "Portrait (2:3)" },
+        { "value": "3/2", "label": "Landscape (3:2)" },
+        { "value": "3/4", "label": "Portrait (3:4)" },
+        { "value": "4/3", "label": "Standard (4:3)" }
+      ],
+      "default": "landscape"
+    },
+    {
+      "type": "range",
+      "id": "image_corner_radius",
+      "label": "Image corner radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "header",
+      "content": "Content Settings"
+    },
+    {
+      "type": "text_alignment",
+      "id": "alignment",
+      "label": "Text alignment",
+      "default": "left"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Image Card Title"
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "label": "Description",
+      "default": "<p>Add descriptive text for this image card.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Title Font Settings"
+    },
+    {
+      "type": "select",
+      "id": "title_font_family",
+      "label": "Title font family",
+      "options": [
+        { "value": "var(--font-heading--family)", "label": "Heading" },
+        { "value": "var(--font-body--family)", "label": "Body" },
+        { "value": "var(--font-subheading--family)", "label": "Subheading" },
+        { "value": "var(--font-accent--family)", "label": "Accent" }
+      ],
+      "default": "var(--font-heading--family)"
+    },
+    {
+      "type": "range",
+      "id": "title_font_size",
+      "label": "Title font size",
+      "min": 12,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "title_font_size_mobile",
+      "label": "Title mobile font size",
+      "min": 12,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "default": 18
+    },
+    {
+      "type": "select",
+      "id": "title_font_weight",
+      "label": "Title font weight",
+      "options": [
+        { "value": "400", "label": "Normal" },
+        { "value": "500", "label": "Medium" },
+        { "value": "600", "label": "Semi Bold" },
+        { "value": "700", "label": "Bold" }
+      ],
+      "default": "600"
+    },
+    {
+      "type": "header",
+      "content": "Description Font Settings"
+    },
+    {
+      "type": "select",
+      "id": "desc_font_family",
+      "label": "Description font family",
+      "options": [
+        { "value": "var(--font-body--family)", "label": "Body" },
+        { "value": "var(--font-heading--family)", "label": "Heading" },
+        { "value": "var(--font-subheading--family)", "label": "Subheading" },
+        { "value": "var(--font-accent--family)", "label": "Accent" }
+      ],
+      "default": "var(--font-body--family)"
+    },
+    {
+      "type": "range",
+      "id": "desc_font_size",
+      "label": "Description font size",
+      "min": 12,
+      "max": 36,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "desc_font_size_mobile",
+      "label": "Description mobile font size",
+      "min": 12,
+      "max": 36,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "select",
+      "id": "desc_font_weight",
+      "label": "Description font weight",
+      "options": [
+        { "value": "400", "label": "Normal" },
+        { "value": "500", "label": "Medium" },
+        { "value": "600", "label": "Semi Bold" },
+        { "value": "700", "label": "Bold" }
+      ],
+      "default": "400"
+    },
+    {
+      "type": "header",
+      "content": "Card Styling"
+    },
+    {
+      "type": "color",
+      "id": "card_bg_color",
+      "label": "Card background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "card_corner_radius",
+      "label": "Card corner radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "color",
+      "id": "card_border_color",
+      "label": "Card border color",
+      "default": "#e5e5e5"
+    },
+    {
+      "type": "range",
+      "id": "card_border_width",
+      "label": "Card border width",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "unit": "px",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "card_padding",
+      "label": "Card content padding",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "color",
+      "id": "card_text_color",
+      "label": "Card text color",
+      "default": "#111111"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Image card",
+      "category": "Media"
+    }
+  ]
+}
+{% endschema %}

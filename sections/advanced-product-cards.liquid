@@ -1,0 +1,682 @@
+{%- liquid
+  assign final_heading = section.settings.title
+  if section.settings.title contains '|'
+    assign title_letters = section.settings.title | split: ''
+    assign final_text = ''
+    assign total_pipeline = 0
+    assign open_tag = '<span class="highlight_words">'
+    assign close_tag = '</span>'
+    for letter in title_letters
+      if letter != '|'
+        assign final_text = final_text | append: letter
+      else
+        assign total_pipeline = total_pipeline | plus: 1
+        assign modulo_number = total_pipeline | modulo: 2
+        if modulo_number == 0
+          assign final_text = final_text | append: close_tag
+        else
+          assign final_text = final_text | append: open_tag
+        endif
+      endif
+    endfor
+
+    assign modulo_pipeline = total_pipeline | modulo: 2
+    if modulo_pipeline == 0
+      assign final_heading = final_text
+    endif
+  endif
+
+  if section.settings.background_color != blank
+    render 'contrast-override', background_color: section.settings.background_color, section_id: section.id
+  endif
+-%}
+
+<div
+  id="AdvancedProductCards-{{ section.id }}"
+  class="advanced-product-cards-section advanced-product-cards-section-{{ section.id }} section section--{{ section.settings.section_width }}{% if section.settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}"
+  style="
+    --padding-top: {{ section.settings.padding_top }}px;
+    --padding-bottom: {{ section.settings.padding_bottom }}px;
+    --desktop-columns: {{ section.settings.desktop_column }};
+    --mobile-columns: {{ section.settings.mobile_column }};
+    --card-gap: {{ section.settings.carousel_gap }}px;
+    --card-bg-color: {{ section.settings.card_bg_color }};
+    --card-border-color: {{ section.settings.card_border_color }};
+    --card-corner-radius: {{ section.settings.card_corner_radius }}px;
+    --card-padding: {{ section.settings.card_padding }}px;
+    --image-corner-radius: {{ section.settings.image_corner_radius }}px;
+    --card-title-color: {{ section.settings.card_title_color }};
+    --card-tagline-color: {{ section.settings.card_tagline_color }};
+    --button-bg-color: {{ section.settings.button_bg_color }};
+    --button-text-color: {{ section.settings.button_text_color }};
+    --divider-color: {{ section.settings.divider_color }};
+    --price-color: {{ section.settings.price_color }};
+    --price-suffix-color: {{ section.settings.price_suffix_color }};
+    --badge-bg-color: {{ section.settings.badge_bg_color }};
+    --badge-border-color: {{ section.settings.badge_border_color }};
+    --badge-text-color: {{ section.settings.badge_text_color }};
+    --feature-text-color: {{ section.settings.feature_text_color }};
+    --feature-icon-color: {{ section.settings.feature_icon_color }};
+    --color-highlight: {{ section.settings.color_highlight }};
+  "
+>
+  {% if section.settings.bg_image != blank %}
+    <div class="apc-section-background">
+      {{
+        section.settings.bg_image
+        | image_url: width: 3840
+        | image_tag: width: section.settings.bg_image.width, height: section.settings.bg_image.height, class: 'apc-section-bg-image', loading: 'lazy'
+      }}
+    </div>
+  {% endif %}
+
+  <div class="apc-container">
+    {%- if section.settings.title != blank -%}
+      <div class="apc-header text-{{ section.settings.align_text }}">
+        <h2 class="apc-heading {{ section.settings.heading_size }}">{{ final_heading }}</h2>
+      </div>
+    {%- endif -%}
+
+    <div class="apc-grid">
+      {%- for block in section.blocks -%}
+        <div class="apc-grid__item" {{ block.shopify_attributes }}>
+          {% render 'advanced-product-card-item', block: block, section: section %}
+        </div>
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .advanced-product-cards-section {
+    position: relative;
+    padding-block-start: var(--padding-top, 64px);
+    padding-block-end: var(--padding-bottom, 64px);
+  }
+
+  .advanced-product-cards-section > .section-background,
+  .apc-section-background {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    grid-column: 1 / -1;
+    overflow: hidden;
+  }
+
+  .apc-section-bg-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .apc-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    grid-column: 2;
+  }
+
+  .advanced-product-cards-section.section--full-width > .apc-container {
+    grid-column: 1 / -1;
+    padding-inline: var(--page-margin, 16px);
+  }
+
+  .apc-header {
+    margin-bottom: 2rem;
+
+    &.text-center {
+      text-align: center;
+    }
+
+    &.text-left {
+      text-align: left;
+    }
+  }
+
+  .apc-heading {
+    margin: 0;
+
+    &.title-sm {
+      font-size: var(--font-size--lg, 1.125rem);
+    }
+    &.title-md {
+      font-size: var(--font-size--2xl, 1.5rem);
+    }
+    &.title-lg {
+      font-size: var(--font-size--3xl, 2rem);
+    }
+    &.title-xl {
+      font-size: var(--font-size--4xl, 2.5rem);
+    }
+
+    .highlight_words {
+      color: var(--color-highlight);
+    }
+  }
+
+  .apc-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--mobile-columns, 1), minmax(0, 1fr));
+    gap: var(--card-gap, 16px);
+  }
+
+  @media screen and (min-width: 750px) {
+    .apc-grid {
+      grid-template-columns: repeat(var(--desktop-columns, 3), minmax(0, 1fr));
+      gap: var(--card-gap, 24px);
+    }
+  }
+
+  .apc-card {
+    background-color: var(--card-bg-color, #122317);
+    border: 1px solid var(--card-border-color, rgba(255, 255, 255, 0.08));
+    border-radius: var(--card-corner-radius, 16px);
+    padding: var(--card-padding, 24px);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .apc-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+  }
+
+  .apc-card__title {
+    color: var(--card-title-color, #ffffff);
+    font-size: 1.125rem;
+    font-weight: 500;
+    text-align: center;
+    margin: 0 0 1.25rem 0;
+    line-height: 1.3;
+  }
+
+  .apc-card__image-wrapper {
+    margin: 0 auto 1rem auto;
+    width: 100%;
+    max-width: var(--apc-image-max-width, 220px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .apc-card__image {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: var(--image-corner-radius, 8px);
+  }
+
+  .apc-card__placeholder {
+    width: 100%;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--image-corner-radius, 8px);
+  }
+
+  .apc-card__tagline {
+    color: var(--card-tagline-color, #dddddd);
+    font-size: 0.875rem;
+    text-align: center;
+    margin-bottom: 1.25rem;
+    line-height: 1.4;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .apc-card__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    background: var(--button-bg-color, #0e936c);
+    color: var(--button-text-color, #ffffff);
+    padding: 12px 20px;
+    border-radius: var(--style-border-radius-buttons-primary, 8px);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    text-decoration: none;
+    text-align: center;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    margin-bottom: 1.5rem;
+  }
+
+  .apc-card__btn:hover {
+    opacity: 0.9;
+    color: var(--button-text-color, #ffffff);
+  }
+
+  .apc-card__price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--divider-color, rgba(255, 255, 255, 0.15));
+    margin-bottom: 1.25rem;
+    gap: 12px;
+  }
+
+  .apc-card__price {
+    color: var(--price-color, #ffffff);
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .apc-card__price-suffix {
+    color: var(--price-suffix-color, #aaaaaa);
+    font-size: 0.8125rem;
+    font-weight: 400;
+  }
+
+  .apc-card__badge {
+    border: 1px solid var(--badge-border-color, rgba(255, 255, 255, 0.4));
+    background-color: var(--badge-bg-color, rgba(0, 0, 0, 0.2));
+    color: var(--badge-text-color, #ffffff);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .apc-card__features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .apc-card__feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: var(--feature-text-color, #ffffff);
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+
+  .apc-card__feature-icon {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    color: var(--feature-icon-color, #ffffff);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Advanced product cards",
+  "tag": "section",
+  "class": "section-wrapper",
+  "disabled_on": {
+    "groups": ["header"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Heading",
+      "info": "Use | to highlight words. Example: Discover |Our Best| Products"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "Heading size",
+      "default": "title-md",
+      "options": [
+        { "value": "title-sm", "label": "Small" },
+        { "value": "title-md", "label": "Medium" },
+        { "value": "title-lg", "label": "Large" },
+        { "value": "title-xl", "label": "Extra large" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "align_text",
+      "label": "Heading alignment",
+      "default": "center",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Section width",
+      "options": [
+        { "value": "page-width", "label": "Page width" },
+        { "value": "full-width", "label": "Full width" }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "header",
+      "content": "Layout Settings"
+    },
+    {
+      "type": "range",
+      "id": "desktop_column",
+      "label": "Desktop columns",
+      "default": 3,
+      "min": 1,
+      "max": 6,
+      "step": 1
+    },
+    {
+      "type": "range",
+      "id": "mobile_column",
+      "label": "Mobile columns",
+      "default": 1,
+      "min": 1,
+      "max": 3,
+      "step": 1
+    },
+    {
+      "type": "range",
+      "id": "carousel_gap",
+      "label": "Card gap",
+      "default": 24,
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px"
+    },
+    {
+      "type": "image_picker",
+      "id": "bg_image",
+      "label": "Section background image"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Section background color"
+    },
+    {
+      "type": "header",
+      "content": "Card Styling & Colors"
+    },
+    {
+      "type": "color",
+      "id": "card_bg_color",
+      "label": "Card background color",
+      "default": "#122317"
+    },
+    {
+      "type": "color",
+      "id": "card_border_color",
+      "label": "Card border color",
+      "default": "rgba(255, 255, 255, 0.08)"
+    },
+    {
+      "type": "range",
+      "id": "card_corner_radius",
+      "label": "Card corner radius",
+      "default": 16,
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "card_padding",
+      "label": "Card padding",
+      "default": 24,
+      "min": 12,
+      "max": 48,
+      "step": 2,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "image_corner_radius",
+      "label": "Image corner radius",
+      "default": 8,
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "type": "color",
+      "id": "card_title_color",
+      "label": "Card title color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "card_tagline_color",
+      "label": "Card tagline color",
+      "default": "#dddddd"
+    },
+    {
+      "type": "color",
+      "id": "button_bg_color",
+      "label": "Button background color",
+      "default": "#0e936c"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "divider_color",
+      "label": "Card inner divider color",
+      "default": "rgba(255, 255, 255, 0.15)"
+    },
+    {
+      "type": "color",
+      "id": "price_color",
+      "label": "Price text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "price_suffix_color",
+      "label": "Price suffix color",
+      "default": "#aaaaaa"
+    },
+    {
+      "type": "color",
+      "id": "badge_bg_color",
+      "label": "Badge background color",
+      "default": "rgba(0, 0, 0, 0.2)"
+    },
+    {
+      "type": "color",
+      "id": "badge_border_color",
+      "label": "Badge border color",
+      "default": "rgba(255, 255, 255, 0.4)"
+    },
+    {
+      "type": "color",
+      "id": "badge_text_color",
+      "label": "Badge text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "feature_text_color",
+      "label": "Feature item text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "feature_icon_color",
+      "label": "Feature checkmark color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "color_highlight",
+      "label": "Highlight color",
+      "default": "#0e936c"
+    },
+    {
+      "type": "header",
+      "content": "Section Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "label": "Top padding",
+      "default": 64
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "label": "Bottom padding",
+      "default": 64
+    }
+  ],
+  "blocks": [
+    {
+      "type": "card",
+      "name": "Product Card",
+      "settings": [
+        {
+          "type": "product",
+          "id": "product",
+          "label": "Select Product (Optional)"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Card Title",
+          "default": "Rootbase Oil Of Oregano Softgels",
+          "info": "Leave blank to use selected product title"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Product Image",
+          "info": "Leave blank to use selected product featured image"
+        },
+        {
+          "type": "range",
+          "id": "image_width",
+          "label": "Image max width",
+          "default": 220,
+          "min": 100,
+          "max": 400,
+          "step": 10,
+          "unit": "px"
+        },
+        {
+          "type": "text",
+          "id": "tagline",
+          "label": "Tagline",
+          "default": "For daily immune and gut support.†"
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Button Label",
+          "default": "Explore Oregano →"
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "Button Link"
+        },
+        {
+          "type": "text",
+          "id": "price_text",
+          "label": "Price Text",
+          "default": "Starting from Tk 5,100",
+          "info": "Example: Starting from Tk 5,100. Leave blank to auto-use product price."
+        },
+        {
+          "type": "text",
+          "id": "price_suffix",
+          "label": "Price Suffix",
+          "default": "/mo"
+        },
+        {
+          "type": "text",
+          "id": "badge_text",
+          "label": "Discount Badge Text",
+          "default": "32% Off"
+        },
+        {
+          "type": "textarea",
+          "id": "features",
+          "label": "Feature Bullet Points",
+          "default": "Natural Antioxidant†\nImmune System Support†\n30-Day Money-Back Guarantee",
+          "info": "Enter each feature bullet point on a new line."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Advanced product cards",
+      "category": "Products",
+      "blocks": [
+        {
+          "type": "card",
+          "settings": {
+            "title": "Rootbase Oil Of Oregano Softgels",
+            "tagline": "For daily immune and gut support.†",
+            "button_label": "Explore Oregano →",
+            "price_text": "Starting from Tk 5,100",
+            "price_suffix": "/mo",
+            "badge_text": "32% Off",
+            "features": "Natural Antioxidant†\nImmune System Support†\n30-Day Money-Back Guarantee"
+          }
+        },
+        {
+          "type": "card",
+          "settings": {
+            "title": "Rootbase Aged Odorless Garlic",
+            "tagline": "For heart and circulation.†",
+            "button_label": "Explore Garlic →",
+            "price_text": "Starting from Tk 5,100",
+            "price_suffix": "/mo",
+            "badge_text": "32% Off",
+            "features": "Heart & Blood Circulation†\nCardiovascular Support†\n30-Day Money-Back Guarantee"
+          }
+        },
+        {
+          "type": "card",
+          "settings": {
+            "title": "Rootbase Ethiopian Black Seed Oil",
+            "tagline": "For digestion and healthy inflammation response.†",
+            "button_label": "Explore Black Seed →",
+            "price_text": "Starting from Tk 3,825",
+            "price_suffix": "/mo",
+            "badge_text": "49% Off",
+            "features": "Digestive Balance†\nHealthy Inflammation Response†\n30-Day Money-Back Guarantee"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

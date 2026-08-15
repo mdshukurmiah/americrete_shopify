@@ -1,0 +1,91 @@
+{%- liquid
+  assign card_product = block.settings.product
+  assign card_title = block.settings.title
+  if card_title == blank and card_product != blank
+    assign card_title = card_product.title
+  endif
+
+  assign card_image = block.settings.image
+  if card_image == blank and card_product != blank
+    assign card_image = card_product.featured_image
+  endif
+
+  assign card_link = block.settings.button_link
+  if card_link == blank and card_product != blank
+    assign card_link = card_product.url
+  elsif card_link == blank
+    assign card_link = '#'
+  endif
+
+  assign card_price = block.settings.price_text
+  if card_price == blank and card_product != blank
+    assign card_price = card_product.price | money
+  endif
+-%}
+
+<div class="apc-card">
+  {%- if card_title != blank -%}
+    <h3 class="apc-card__title">{{ card_title }}</h3>
+  {%- endif -%}
+
+  <div class="apc-card__image-wrapper" style="--apc-image-max-width: {{ block.settings.image_width }}px;">
+    {%- if card_image != blank -%}
+      {{
+        card_image
+        | image_url: width: 720
+        | image_tag:
+          width: card_image.width,
+          widths: '180, 360, 540, 720',
+          height: card_image.height,
+          alt: card_image.alt | default: card_title,
+          class: 'apc-card__image',
+          loading: 'lazy'
+      }}
+    {%- else -%}
+      <div class="apc-card__placeholder">
+        {{ 'product-1' | placeholder_svg_tag: 'placeholder-svg' }}
+      </div>
+    {%- endif -%}
+  </div>
+
+  {%- if block.settings.tagline != blank -%}
+    <div class="apc-card__tagline">{{ block.settings.tagline }}</div>
+  {%- endif -%}
+
+  {%- if block.settings.button_label != blank -%}
+    <a href="{{ card_link }}" class="apc-card__btn">
+      <span>{{ block.settings.button_label }}</span>
+    </a>
+  {%- endif -%}
+
+  {%- if card_price != blank or block.settings.badge_text != blank -%}
+    <div class="apc-card__price-row">
+      <div class="apc-card__price">
+        {{ card_price }}
+        {%- if block.settings.price_suffix != blank -%}
+          <span class="apc-card__price-suffix">{{ block.settings.price_suffix }}</span>
+        {%- endif -%}
+      </div>
+      {%- if block.settings.badge_text != blank -%}
+        <div class="apc-card__badge">{{ block.settings.badge_text }}</div>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+
+  {%- if block.settings.features != blank -%}
+    {%- assign feature_items = block.settings.features | newline_to_br | split: '<br />' -%}
+    <ul class="apc-card__features">
+      {%- for item in feature_items -%}
+        {%- assign clean_item = item | strip_newlines | strip -%}
+        {%- if clean_item != blank -%}
+          <li class="apc-card__feature-item">
+            <svg class="apc-card__feature-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+              <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>{{ clean_item }}</span>
+          </li>
+        {%- endif -%}
+      {%- endfor -%}
+    </ul>
+  {%- endif -%}
+</div>

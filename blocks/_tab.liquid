@@ -1,0 +1,162 @@
+{% liquid
+  assign block_settings = block.settings
+-%}
+
+<div
+  class="tabs-section__panel"
+  role="tabpanel"
+  data-tabs-panel
+  data-tab-label="{{ block_settings.tab_label | escape }}"
+  data-tab-id="{{ block.id }}"
+  {{ block.shopify_attributes }}
+>
+  <div class="tabs-section__layout">
+    <div class="tabs-section__media">
+      {% if block_settings.media_type == 'video' %}
+        {% if block_settings.video != blank or block_settings.video_url != blank %}
+          <div class="hero-video-block">
+            <div class="hero-video-wrapper">
+              {% if block_settings.video != blank %}
+                {% render 'video',
+                  video: block_settings.video,
+                  video_autoplay: block_settings.autoplay_video,
+                  video_loop: block_settings.autoplay_video,
+                  video_class: 'tabs-section__video-media'
+                %}
+              {% elsif block_settings.video_url != blank %}
+                {% render 'video',
+                  video_from_url: true,
+                  video: block_settings.video_url.id,
+                  video_type: block_settings.video_url.type,
+                  video_autoplay: block_settings.autoplay_video,
+                  video_loop: block_settings.autoplay_video,
+                  video_class: 'tabs-section__video-media'
+                %}
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      {% elsif block_settings.image != blank %}
+        {{ block_settings.image | image_url: width: 1400 | image_tag: loading: 'lazy' }}
+      {% else %}
+        {{ 'image' | placeholder_svg_tag: 'placeholder-svg' }}
+      {% endif %}
+    </div>
+
+    <div class="tabs-section__content text-{{ block_settings.align_text | default: 'left' }}">
+      {% if block_settings.heading != blank %}
+        <h2 class="heading tabs-section__heading {{ block_settings.heading_size | default: 'title-lg' }}">
+          {{ block_settings.heading }}
+        </h2>
+      {% endif %}
+      {% if block_settings.text != blank %}
+        <div class="tabs-section__text rte">{{ block_settings.text }}</div>
+      {% endif %}
+      {% if block_settings.note != blank %}
+        <div class="tabs-section__note rte">{{ block_settings.note }}</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Tab item",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "tab_label",
+      "label": "Tab label",
+      "default": "Chronic inflammation attacks"
+    },
+    {
+      "type": "select",
+      "id": "media_type",
+      "label": "Media type",
+      "default": "image",
+      "options": [
+        {
+          "value": "image",
+          "label": "Image"
+        },
+        {
+          "value": "video",
+          "label": "Video"
+        }
+      ]
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image",
+      "visible_if": "{{ block.settings.media_type == 'image' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_play_icon",
+      "label": "Show play icon on image",
+      "default": true,
+      "visible_if": "{{ block.settings.media_type == 'video' }}"
+    },
+    {
+      "type": "video",
+      "id": "video",
+      "label": "Shopify video",
+      "visible_if": "{{ block.settings.media_type == 'video' }}"
+    },
+    {
+      "type": "video_url",
+      "id": "video_url",
+      "accept": ["vimeo", "youtube"],
+      "label": "External video URL",
+      "visible_if": "{{ block.settings.media_type == 'video' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "autoplay_video",
+      "label": "Autoplay video",
+      "default": false,
+      "visible_if": "{{ block.settings.media_type == 'video' }}"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Chronic Inflammation"
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Text",
+      "default": "<p>Chronic low-grade inflammation is now recognised as the <strong>primary trigger of arterial damage</strong> - responsible for initiating the cascade that leads to plaque formation, vessel stiffening, and cardiovascular events.</p>"
+    },
+    {
+      "type": "richtext",
+      "id": "note",
+      "label": "Note",
+      "default": "<p>*Ridker PM et al. Inflammation, aspirin, and the risk of cardiovascular disease. New England Journal of Medicine, 1997.</p>"
+    },
+    {
+      "type": "select",
+      "id": "align_text",
+      "label": "Text alignment",
+      "default": "left",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

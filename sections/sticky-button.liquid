@@ -1,0 +1,347 @@
+{% liquid
+  if section.settings.background_color != blank
+    render 'contrast-override', background_color: section.settings.background_color, section_id: section.id
+  endif
+%}
+
+{% style %}
+  .section-background.color-custom-{{ section.id }} {
+    {% if section.settings.background_color != blank %}
+      background-color: {{ section.settings.background_color }};
+    {% endif %}
+  }
+{% endstyle %}
+
+<script src="{{ 'sticky-button.js' | asset_url }}" defer="defer"></script>
+
+<sticky-button data-scroll="{{ section.settings.visible_at }}">
+  <div
+    class="section-background{% if section.settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}"
+  ></div>
+  <div
+    class="section-text-column section-{{ section.id }} section spacing-style {% if section.settings.top_border %}top-border{% endif %}"
+    style="
+      {% render 'spacing-style', settings: section.settings %}
+      --border-color: {{ section.settings.border_color }};
+    "
+  >
+    <div class="page-width {% if section.settings.narrow_column %} page-width--narrow{% endif %}">
+      <div class="sticky-button-wrapper">
+        {% if section.settings.image != blank or section.settings.product_name != blank %}
+          <div class="product-info">
+            {% if section.settings.image != blank %}
+              {{
+                section.settings.image
+                | image_url: width: 100
+                | image_tag: class: 'sticky-product-image', loading: 'lazy', widths: '20,30,40,50,60,70,80,90,100'
+              }}
+            {% endif %}
+            <span>{{ section.settings.product_name }}</span>
+          </div>
+        {% endif %}
+        {%- if section.settings.button_label != blank -%}
+          <div
+            class="{% if section.settings.bigger_button %}bigger-button {% endif %} appear-delay{% cycle '','-1','-2','-3','-4' %}"
+            style="text-align: {{ section.settings.button_alignment }};"
+          >
+            {% if section.settings.link_with_add_to_cart and section.settings.button_label != blank %}
+              <button
+                class="btn {% if section.settings.button_style == 'secondary' %} btn--tertiary{% endif %}"
+                data-link-add-to-cart
+                style="color: {{ section.settings.button_text_color }}; background-color: {{ section.settings.button_background_color }};"
+              >
+                {{ section.settings.button_label }}
+              </button>
+            {% else %}
+              {% liquid
+                assign btn_link = section.settings.button_link
+                if section.settings.link_with_section
+                  assign btn_link = section.settings.button_link | append: section.settings.section_id
+                endif
+              %}
+              <a
+                {% if btn_link == blank %}
+                  role="link"
+                  aria-disabled="true"
+                {% else %}
+                  href="{{ btn_link }}"
+                {% endif %}
+                class="button{% if section.settings.button_style == 'secondary' %} btn--tertiary{% endif %}"
+                style="display: inline-block; color: {{ section.settings.button_text_color }}; background-color: {{ section.settings.button_background_color }} !important;"
+              >
+                {{ section.settings.button_label }}
+              </a>
+            {% endif %}
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</sticky-button>
+
+{% style %}
+  sticky-button {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 99999;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(100%);
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  }
+  sticky-button.is-sticky {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  }
+  .shopify-section:has(sticky-button) {
+    z-index: 9999;
+    position: relative;
+  }
+
+  sticky-button .product-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  sticky-button .product-info > span {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  sticky-button .product-info > img {
+    height: 60px;
+    width: auto;
+    object-fit: contain;
+    aspect-ratio: 1;
+  }
+
+  sticky-button .sticky-button-wrapper:has(.product-info) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  sticky-button .top-border {
+    border-top: 1px solid var(--border-color);
+  }
+  @media only screen and (max-width: 589px) {
+    sticky-button .product-info > img {
+      display: none;
+    }
+    sticky-button .product-info > span {
+      text-align: center;
+    }
+    sticky-button .sticky-button-wrapper:has(.product-info) {
+      flex-direction: column;
+      gap: 12px;
+      justify-content: center;
+    }
+    sticky-button .sticky-button-wrapper .btn {
+      font-size: 16px;
+      padding: 10px 22px;
+      width: 80%;
+      max-width: 400px;
+    }
+    .sticky-button-wrapper > div:has(.btn) {
+      width: 100%;
+    }
+  }
+{% endstyle %}
+
+{% schema %}
+{
+  "name": "Sticky button",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "narrow_column",
+      "label": "Narrow width",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "product_name",
+      "label": "Product name"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "t:settings.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "link_with_add_to_cart",
+      "label": "Link with add to cart",
+      "default": false
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "t:settings.link",
+      "visible_if": "{{ section.settings.link_with_add_to_cart == false }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "link_with_section",
+      "label": "Link with section?",
+      "default": false,
+      "visible_if": "{{ section.settings.link_with_add_to_cart == false }}"
+    },
+    {
+      "type": "text",
+      "id": "section_id",
+      "label": "Section id",
+      "visible_if": "{{ section.settings.link_with_section and section.settings.link_with_add_to_cart == false}}"
+    },
+    {
+      "type": "select",
+      "id": "button_style",
+      "label": "t:settings.style",
+      "default": "primary",
+      "options": [
+        {
+          "value": "primary",
+          "label": "t:options.primary"
+        },
+        {
+          "value": "secondary",
+          "label": "t:options.secondary"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "button_alignment",
+      "label": "Button alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "checkbox",
+      "id": "bigger_button",
+      "label": "Bigger button?"
+    },
+    {
+      "type": "checkbox",
+      "id": "top_border",
+      "label": "Top border",
+      "default": false
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border color",
+      "visible_if": "{{ section.settings.top_border }}"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_background_color",
+      "label": "Button background color",
+      "default": "#205b32"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background"
+    },
+    {
+      "type": "range",
+      "id": "visible_at",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "label": "Visible after scrolling",
+      "default": 70
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "checkbox",
+      "id": "custom_mobile_padding",
+      "label": "Custom mobile padding",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start-mobile",
+      "label": "Mobile top padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 16,
+      "visible_if": "{{ section.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end-mobile",
+      "label": "Mobile bottom padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 16,
+      "visible_if": "{{ section.settings.custom_mobile_padding }}"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Sticky button"
+    }
+  ],
+  "disabled_on": {
+    "groups": ["custom.popups"]
+  }
+}
+{% endschema %}

@@ -1,0 +1,151 @@
+{% liquid
+  assign block_settings = block.settings
+  assign block_index = section.blocks | find_index: 'id', block.id
+
+  # If this block is rendered inside a slideshow-component, assign index
+  assign slide_index = block_index | default: 0
+%}
+
+{% capture children %}
+  <div class="testimonial-card">
+    <blockquote class="testimonial-card__blockquote">
+      {%- if block_settings.image != blank -%}
+        <div class="testimonial-card__image-container{% if block_settings.round_images %} testimonial-card__image-container--round{% endif %}">
+          {{ block_settings.image | image_url: width: 180 | image_tag: loading: 'lazy', class: 'testimonial-card__image' }}
+        </div>
+      {%- endif -%}
+
+      {% if block_settings.testimonial_title != blank %}
+        <h4 class="testimonial-card__title">{{ block_settings.testimonial_title }}</h4>
+      {% endif %}
+
+      <div class="testimonial-card__rating">
+        {%- if block_settings.icon == 'quote' -%}
+          <span class="testimonial-card__quote-icon">
+            <svg aria-hidden="true" focusable="false" role="presentation" viewBox="0 0 41 35" width="20" height="17">
+              <path d="M10.208 17.711h6.124v16.332H0V21.684C0 8.184 5.444.956 16.332 0v6.125c-4.083 1.14-6.124 4.414-6.124 9.82v1.766Zm24.498 0h6.124v16.332H24.498V21.684C24.498 8.184 29.942.956 40.83 0v6.125c-4.083 1.14-6.124 4.414-6.124 9.82v1.766Z" fill="currentColor"/>
+            </svg>
+          </span>
+        {%- elsif block_settings.icon != 'none' -%}
+          <span class="testimonial-card__stars">
+            {%- case block_settings.icon -%}
+              {%- when '5-stars' -%}★★★★★
+              {%- when '4-stars' -%}★★★★
+              {%- when '3-stars' -%}★★★
+              {%- when '2-stars' -%}★★
+              {%- when '1-star' -%}★
+            {%- endcase -%}
+          </span>
+        {%- endif -%}
+        {%- if block_settings.start_count_text != blank -%}
+          <span class="testimonial-card__start-count">{{ block_settings.start_count_text }}</span>
+        {%- endif -%}
+      </div>
+
+      {%- if block_settings.testimonial != blank -%}
+        <div class="testimonial-card__text rte">{{ block_settings.testimonial }}</div>
+      {%- endif -%}
+
+      {%- if block_settings.author != blank or block_settings.author_info != blank -%}
+        <div class="testimonial-card__meta">
+          {%- if block_settings.author != blank -%}
+            <cite class="testimonial-card__author">{{ block_settings.author | escape }}</cite>
+          {%- endif -%}
+          {%- if block_settings.author_info != blank -%}
+            <p class="testimonial-card__author-info">{{ block_settings.author_info | escape }}</p>
+          {%- endif -%}
+          {% if block_settings.verified %}
+            <div class="testimonial-card__verified">
+              {%- comment -%} Look up the verification icon from block or theme defaults {%- endcomment -%}
+              <span class="testimonial-card__verified-badge">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="14" height="14" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+                  <path d="M12 3.5c2.25 1.6 4.93 2.4 7.7 2.4v5.24c0 4.87-2.86 8.14-7.7 9.86-4.84-1.72-7.7-4.99-7.7-9.86V5.9C7.07 5.9 9.75 5.1 12 3.5Z" stroke="currentColor" stroke-linejoin="round"/>
+                  <path d="m8.8 12.2 2.07 2.07 4.33-4.34" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Verified Buyer
+              </span>
+            </div>
+          {% endif %}
+        </div>
+      {%- endif -%}
+    </blockquote>
+  </div>
+{% endcapture %}
+
+{% render 'slideshow-slide',
+  index: slide_index,
+  children: children,
+  attributes: block.shopify_attributes,
+  slide_size: 'auto',
+  navigate_to_slide: false
+%}
+
+{% schema %}
+{
+  "name": "Testimonial",
+  "tag": null,
+  "settings": [
+    {
+      "type": "select",
+      "id": "icon",
+      "label": "Icon/Rating",
+      "default": "5-stars",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "quote", "label": "Quote" },
+        { "value": "5-stars", "label": "5 stars" },
+        { "value": "4-stars", "label": "4 stars" },
+        { "value": "3-stars", "label": "3 stars" },
+        { "value": "2-stars", "label": "2 stars" },
+        { "value": "1-star", "label": "1 star" }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "start_count_text",
+      "label": "Additional rating text",
+      "placeholder": "e.g. 5/5"
+    },
+    {
+      "type": "text",
+      "id": "testimonial_title",
+      "label": "Testimonial title"
+    },
+    {
+      "type": "richtext",
+      "id": "testimonial",
+      "label": "Testimonial text",
+      "default": "<p>Add customer reviews and testimonials to showcase your store’s happy customers.</p>"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Author image"
+    },
+    {
+      "type": "checkbox",
+      "id": "round_images",
+      "label": "Round author image?",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "author",
+      "label": "Author name",
+      "default": "Customer name"
+    },
+    {
+      "type": "text",
+      "id": "author_info",
+      "label": "Author info",
+      "default": "Verified buyer"
+    },
+    {
+      "type": "checkbox",
+      "id": "verified",
+      "label": "Show verified customer badge?",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

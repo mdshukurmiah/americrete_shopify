@@ -1,0 +1,80 @@
+{% comment %}
+  This block represents a comparison row in the Compare Table.
+  It is rendered by the parent block (compare-table.liquid).
+{% endcomment %}
+<div class="compare-table-v3__row">
+  <div class="compare-table-v3__column left">
+    <div class="compare-table-v3__cell-icon">
+      {% if block.settings.left_icon_image != blank %}
+        {{ block.settings.left_icon_image | image_url: width: 160 | image_tag: loading: 'lazy' }}
+      {% else %}
+        {{ block.settings.left_icon_svg }}
+      {% endif %}
+    </div>
+    {% if block.settings.left_text != blank %}
+      <div class="compare-table-v3__cell-text">{{ block.settings.left_text }}</div>
+    {% endif %}
+  </div>
+  <div class="compare-table-v3__column right">
+    <div class="compare-table-v3__cell-icon">
+      {% if block.settings.right_icon_image != blank %}
+        {{ block.settings.right_icon_image | image_url: width: 160 | image_tag: loading: 'lazy' }}
+      {% else %}
+        {{ block.settings.right_icon_svg }}
+      {% endif %}
+    </div>
+    {% if block.settings.right_text != blank %}
+      <div class="compare-table-v3__cell-text">{{ block.settings.right_text }}</div>
+    {% endif %}
+  </div>
+</div>
+{% schema %}
+{
+  "name": "Comparison Row",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Left Column"
+    },
+    {
+      "type": "image_picker",
+      "id": "left_icon_image",
+      "label": "Left icon image"
+    },
+    {
+      "type": "textarea",
+      "id": "left_icon_svg",
+      "label": "Left icon SVG",
+      "default": "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M4.5 19.5h15'/><path d='M6.5 15.5c2.4-1.6 5.4-8 5.4-8s3 6.4 5.6 8'/><path d='M10.5 19.5V17'/><path d='M13.5 19.5V17'/><path d='M8.5 11.5h6.5'/></svg>"
+    },
+    {
+      "type": "text",
+      "id": "left_text",
+      "label": "Left text",
+      "default": "Clinically-Studied Ingredients"
+    },
+    {
+      "type": "header",
+      "content": "Right Column"
+    },
+    {
+      "type": "image_picker",
+      "id": "right_icon_image",
+      "label": "right icon image"
+    },
+    {
+      "type": "textarea",
+      "id": "right_icon_svg",
+      "label": "right icon SVG",
+      "default": "<svg viewBox='0 0 24 24' aria-hidden='true'><circle cx='12' cy='12' r='9'/><path d='M9 9l6 6'/><path d='M15 9l-6 6'/></svg>"
+    },
+    {
+      "type": "text",
+      "id": "right_text",
+      "label": "right text",
+      "default": "Trend-Based Blends"
+    }
+  ]
+}
+{% endschema %}

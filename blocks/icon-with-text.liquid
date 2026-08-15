@@ -1,0 +1,659 @@
+{% liquid
+  assign block_settings = block.settings
+  assign icon_class = 'icon-with-text__icon icon-with-text-icon-' | append: block.id
+%}
+
+{% style %}
+  {% if block_settings.icon_color != blank %}
+    .icon-with-text-icon-{{ block.id }} {
+      color: {{ block_settings.icon_color }};
+      fill: currentColor;
+    }
+  {% endif %}
+
+  .icon-with-text--{{ block.id }} {
+    --iwt-layout: {{ block_settings.layout | default: 'row' }};
+    --iwt-gap: {{ block_settings.gap | default: 12 }}px;
+    --iwt-gap-mobile: {{ block_settings.gap_mobile | default: block_settings.gap | default: 8 }}px;
+    --iwt-icon-size: {{ block_settings.icon_size | default: 24 }}px;
+    --iwt-align: {{ block_settings.alignment | default: 'flex-start' }};
+    --iwt-vertical-align: {{ block_settings.vertical_alignment | default: 'center' }};
+    --iwt-font-size: {{ block_settings.font_size | default: '1rem' }};
+    --iwt-font-size-mobile: {{ block_settings.font_size_mobile | default: block_settings.font_size | default: '1rem' }};
+    --iwt-text-color: {{ block_settings.text_color | default: 'inherit' }};
+    {% render 'spacing-style', settings: block_settings %}
+  }
+{% endstyle %}
+
+<div
+  class="icon-with-text-block icon-with-text--{{ block.id }} spacing-style"
+  {{ block.shopify_attributes }}
+>
+  {% capture icon_markup %}
+    <div class="icon-with-text__icon-wrapper">
+      {% render 'icon-or-image',
+        icon: block_settings.icon,
+        image_upload: block_settings.image_upload,
+        width: block_settings.icon_size,
+        class_name: icon_class
+      %}
+    </div>
+  {% endcapture %}
+
+  {%- if block_settings.link != blank -%}
+    <a
+      href="{{ block_settings.link }}"
+      class="icon-with-text__link"
+      {% if block_settings.open_in_new_tab %}
+        target="_blank" rel="noopener"
+      {% endif %}
+    >
+      {{ icon_markup }}
+      {% if block_settings.text != blank %}
+        <div class="icon-with-text__content">
+          {{ block.settings.text }}
+        </div>
+      {% endif %}
+    </a>
+  {%- else -%}
+    <div class="icon-with-text__inner">
+      {{ icon_markup }}
+      {% if block_settings.text != blank %}
+        <div class="icon-with-text__content">
+          {{ block.settings.text }}
+        </div>
+      {% endif %}
+    </div>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+  .icon-with-text-block {
+    display: flex;
+    width: fit-content;
+  }
+
+  .icon-with-text__inner,
+  .icon-with-text__link {
+    display: flex;
+    flex-direction: var(--iwt-layout, row);
+    gap: var(--iwt-gap, 12px);
+    align-items: var(--iwt-vertical-align, center);
+    justify-content: var(--iwt-align, flex-start);
+    width: fit-content;
+    color: var(--iwt-text-color);
+    text-decoration: none;
+  }
+
+  .icon-with-text__icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: var(--iwt-icon-size);
+    height: var(--iwt-icon-size);
+  }
+
+  .icon-with-text__icon {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .icon-with-text__content {
+    font-size: var(--iwt-font-size);
+    color: inherit;
+    line-height: 1.4;
+
+    p {
+      margin: 0;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .icon-with-text__inner,
+    .icon-with-text__link {
+      gap: var(--iwt-gap-mobile, var(--iwt-gap, 8px));
+    }
+    .icon-with-text__content {
+      font-size: var(--iwt-font-size-mobile, var(--iwt-font-size));
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Icon with text",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Layout Settings"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout direction",
+      "options": [
+        { "value": "row", "label": "Horizontal (Icon beside text)" },
+        { "value": "column", "label": "Vertical (Icon above text)" }
+      ],
+      "default": "row"
+    },
+    {
+      "type": "select",
+      "id": "alignment",
+      "label": "Horizontal alignment",
+      "options": [
+        { "value": "flex-start", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "flex-end", "label": "Right" }
+      ],
+      "default": "flex-start"
+    },
+    {
+      "type": "select",
+      "id": "vertical_alignment",
+      "label": "Vertical alignment",
+      "options": [
+        { "value": "flex-start", "label": "Top" },
+        { "value": "center", "label": "Center" },
+        { "value": "flex-end", "label": "Bottom" }
+      ],
+      "default": "center",
+      "visible_if": "{{ block.settings.layout == 'row' }}"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Desktop gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "gap_mobile",
+      "label": "Mobile gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "Icon Settings"
+    },
+    {
+      "type": "select",
+      "id": "icon",
+      "label": "Icon",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "check_box", "label": "Check box" },
+        { "value": "heart", "label": "Heart" },
+        { "value": "leaf", "label": "Leaf" },
+        { "value": "star", "label": "Star" },
+        { "value": "shield", "label": "Shield" },
+        { "value": "truck", "label": "Truck" },
+        { "value": "box", "label": "Box" },
+        { "value": "arrow", "label": "Arrow" },
+        { "value": "chat_bubble", "label": "Chat bubble" },
+        { "value": "lock", "label": "Lock" }
+      ],
+      "default": "check_box"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_upload",
+      "label": "Custom icon image"
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "label": "Icon size",
+      "min": 12,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "color",
+      "id": "icon_color",
+      "label": "Icon color"
+    },
+    {
+      "type": "header",
+      "content": "Text Settings"
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Text",
+      "default": "<p>Icon with text feature description</p>"
+    },
+    {
+      "type": "select",
+      "id": "font_size",
+      "label": "Desktop text size",
+      "options": [
+          {
+            "value": "0.625rem",
+            "label": "10px"
+          },
+          {
+            "value": "0.6875rem",
+            "label": "11px"
+          },
+          {
+            "value": "0.75rem",
+            "label": "12px"
+          },
+          {
+            "value": "0.8125rem",
+            "label": "13px"
+          },
+          {
+            "value": "0.875rem",
+            "label": "14px"
+          },
+          {
+            "value": "0.9375rem",
+            "label": "15px"
+          },
+          {
+            "value": "1rem",
+            "label": "16px"
+          },
+          {
+            "value": "1.0625rem",
+            "label": "17px"
+          },
+          {
+            "value": "1.125rem",
+            "label": "18px"
+          },
+          {
+            "value": "1.1875rem",
+            "label": "19px"
+          },
+          {
+            "value": "1.25rem",
+            "label": "20px"
+          },
+          {
+            "value": "1.3125rem",
+            "label": "21px"
+          },
+          {
+            "value": "1.375rem",
+            "label": "22px"
+          },
+          {
+            "value": "1.4375rem",
+            "label": "23px"
+          },
+          {
+            "value": "1.5rem",
+            "label": "24px"
+          },
+          {
+            "value": "1.5625rem",
+            "label": "25px"
+          },
+          {
+            "value": "1.625rem",
+            "label": "26px"
+          },
+          {
+            "value": "1.6875rem",
+            "label": "27px"
+          },
+          {
+            "value": "1.75rem",
+            "label": "28px"
+          },
+          {
+            "value": "1.8125rem",
+            "label": "29px"
+          },
+          {
+            "value": "1.875rem",
+            "label": "30px"
+          },
+          {
+            "value": "1.9375rem",
+            "label": "31px"
+          },
+          {
+            "value": "2rem",
+            "label": "32px"
+          },
+          {
+            "value": "2.0625rem",
+            "label": "33px"
+          },
+          {
+            "value": "2.125rem",
+            "label": "34px"
+          },
+          {
+            "value": "2.1875rem",
+            "label": "35px"
+          },
+          {
+            "value": "2.25rem",
+            "label": "36px"
+          },
+          {
+            "value": "2.3125rem",
+            "label": "37px"
+          },
+          {
+            "value": "2.375rem",
+            "label": "38px"
+          },
+          {
+            "value": "2.4375rem",
+            "label": "39px"
+          },
+          {
+            "value": "2.5rem",
+            "label": "40px"
+          },
+          {
+            "value": "2.5625rem",
+            "label": "41px"
+          },
+          {
+            "value": "2.625rem",
+            "label": "42px"
+          },
+          {
+            "value": "2.6875rem",
+            "label": "43px"
+          },
+          {
+            "value": "2.75rem",
+            "label": "44px"
+          },
+          {
+            "value": "2.8125rem",
+            "label": "45px"
+          },
+          {
+            "value": "2.875rem",
+            "label": "46px"
+          },
+          {
+            "value": "2.9375rem",
+            "label": "47px"
+          },
+          {
+            "value": "3rem",
+            "label": "48px"
+          },
+          {
+            "value": "3.0625rem",
+            "label": "49px"
+          },
+          {
+            "value": "3.125rem",
+            "label": "50px"
+          }
+        ],
+      "default": "1rem"
+    },
+    {
+      "type": "select",
+      "id": "font_size_mobile",
+      "label": "Mobile text size",
+      "options": [
+          {
+            "value": "",
+            "label": "Same as desktop"
+          },
+          {
+            "value": "0.625rem",
+            "label": "10px"
+          },
+          {
+            "value": "0.6875rem",
+            "label": "11px"
+          },
+          {
+            "value": "0.75rem",
+            "label": "12px"
+          },
+          {
+            "value": "0.8125rem",
+            "label": "13px"
+          },
+          {
+            "value": "0.875rem",
+            "label": "14px"
+          },
+          {
+            "value": "0.9375rem",
+            "label": "15px"
+          },
+          {
+            "value": "1rem",
+            "label": "16px"
+          },
+          {
+            "value": "1.0625rem",
+            "label": "17px"
+          },
+          {
+            "value": "1.125rem",
+            "label": "18px"
+          },
+          {
+            "value": "1.1875rem",
+            "label": "19px"
+          },
+          {
+            "value": "1.25rem",
+            "label": "20px"
+          },
+          {
+            "value": "1.3125rem",
+            "label": "21px"
+          },
+          {
+            "value": "1.375rem",
+            "label": "22px"
+          },
+          {
+            "value": "1.4375rem",
+            "label": "23px"
+          },
+          {
+            "value": "1.5rem",
+            "label": "24px"
+          },
+          {
+            "value": "1.5625rem",
+            "label": "25px"
+          },
+          {
+            "value": "1.625rem",
+            "label": "26px"
+          },
+          {
+            "value": "1.6875rem",
+            "label": "27px"
+          },
+          {
+            "value": "1.75rem",
+            "label": "28px"
+          },
+          {
+            "value": "1.8125rem",
+            "label": "29px"
+          },
+          {
+            "value": "1.875rem",
+            "label": "30px"
+          },
+          {
+            "value": "1.9375rem",
+            "label": "31px"
+          },
+          {
+            "value": "2rem",
+            "label": "32px"
+          },
+          {
+            "value": "2.0625rem",
+            "label": "33px"
+          },
+          {
+            "value": "2.125rem",
+            "label": "34px"
+          },
+          {
+            "value": "2.1875rem",
+            "label": "35px"
+          },
+          {
+            "value": "2.25rem",
+            "label": "36px"
+          },
+          {
+            "value": "2.3125rem",
+            "label": "37px"
+          },
+          {
+            "value": "2.375rem",
+            "label": "38px"
+          },
+          {
+            "value": "2.4375rem",
+            "label": "39px"
+          },
+          {
+            "value": "2.5rem",
+            "label": "40px"
+          },
+          {
+            "value": "2.5625rem",
+            "label": "41px"
+          },
+          {
+            "value": "2.625rem",
+            "label": "42px"
+          },
+          {
+            "value": "2.6875rem",
+            "label": "43px"
+          },
+          {
+            "value": "2.75rem",
+            "label": "44px"
+          },
+          {
+            "value": "2.8125rem",
+            "label": "45px"
+          },
+          {
+            "value": "2.875rem",
+            "label": "46px"
+          },
+          {
+            "value": "2.9375rem",
+            "label": "47px"
+          },
+          {
+            "value": "3rem",
+            "label": "48px"
+          },
+          {
+            "value": "3.0625rem",
+            "label": "49px"
+          },
+          {
+            "value": "3.125rem",
+            "label": "50px"
+          }
+        ],
+      "default": ""
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color"
+    },
+    {
+      "type": "header",
+      "content": "Link Settings"
+    },
+    {
+      "type": "url",
+      "id": "link",
+      "label": "Link URL"
+    },
+    {
+      "type": "checkbox",
+      "id": "open_in_new_tab",
+      "label": "Open link in new tab",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Paddings"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "Left padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "Right padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Icon with text",
+      "category": "Media"
+    }
+  ]
+}
+{% endschema %}

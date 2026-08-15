@@ -1,0 +1,17 @@
+{%- comment -%}
+  Intended for blocks and sections that provide values for all the referenced settings.
+
+  <div style="{%  render 'spacing-padding', settings: section.settings %}">
+
+   Accepts:
+      settings: {block.settings || section.settings}
+{%- endcomment -%}
+
+{%- if settings.custom_mobile_padding -%}
+--padding-block-start-desktop: {{ settings['padding-block-start'] | default: 0 }}px; --padding-block-end-desktop: {{ settings['padding-block-end'] | default: 0 }}px; --padding-block-start-mobile: {{ settings['padding-block-start-mobile'] | default: 0 }}px; --padding-block-end-mobile: {{ settings['padding-block-end-mobile'] | default: 0 }}px;
+{%- else -%}
+--padding-block-start: {{ settings['padding-block-start'] | default: 0 }}px; --padding-block-end: {{- settings['padding-block-end'] | default: 0 -}}px;
+{%- endif -%}
+ --padding-inline-start:{{ settings['padding-inline-start'] | default: 0 }}px; --padding-inline-end:
+{{- settings['padding-inline-end'] | default: 0 -}}
+px;

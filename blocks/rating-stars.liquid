@@ -1,0 +1,169 @@
+{%- assign rating = block.settings.rating | default: 4.8 -%}
+{%- assign star_color = block.settings.star_color | default: '#8B4614' -%}
+<div
+  id="block-{{ block.id }}"
+  class="rating-stars"
+>
+  <div
+    class="star-rating"
+    style="
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: {{ block.settings.star_gap | default: 6 }}px;
+      line-height: 1;
+      margin-top: {{ block.settings.margin_top | default: -15 }}px;
+      margin-bottom: {{ block.settings.margin_bottom | default: 5 }}px;
+      color: {{ star_color }};
+    "
+  >
+    {%- assign full_stars = rating | floor -%}
+    {%- assign decimal_part = rating | minus: full_stars -%}
+
+    {%- comment -%} Full stars {%- endcomment -%}
+    {%- for i in (1..full_stars) -%}
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="star-rating__icon star-rating__icon--full"
+        viewBox="0 0 24 24"
+      >
+        <path d="M12 2.5l2.94 5.96 6.58.96-4.76 4.64 1.12 6.56L12 17.52 6.12 20.62l1.12-6.56L2.48 9.42l6.58-.96L12 2.5z"/>
+      </svg>
+    {%- endfor -%}
+
+    {%- comment -%} Half star if needed {%- endcomment -%}
+    {%- if decimal_part >= 0.25 and decimal_part <= 0.75 -%}
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="star-rating__icon star-rating__icon--half"
+        viewBox="0 0 24 24"
+      >
+        <defs>
+            <clipPath id="star-half-{{ block.id }}">
+            <rect x="0" y="0" width="12" height="24"></rect>
+            </clipPath>
+        </defs>
+        <path class="star-rating__outline" d="M12 2.5l2.94 5.96 6.58.96-4.76 4.64 1.12 6.56L12 17.52 6.12 20.62l1.12-6.56L2.48 9.42l6.58-.96L12 2.5z"/>
+        <path class="star-rating__fill" clip-path="url(#star-half-{{ block.id }})" d="M12 2.5l2.94 5.96 6.58.96-4.76 4.64 1.12 6.56L12 17.52 6.12 20.62l1.12-6.56L2.48 9.42l6.58-.96L12 2.5z"/>
+      </svg>
+      {%- assign remaining_stars = 4 | minus: full_stars -%}
+    {%- elsif decimal_part > 0.75 -%}
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="star-rating__icon star-rating__icon--full"
+        viewBox="0 0 24 24"
+      >
+        <path d="M12 2.5l2.94 5.96 6.58.96-4.76 4.64 1.12 6.56L12 17.52 6.12 20.62l1.12-6.56L2.48 9.42l6.58-.96L12 2.5z"/>
+      </svg>
+      {%- assign remaining_stars = 4 | minus: full_stars -%}
+    {%- else -%}
+      {%- assign remaining_stars = 5 | minus: full_stars -%}
+    {%- endif -%}
+
+    {%- comment -%} Empty stars {%- endcomment -%}
+    {%- if remaining_stars > 0 -%}
+      {%- for i in (1..remaining_stars) -%}
+        <svg
+          aria-hidden="true"
+          focusable="false"
+          class="star-rating__icon star-rating__icon--empty"
+          viewBox="0 0 24 24"
+        >
+          <path d="M12 2.5l2.94 5.96 6.58.96-4.76 4.64 1.12 6.56L12 17.52 6.12 20.62l1.12-6.56L2.48 9.42l6.58-.96L12 2.5z"/>
+        </svg>
+      {%- endfor -%}
+    {%- endif -%}
+  </div>
+</div>
+
+{% style %}
+  .rating-stars .star-rating__icon {
+  width: {{ block.settings.star_size | default: 14 }}px;
+  height: {{ block.settings.star_size | default: 14 }}px;
+  display: block;
+  flex: 0 0 auto;
+  }
+  .rating-stars .star-rating__icon--full,
+  .rating-stars .star-rating__fill {
+  fill: currentColor;
+  }
+  .rating-stars .star-rating__icon--empty,
+  .rating-stars .star-rating__outline {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+  }
+{% endstyle %}
+
+{% schema %}
+{
+  "name": "Rating stars",
+  "tag": null,
+  "settings": [
+    {
+      "type": "range",
+      "id": "rating",
+      "label": "Rating",
+      "min": 0,
+      "max": 5,
+      "step": 0.1,
+      "default": 4.8
+    },
+    {
+      "type": "color",
+      "id": "star_color",
+      "label": "Star color",
+      "default": "#8b4614"
+    },
+    {
+      "type": "range",
+      "id": "star_size",
+      "label": "Star size",
+      "min": 10,
+      "max": 100,
+      "step": 1,
+      "default": 14,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "star_gap",
+      "label": "Gap between stars",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 6,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "margin_top",
+      "label": "Margin top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 0,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "margin_bottom",
+      "label": "Margin bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 0,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Rating stars"
+    }
+  ]
+}
+{% endschema %}
