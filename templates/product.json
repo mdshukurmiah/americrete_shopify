@@ -644,8 +644,9 @@
                   "type": "add-to-cart",
                   "static": true,
                   "settings": {
+                    "show_price": true,
                     "style_class": "button-custom",
-                    "disable_icon": false,
+                    "disable_icon": true,
                     "custom_button_background": "{{ settings.color_palette.color1 }}",
                     "custom_button_text": "{{ settings.color_palette.background }}",
                     "custom_button_border": "{{ settings.color_palette.background }}",
@@ -653,8 +654,8 @@
                     "button_padding_horizontal": 20,
                     "font_size": "",
                     "font_size_mobile": "",
-                    "weight": "",
-                    "case": ""
+                    "weight": "700",
+                    "case": "uppercase"
                   },
                   "blocks": {}
                 },

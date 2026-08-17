@@ -30,6 +30,7 @@
     product: closest.product,
     add_to_cart_text: add_to_cart_text,
     show_icon: show_icon,
+    show_price: block.settings.show_price,
     data_testid: 'standalone-add-to-cart'
   %}
 </span>
@@ -39,6 +40,12 @@
   "name": "t:names.add_to_cart",
   "tag": null,
   "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_price",
+      "label": "Show price after button name",
+      "default": false
+    },
     {
       "type": "select",
       "id": "style_class",
