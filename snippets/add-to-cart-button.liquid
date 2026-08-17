@@ -46,7 +46,18 @@
         {{- 'icon-add-to-cart.svg' | inline_asset_content -}}
       </span>
     {% endif %}
-    {{- add_to_cart_text | default: default_add_to_cart_text -}}
+    {%- liquid
+      assign button_text = add_to_cart_text | default: default_add_to_cart_text
+      if show_price
+        assign selected_variant = product.selected_or_first_available_variant
+        if selected_variant != blank
+          assign button_price = selected_variant.price | money
+          assign separator = ' <span style="margin: 0 6px; display: inline-block; vertical-align: middle;">·</span> '
+          assign button_text = button_text | append: separator | append: button_price
+        endif
+      endif
+    -%}
+    {{- button_text -}}
     {% comment %} checkmark burst markup {% endcomment %}
     <span class="add-to-cart__added">
       <span class="svg-wrapper add-to-cart__added-icon">
