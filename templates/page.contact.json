@@ -185,6 +185,9 @@
       "block_order": [
         "surecust_forms_lock_custom_form_yzJXGP"
       ],
+      "custom_css": [
+        ".onst-field-roptions {display: grid !important; grid-template-columns: repeat(3, 1fr); width: 100%;}"
+      ],
       "settings": {
         "content_direction": "column",
         "vertical_on_mobile": true,
