@@ -107,6 +107,13 @@
     "variant_button_radius": 0,
     "variant_button_width": "equal-width-buttons",
     "content_for_index": [],
+    "blocks": {
+      "16605207545338212596": {
+        "type": "shopify://apps/aov-ai-bundle/blocks/aov-offer/0335d423-143c-4ad7-b224-99a1db74a9ee",
+        "disabled": false,
+        "settings": {}
+      }
+    },
     "color_palette": {
       "background": "#ffffff",
       "foreground": "#293241",

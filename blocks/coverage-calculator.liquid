@@ -396,6 +396,12 @@
     color: var(--calc-text-color, rgb(var(--color-foreground-rgb) / var(--opacity-70, 0.7)));
     font-size: var(--calc-text-size, 0.9375rem);
     line-height: 1.5;
+    text-transform: none;
+    font-weight: 400;
+  }
+  .coverage-calculator__description p {
+    font-size: var(--calc-text-size, 0.9375rem);
+    font-weight: 400;
   }
 
   .coverage-calculator__field {
@@ -417,7 +423,7 @@
     width: 100%;
     padding: 12px 14px;
     border: var(--style-border-width-inputs, 1px) solid
-      var(--calc-input-border, var(--color-input-border, rgb(var(--color-foreground-rgb) / var(--opacity-20, 0.2))));
+      var(--calc-input-border, var(--color-input-border, rgb(var(--color-foreground-rgb) / var(--opacity-20, 0.2)))) !important;
     border-radius: var(--calc-input-radius, var(--style-border-radius-inputs, 4px));
     background-color: var(--calc-input-bg, var(--color-background));
     color: var(--calc-input-color, var(--color-foreground));
