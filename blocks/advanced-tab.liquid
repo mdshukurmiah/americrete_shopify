@@ -1,0 +1,908 @@
+{% assign block_settings = block.settings %}
+
+{% render 'contrast-override',
+  background_color: block_settings.background_color,
+  text_color: block_settings.text_color,
+  section_id: block.id
+%}
+
+{% style %}
+  #block-{{ block.id }}.advanced-tab {
+    --nav-bg: {% if block_settings.nav_background_color != blank %}{{ block_settings.nav_background_color }}{% else %}#f4f4f5{% endif %};
+    --nav-border-color: {% if block_settings.nav_border_color != blank %}{{ block_settings.nav_border_color }}{% else %}#e4e4e7{% endif %};
+    --tab-inactive-text: {% if block_settings.tab_inactive_color != blank %}{{ block_settings.tab_inactive_color }}{% else %}#52525b{% endif %};
+    --tab-active-text: {% if block_settings.tab_active_color != blank %}{{ block_settings.tab_active_color }}{% else %}#b91c1c{% endif %};
+    --tab-active-bg: {% if block_settings.tab_active_bg_color != blank %}{{ block_settings.tab_active_bg_color }}{% else %}#ffffff{% endif %};
+    --tab-active-line: {% if block_settings.tab_active_line_color != blank %}{{ block_settings.tab_active_line_color }}{% else %}#b91c1c{% endif %};
+    --accent-line-height: {{ block_settings.accent_line_height | default: 3 }}px;
+    --tab-padding-y: {{ block_settings.tab_padding_vertical | default: 16 }}px;
+    --tab-padding-x: {{ block_settings.tab_padding_horizontal | default: 24 }}px;
+    --content-bg: {% if block_settings.content_bg_color != blank %}{{ block_settings.content_bg_color }}{% else %}transparent{% endif %};
+  }
+
+  {% if block_settings.custom_css != blank %}
+    {% if block_settings.custom_css contains 'selector' %}
+      {% assign target_selector = '#block-' | append: block.id %}
+      {{ block_settings.custom_css | replace: 'selector', target_selector }}
+    {% else %}
+      #block-{{ block.id }} {
+        {{ block_settings.custom_css }}
+      }
+    {% endif %}
+  {% endif %}
+{% endstyle %}
+
+<advanced-tab
+  id="block-{{ block.id }}"
+  class="advanced-tab border-style spacing-style{% if block_settings.type_preset == 'custom' %} custom-typography{% if block_settings.font_size != blank %} custom-font-size{% endif %}{% endif %}{% if block_settings.background_color != blank or block_settings.text_color != blank %} color-custom-{{ block.id }}{% endif %}"
+  style="
+    {% if block_settings.type_preset == 'custom' %}
+      {% render 'typography-style', settings: block_settings %}
+    {% else %}
+      --font-family: var(--font-{{ block_settings.type_preset }}--family);
+      --font-style: var(--font-{{ block_settings.type_preset }}--style);
+      --font-weight: var(--font-{{ block_settings.type_preset }}--weight);
+      --font-size: var(--font-{{ block_settings.type_preset }}--size);
+      --line-height: var(--font-{{ block_settings.type_preset }}--line-height);
+    {% endif %}
+    --text-transform: {{ block_settings.text_transform | default: 'uppercase' }};
+    --letter-spacing: {{ block_settings.letter_spacing | default: '0.05em' }};
+    {% render 'spacing-style', settings: block_settings %}
+    {% render 'border-override', settings: block_settings %}
+  "
+  {{ block.shopify_attributes }}
+>
+  <div class="advanced-tab__nav-wrapper">
+    <button
+      class="advanced-tab__scroll-btn advanced-tab__scroll-btn--left"
+      type="button"
+      aria-label="Scroll left"
+      hidden
+    >
+      <span class="svg-wrapper">
+        {{- 'icon-caret.svg' | inline_asset_content -}}
+      </span>
+    </button>
+    <div class="advanced-tab__nav" role="tablist"></div>
+    <button
+      class="advanced-tab__scroll-btn advanced-tab__scroll-btn--right"
+      type="button"
+      aria-label="Scroll right"
+      hidden
+    >
+      <span class="svg-wrapper">
+        {{- 'icon-caret.svg' | inline_asset_content -}}
+      </span>
+    </button>
+  </div>
+
+  <div class="advanced-tab__panels">
+    {% content_for 'blocks' %}
+  </div>
+</advanced-tab>
+
+{% stylesheet %}
+  advanced-tab {
+    display: block;
+    width: 100%;
+    position: relative;
+  }
+
+  .advanced-tab__nav-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: var(--nav-bg, #f4f4f5);
+    border-bottom: 1px solid var(--nav-border-color, #e4e4e7);
+    width: 100%;
+  }
+
+  .advanced-tab__nav {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+    width: 100%;
+  }
+
+  .advanced-tab__nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .advanced-tab__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: var(--tab-padding-y, 16px) var(--tab-padding-x, 24px);
+    background: transparent;
+    color: var(--tab-inactive-text, #52525b);
+    border: none;
+    border-right: 1px solid var(--nav-border-color, #e4e4e7);
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: var(--font-family, inherit);
+    font-size: var(--font-size, 0.875rem);
+    font-weight: var(--font-weight, 700);
+    letter-spacing: var(--letter-spacing, 0.05em);
+    text-transform: var(--text-transform, uppercase);
+    line-height: var(--line-height, 1.2);
+    transition: color 0.2s ease, background-color 0.2s ease;
+    flex-shrink: 0;
+    margin: 0;
+    outline-offset: -2px;
+  }
+
+  @media screen and (max-width: 749px) {
+    .advanced-tab__button {
+      font-size: var(--font-size-mobile, var(--font-size, 0.75rem));
+      padding: max(10px, calc(var(--tab-padding-y, 16px) * 0.75)) max(14px, calc(var(--tab-padding-x, 24px) * 0.65));
+    }
+  }
+
+  .advanced-tab__button:hover {
+    color: var(--tab-active-text, #b91c1c);
+    background-color: rgba(255, 255, 255, 0.5);
+  }
+
+  .advanced-tab__button.is-active {
+    color: var(--tab-active-text, #b91c1c);
+    background-color: var(--tab-active-bg, #ffffff);
+  }
+
+  .advanced-tab__button.is-active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: var(--accent-line-height, 3px);
+    background-color: var(--tab-active-line, #b91c1c);
+    z-index: 2;
+  }
+
+  .advanced-tab__scroll-btn {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    padding: 0;
+    border: none;
+    background: var(--nav-bg, #f4f4f5);
+    color: var(--tab-inactive-text, #52525b);
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    transition: color 0.2s, opacity 0.2s;
+  }
+
+  .advanced-tab__scroll-btn:hover {
+    color: var(--tab-active-text, #b91c1c);
+  }
+
+  .advanced-tab__scroll-btn--left {
+    left: 0;
+  }
+
+  .advanced-tab__scroll-btn--right {
+    right: 0;
+  }
+
+  .advanced-tab__scroll-btn--left .svg-wrapper {
+    transform: rotate(90deg);
+  }
+
+  .advanced-tab__scroll-btn--right .svg-wrapper {
+    transform: rotate(-90deg);
+  }
+
+  .advanced-tab__scroll-btn[hidden] {
+    display: none !important;
+  }
+
+  .advanced-tab__panels {
+    width: 100%;
+    background-color: var(--content-bg, transparent);
+  }
+
+  .advanced-tab__panel {
+    display: none;
+  }
+
+  .advanced-tab__panel.is-active {
+    display: block;
+    animation: advancedTabFadeIn 0.2s ease-in-out;
+  }
+
+  @keyframes advancedTabFadeIn {
+    from {
+      opacity: 0.3;
+      transform: translateY(2px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+{% endstylesheet %}
+
+<script>
+  if (!customElements.get('advanced-tab')) {
+    customElements.define(
+      'advanced-tab',
+      class AdvancedTab extends HTMLElement {
+        connectedCallback() {
+          this.navContainer = this.querySelector('.advanced-tab__nav');
+          this.panelsContainer = this.querySelector('.advanced-tab__panels');
+          this.btnLeft = this.querySelector('.advanced-tab__scroll-btn--left');
+          this.btnRight = this.querySelector('.advanced-tab__scroll-btn--right');
+
+          if (!this.navContainer || !this.panelsContainer) return;
+
+          this.initTabs();
+          this.setupEventListeners();
+          this.setupObserver();
+        }
+
+        disconnectedCallback() {
+          if (this.observer) {
+            this.observer.disconnect();
+          }
+        }
+
+        initTabs() {
+          const panels = Array.from(this.querySelectorAll(':scope > .advanced-tab__panels > .advanced-tab__panel'));
+          if (panels.length === 0) return;
+
+          this.navContainer.innerHTML = '';
+
+          let activeIndex = panels.findIndex((p) => p.dataset.activeDefault === 'true');
+          if (activeIndex === -1) activeIndex = 0;
+
+          panels.forEach((panel, index) => {
+            const blockId = panel.dataset.blockId || `tab-${index}`;
+            const title = panel.dataset.tabTitle || `Tab ${index + 1}`;
+            const isActive = index === activeIndex;
+
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `advanced-tab__button${isActive ? ' is-active' : ''}`;
+            button.id = `tab-button-${blockId}`;
+            button.setAttribute('role', 'tab');
+            button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            button.setAttribute('aria-controls', `tab-panel-${blockId}`);
+            button.setAttribute('tabindex', isActive ? '0' : '-1');
+            button.dataset.targetPanel = blockId;
+            button.textContent = title;
+
+            this.navContainer.appendChild(button);
+
+            if (isActive) {
+              panel.classList.add('is-active');
+              panel.removeAttribute('hidden');
+            } else {
+              panel.classList.remove('is-active');
+              panel.setAttribute('hidden', '');
+            }
+          });
+
+          this.checkScrollButtons();
+        }
+
+        setupEventListeners() {
+          this.navContainer.addEventListener('click', (e) => {
+            const button = e.target.closest('.advanced-tab__button');
+            if (button) {
+              this.activateTab(button.dataset.targetPanel);
+            }
+          });
+
+          this.navContainer.addEventListener('keydown', (e) => {
+            const buttons = Array.from(this.navContainer.querySelectorAll('.advanced-tab__button'));
+            const currentBtn = document.activeElement;
+            const index = buttons.indexOf(currentBtn);
+
+            if (index === -1) return;
+
+            let newIndex = index;
+            if (e.key === 'ArrowRight') {
+              newIndex = (index + 1) % buttons.length;
+            } else if (e.key === 'ArrowLeft') {
+              newIndex = (index - 1 + buttons.length) % buttons.length;
+            } else if (e.key === 'Home') {
+              newIndex = 0;
+            } else if (e.key === 'End') {
+              newIndex = buttons.length - 1;
+            } else {
+              return;
+            }
+
+            e.preventDefault();
+            buttons[newIndex].focus();
+            this.activateTab(buttons[newIndex].dataset.targetPanel);
+          });
+
+          if (this.btnLeft) {
+            this.btnLeft.addEventListener('click', () => {
+              this.navContainer.scrollBy({ left: -200, behavior: 'smooth' });
+            });
+          }
+          if (this.btnRight) {
+            this.btnRight.addEventListener('click', () => {
+              this.navContainer.scrollBy({ left: 200, behavior: 'smooth' });
+            });
+          }
+
+          this.navContainer.addEventListener('scroll', () => this.checkScrollButtons());
+          window.addEventListener('resize', () => this.checkScrollButtons());
+
+          this.addEventListener('shopify:block:select', (e) => {
+            const panel = e.target.closest('.advanced-tab__panel');
+            if (panel) {
+              this.activateTab(panel.dataset.blockId);
+            }
+          });
+        }
+
+        setupObserver() {
+          this.observer = new MutationObserver(() => {
+            this.initTabs();
+          });
+          this.observer.observe(this.panelsContainer, { childList: true, subtree: false });
+        }
+
+        activateTab(blockId) {
+          const buttons = this.navContainer.querySelectorAll('.advanced-tab__button');
+          const panels = this.querySelectorAll(':scope > .advanced-tab__panels > .advanced-tab__panel');
+
+          buttons.forEach((btn) => {
+            const isTarget = btn.dataset.targetPanel === blockId;
+            btn.classList.toggle('is-active', isTarget);
+            btn.setAttribute('aria-selected', isTarget ? 'true' : 'false');
+            btn.setAttribute('tabindex', isTarget ? '0' : '-1');
+
+            if (isTarget) {
+              btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+            }
+          });
+
+          panels.forEach((panel) => {
+            const isTarget = panel.dataset.blockId === blockId;
+            panel.classList.toggle('is-active', isTarget);
+            if (isTarget) {
+              panel.removeAttribute('hidden');
+            } else {
+              panel.setAttribute('hidden', '');
+            }
+          });
+        }
+
+        checkScrollButtons() {
+          if (!this.btnLeft || !this.btnRight) return;
+          const { scrollLeft, scrollWidth, clientWidth } = this.navContainer;
+          const hasOverflow = scrollWidth > clientWidth + 2;
+
+          if (!hasOverflow) {
+            this.btnLeft.hidden = true;
+            this.btnRight.hidden = true;
+          } else {
+            this.btnLeft.hidden = scrollLeft <= 2;
+            this.btnRight.hidden = scrollLeft >= scrollWidth - clientWidth - 2;
+          }
+        }
+      }
+    );
+  }
+</script>
+
+{% schema %}
+{
+  "name": "Advanced Tab",
+  "tag": null,
+  "class": "advanced-tab-wrapper",
+  "blocks": [
+    {
+      "type": "_advanced-tab-item"
+    }
+  ],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Tab Navigation Colors"
+    },
+    {
+      "type": "color",
+      "id": "nav_background_color",
+      "label": "Navigation background color",
+      "default": "#f4f4f5"
+    },
+    {
+      "type": "color",
+      "id": "tab_inactive_color",
+      "label": "Inactive tab text color",
+      "default": "#52525b"
+    },
+    {
+      "type": "color",
+      "id": "tab_active_color",
+      "label": "Active tab text color",
+      "default": "#b91c1c"
+    },
+    {
+      "type": "color",
+      "id": "tab_active_bg_color",
+      "label": "Active tab background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "tab_active_line_color",
+      "label": "Active accent line color",
+      "default": "#b91c1c"
+    },
+    {
+      "type": "range",
+      "id": "accent_line_height",
+      "label": "Active line thickness",
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "unit": "px",
+      "default": 3
+    },
+    {
+      "type": "color",
+      "id": "nav_border_color",
+      "label": "Navigation border color",
+      "default": "#e4e4e7"
+    },
+    {
+      "type": "header",
+      "content": "t:content.typography"
+    },
+    {
+      "type": "select",
+      "id": "type_preset",
+      "label": "t:settings.preset",
+      "options": [
+        {
+          "value": "rte",
+          "label": "t:options.default"
+        },
+        {
+          "value": "paragraph",
+          "label": "t:options.paragraph"
+        },
+        {
+          "value": "h1",
+          "label": "t:options.h1"
+        },
+        {
+          "value": "h2",
+          "label": "t:options.h2"
+        },
+        {
+          "value": "h3",
+          "label": "t:options.h3"
+        },
+        {
+          "value": "h4",
+          "label": "t:options.h4"
+        },
+        {
+          "value": "h5",
+          "label": "t:options.h5"
+        },
+        {
+          "value": "h6",
+          "label": "t:options.h6"
+        },
+        {
+          "value": "custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "custom"
+    },
+    {
+      "type": "select",
+      "id": "font",
+      "label": "t:settings.font",
+      "options": [
+        {
+          "value": "var(--font-body--family)",
+          "label": "t:options.body"
+        },
+        {
+          "value": "var(--font-subheading--family)",
+          "label": "t:options.subheading"
+        },
+        {
+          "value": "var(--font-heading--family)",
+          "label": "t:options.heading"
+        },
+        {
+          "value": "var(--font-accent--family)",
+          "label": "t:options.accent"
+        }
+      ],
+      "default": "var(--font-heading--family)",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "font_size",
+      "label": "t:settings.size",
+      "options": [
+        {
+          "value": "0.75rem",
+          "label": "12px"
+        },
+        {
+          "value": "0.875rem",
+          "label": "14px"
+        },
+        {
+          "value": "1rem",
+          "label": "16px"
+        },
+        {
+          "value": "1.125rem",
+          "label": "18px"
+        },
+        {
+          "value": "1.25rem",
+          "label": "20px"
+        }
+      ],
+      "default": "0.875rem",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "font_size_mobile",
+      "label": "Mobile font size",
+      "options": [
+        {
+          "value": "0.6875rem",
+          "label": "11px"
+        },
+        {
+          "value": "0.75rem",
+          "label": "12px"
+        },
+        {
+          "value": "0.875rem",
+          "label": "14px"
+        },
+        {
+          "value": "1rem",
+          "label": "16px"
+        }
+      ],
+      "default": "0.75rem",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "weight",
+      "label": "t:settings.weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "t:options.regular"
+        },
+        {
+          "value": "500",
+          "label": "t:options.medium"
+        },
+        {
+          "value": "600",
+          "label": "t:options.semibold"
+        },
+        {
+          "value": "700",
+          "label": "t:options.bold"
+        },
+        {
+          "value": "800",
+          "label": "800"
+        }
+      ],
+      "default": "700",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "text_transform",
+      "label": "Text case",
+      "options": [
+        {
+          "value": "uppercase",
+          "label": "Uppercase"
+        },
+        {
+          "value": "capitalize",
+          "label": "Capitalize"
+        },
+        {
+          "value": "lowercase",
+          "label": "Lowercase"
+        },
+        {
+          "value": "none",
+          "label": "Normal"
+        }
+      ],
+      "default": "uppercase"
+    },
+    {
+      "type": "select",
+      "id": "letter_spacing",
+      "label": "Letter spacing",
+      "options": [
+        {
+          "value": "0",
+          "label": "Normal"
+        },
+        {
+          "value": "0.05em",
+          "label": "Wide (0.05em)"
+        },
+        {
+          "value": "0.1em",
+          "label": "Wider (0.1em)"
+        }
+      ],
+      "default": "0.05em"
+    },
+    {
+      "type": "header",
+      "content": "Tab Item Padding"
+    },
+    {
+      "type": "range",
+      "id": "tab_padding_vertical",
+      "label": "Tab vertical padding",
+      "min": 8,
+      "max": 36,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "tab_padding_horizontal",
+      "label": "Tab horizontal padding",
+      "min": 8,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "Appearance & Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Block background color"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Block text color"
+    },
+    {
+      "type": "color",
+      "id": "content_bg_color",
+      "label": "Content background color"
+    },
+    {
+      "type": "header",
+      "content": "t:content.borders"
+    },
+    {
+      "type": "select",
+      "id": "border",
+      "label": "t:settings.border",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:options.none"
+        },
+        {
+          "value": "solid",
+          "label": "Solid"
+        },
+        {
+          "value": "dashed",
+          "label": "Dashed"
+        },
+        {
+          "value": "dotted",
+          "label": "Dotted"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "label": "t:settings.border_width",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 1,
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "t:settings.border_color",
+      "placeholder": "t:settings.default",
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "t:settings.border_radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "checkbox",
+      "id": "custom_mobile_padding",
+      "label": "Use custom mobile padding",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start-mobile",
+      "label": "Top (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end-mobile",
+      "label": "Bottom (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start-mobile",
+      "label": "Left (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end-mobile",
+      "label": "Right (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "header",
+      "content": "Custom CSS"
+    },
+    {
+      "type": "textarea",
+      "id": "custom_css",
+      "label": "Custom CSS",
+      "info": "Custom CSS applied to this advanced tab parent block."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Advanced Tab",
+      "blocks": [
+        {
+          "type": "_advanced-tab-item",
+          "settings": {
+            "title": "DESCRIPTION",
+            "open_by_default": true
+          }
+        },
+        {
+          "type": "_advanced-tab-item",
+          "settings": {
+            "title": "TECH SPECS"
+          }
+        },
+        {
+          "type": "_advanced-tab-item",
+          "settings": {
+            "title": "COVERAGE CALCULATOR"
+          }
+        },
+        {
+          "type": "_advanced-tab-item",
+          "settings": {
+            "title": "DOCUMENTS & SDS"
+          }
+        },
+        {
+          "type": "_advanced-tab-item",
+          "settings": {
+            "title": "USE CASES"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

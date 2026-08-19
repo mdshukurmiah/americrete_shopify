@@ -1,0 +1,745 @@
+{% liquid
+  assign block_settings = block.settings
+%}
+
+{% render 'contrast-override',
+  background_color: block_settings.background_color,
+  text_color: block_settings.text_color,
+  section_id: block.id
+%}
+
+{% style %}
+  #block-{{ block.id }}.text-card-block {
+    --tc-bg-color: {% if block_settings.card_bg_color != blank %}{{ block_settings.card_bg_color }}{% else %}#f7f7f5{% endif %};
+    --tc-border-color: {% if block_settings.card_border_color != blank %}{{ block_settings.card_border_color }}{% else %}#e5e7eb{% endif %};
+    --tc-border-width: {{ block_settings.card_border_width | default: 1 }}px;
+    --tc-border-radius: {{ block_settings.card_border_radius | default: 6 }}px;
+    --tc-padding-y: {{ block_settings.card_padding_y | default: 24 }}px;
+    --tc-padding-x: {{ block_settings.card_padding_x | default: 24 }}px;
+    --tc-text-align: {{ block_settings.alignment | default: 'left' }};
+
+    --tc-badge-bg: {% if block_settings.badge_bg_color != blank %}{{ block_settings.badge_bg_color }}{% else %}#1e293b{% endif %};
+    --tc-badge-color: {% if block_settings.badge_color != blank %}{{ block_settings.badge_color }}{% else %}#ffffff{% endif %};
+    --tc-badge-size: {{ block_settings.badge_font_size | default: 11 }}px;
+    --tc-badge-weight: {{ block_settings.badge_font_weight | default: '700' }};
+    --tc-badge-spacing: {{ block_settings.badge_letter_spacing | default: 1 }}px;
+    --tc-badge-radius: {{ block_settings.badge_corner_radius | default: 4 }}px;
+
+    --tc-title-size: {{ block_settings.title_font_size | default: 18 }}px;
+    --tc-title-weight: {{ block_settings.title_font_weight | default: '700' }};
+    --tc-title-color: {% if block_settings.title_color != blank %}{{ block_settings.title_color }}{% else %}#1e293b{% endif %};
+
+    --tc-desc-size: {{ block_settings.desc_font_size | default: 14 }}px;
+    --tc-desc-weight: {{ block_settings.desc_font_weight | default: '400' }};
+    --tc-desc-color: {% if block_settings.desc_color != blank %}{{ block_settings.desc_color }}{% else %}#475569{% endif %};
+
+    --tc-divider-color: {% if block_settings.divider_color != blank %}{{ block_settings.divider_color }}{% else %}#e2e8f0{% endif %};
+    --tc-divider-margin: {{ block_settings.divider_spacing | default: 16 }}px;
+
+    --tc-footer-size: {{ block_settings.footer_font_size | default: 13 }}px;
+    --tc-footer-label-weight: {{ block_settings.footer_label_weight | default: '700' }};
+    --tc-footer-label-color: {% if block_settings.footer_label_color != blank %}{{ block_settings.footer_label_color }}{% else %}#1e293b{% endif %};
+    --tc-footer-text-weight: {{ block_settings.footer_text_weight | default: '400' }};
+    --tc-footer-text-color: {% if block_settings.footer_text_color != blank %}{{ block_settings.footer_text_color }}{% else %}#64748b{% endif %};
+
+    background-color: {% if block_settings.background_color != blank %}{{ block_settings.background_color }}{% else %}transparent{% endif %};
+  }
+
+  {% if block_settings.custom_css != blank %}
+    {% if block_settings.custom_css contains 'selector' %}
+      {% assign target_selector = '#block-' | append: block.id %}
+      {{ block_settings.custom_css | replace: 'selector', target_selector }}
+    {% else %}
+      #block-{{ block.id }} {
+        {{ block_settings.custom_css }}
+      }
+    {% endif %}
+  {% endif %}
+{% endstyle %}
+
+{% stylesheet %}
+  .text-card-block {
+    display: block;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: var(--tc-bg-color);
+    border: var(--tc-border-width) solid var(--tc-border-color);
+    border-radius: var(--tc-border-radius);
+    padding: var(--tc-padding-y) var(--tc-padding-x);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .text-card-block--has-link {
+    cursor: pointer;
+  }
+
+  .text-card-block--has-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    border-color: color-mix(in srgb, var(--tc-border-color) 70%, #000);
+  }
+
+  .text-card-block__link-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    cursor: pointer;
+  }
+
+  .text-card-block__content {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    text-align: var(--tc-text-align);
+  }
+
+  .text-card-block__badge-wrap {
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .text-card-block[style*="--tc-text-align: center"] .text-card-block__badge-wrap {
+    justify-content: center;
+  }
+
+  .text-card-block[style*="--tc-text-align: right"] .text-card-block__badge-wrap {
+    justify-content: flex-end;
+  }
+
+  .text-card-block__badge {
+    display: inline-block;
+    background-color: var(--tc-badge-bg);
+    color: var(--tc-badge-color);
+    font-size: var(--tc-badge-size);
+    font-weight: var(--tc-badge-weight);
+    letter-spacing: var(--tc-badge-spacing);
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: var(--tc-badge-radius);
+    line-height: 1.25;
+  }
+
+  .text-card-block__title {
+    margin: 0 0 10px 0;
+    font-size: var(--tc-title-size);
+    font-weight: var(--tc-title-weight);
+    color: var(--tc-title-color);
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  .text-card-block__description {
+    font-size: var(--tc-desc-size);
+    font-weight: var(--tc-desc-weight);
+    color: var(--tc-desc-color);
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .text-card-block__description p {
+    margin: 0 0 8px 0;
+    font-size: inherit;
+    color: inherit;
+  }
+
+  .text-card-block__description p:last-child {
+    margin-bottom: 0;
+  }
+
+  .text-card-block__divider {
+    width: 100%;
+    height: 1px;
+    background-color: var(--tc-divider-color);
+    margin: var(--tc-divider-margin) 0;
+  }
+
+  .text-card-block__footer {
+    font-size: var(--tc-footer-size);
+    line-height: 1.5;
+    word-break: break-word;
+  }
+
+  .text-card-block__footer-label {
+    font-weight: var(--tc-footer-label-weight);
+    color: var(--tc-footer-label-color);
+    margin-right: 4px;
+  }
+
+  .text-card-block__footer-text {
+    font-weight: var(--tc-footer-text-weight);
+    color: var(--tc-footer-text-color);
+  }
+
+  @media screen and (max-width: 639px) {
+    .text-card-block {
+      padding: calc(var(--tc-padding-y) * 0.8) calc(var(--tc-padding-x) * 0.75);
+    }
+  }
+{% endstylesheet %}
+
+<div
+  id="block-{{ block.id }}"
+  class="text-card-block border-style spacing-style{% if block_settings.card_link != blank %} text-card-block--has-link{% endif %}{% if block_settings.background_color != blank or block_settings.text_color != blank %} color-custom-{{ block.id }}{% endif %}"
+  style="
+    {% if block_settings.type_preset == 'custom' %}
+      {% render 'typography-style', settings: block_settings %}
+    {% else %}
+      --font-family: var(--font-{{ block_settings.type_preset }}--family);
+    {% endif %}
+    {% render 'spacing-style', settings: block_settings %}
+    {% render 'border-override', settings: block_settings %}
+  "
+  {{ block.shopify_attributes }}
+>
+  {% if block_settings.card_link != blank %}
+    <a
+      href="{{ block_settings.card_link }}"
+      class="text-card-block__link-overlay"
+      {% if block_settings.open_in_new_tab %}
+        target="_blank" rel="noopener"
+      {% endif %}
+      aria-label="{{ block_settings.title | escape | default: 'Card Link' }}"
+    ></a>
+  {% endif %}
+
+  <div class="text-card-block__content">
+    {% if block_settings.show_badge and block_settings.badge_text != blank %}
+      <div class="text-card-block__badge-wrap">
+        <span class="text-card-block__badge">{{ block_settings.badge_text }}</span>
+      </div>
+    {% endif %}
+
+    {% if block_settings.title != blank %}
+      <h3 class="text-card-block__title">{{ block_settings.title }}</h3>
+    {% endif %}
+
+    {% if block_settings.description != blank %}
+      <div class="text-card-block__description rte">
+        {{ block_settings.description }}
+      </div>
+    {% endif %}
+
+    {% if block_settings.show_divider %}
+      <div class="text-card-block__divider"></div>
+    {% endif %}
+
+    {% if block_settings.footer_label != blank or block_settings.footer_text != blank %}
+      <div class="text-card-block__footer">
+        {% if block_settings.footer_label != blank %}
+          <strong class="text-card-block__footer-label">{{ block_settings.footer_label }}</strong>
+        {% endif %}
+        {% if block_settings.footer_text != blank %}
+          <span class="text-card-block__footer-text">{{ block_settings.footer_text }}</span>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Text Card",
+  "class": "text-card-block",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Badge / Tag Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_badge",
+      "label": "Show badge / tag",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "badge_text",
+      "label": "Badge text",
+      "default": "FLAT ROOF"
+    },
+    {
+      "type": "color",
+      "id": "badge_bg_color",
+      "label": "Badge background color",
+      "default": "#1e293b"
+    },
+    {
+      "type": "color",
+      "id": "badge_color",
+      "label": "Badge text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "badge_font_size",
+      "label": "Badge font size",
+      "min": 9,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "default": 11
+    },
+    {
+      "type": "select",
+      "id": "badge_font_weight",
+      "label": "Badge font weight",
+      "options": [
+        { "value": "400", "label": "Regular" },
+        { "value": "500", "label": "Medium" },
+        { "value": "600", "label": "Semibold" },
+        { "value": "700", "label": "Bold" },
+        { "value": "800", "label": "Extra Bold" }
+      ],
+      "default": "700"
+    },
+    {
+      "type": "range",
+      "id": "badge_letter_spacing",
+      "label": "Badge letter spacing",
+      "min": 0,
+      "max": 4,
+      "step": 0.5,
+      "unit": "px",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "badge_corner_radius",
+      "label": "Badge corner radius",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "header",
+      "content": "Title & Description Settings"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Commercial flat & low-slope roofs"
+    },
+    {
+      "type": "range",
+      "id": "title_font_size",
+      "label": "Title font size",
+      "min": 12,
+      "max": 48,
+      "step": 1,
+      "unit": "px",
+      "default": 18
+    },
+    {
+      "type": "select",
+      "id": "title_font_weight",
+      "label": "Title font weight",
+      "options": [
+        { "value": "400", "label": "Regular" },
+        { "value": "500", "label": "Medium" },
+        { "value": "600", "label": "Semibold" },
+        { "value": "700", "label": "Bold" },
+        { "value": "800", "label": "Extra Bold" }
+      ],
+      "default": "700"
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Title color",
+      "default": "#1e293b"
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "label": "Description",
+      "default": "<p>Primary use case. Apply directly over aged built-up, modified bitumen, EPDM, TPO, or PVC. Twice the elongation of standard elastomeric coatings means fewer callbacks on movement-related failures.</p>"
+    },
+    {
+      "type": "range",
+      "id": "desc_font_size",
+      "label": "Description font size",
+      "min": 10,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "select",
+      "id": "desc_font_weight",
+      "label": "Description font weight",
+      "options": [
+        { "value": "300", "label": "Light" },
+        { "value": "400", "label": "Regular" },
+        { "value": "500", "label": "Medium" },
+        { "value": "600", "label": "Semibold" }
+      ],
+      "default": "400"
+    },
+    {
+      "type": "color",
+      "id": "desc_color",
+      "label": "Description color",
+      "default": "#475569"
+    },
+    {
+      "type": "header",
+      "content": "Divider Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_divider",
+      "label": "Show divider line",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "divider_color",
+      "label": "Divider color",
+      "default": "#e2e8f0"
+    },
+    {
+      "type": "range",
+      "id": "divider_spacing",
+      "label": "Divider top & bottom spacing",
+      "min": 4,
+      "max": 40,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "header",
+      "content": "Footer / Recommendation Settings"
+    },
+    {
+      "type": "text",
+      "id": "footer_label",
+      "label": "Footer label",
+      "default": "Recommended:"
+    },
+    {
+      "type": "color",
+      "id": "footer_label_color",
+      "label": "Footer label color",
+      "default": "#1e293b"
+    },
+    {
+      "type": "select",
+      "id": "footer_label_weight",
+      "label": "Footer label font weight",
+      "options": [
+        { "value": "400", "label": "Regular" },
+        { "value": "500", "label": "Medium" },
+        { "value": "600", "label": "Semibold" },
+        { "value": "700", "label": "Bold" },
+        { "value": "800", "label": "Extra Bold" }
+      ],
+      "default": "700"
+    },
+    {
+      "type": "text",
+      "id": "footer_text",
+      "label": "Footer text",
+      "default": "A-3025 underseal + A-3050 topcoat, two coats each, minimum 60 mil total DFT."
+    },
+    {
+      "type": "color",
+      "id": "footer_text_color",
+      "label": "Footer text color",
+      "default": "#64748b"
+    },
+    {
+      "type": "select",
+      "id": "footer_text_weight",
+      "label": "Footer text font weight",
+      "options": [
+        { "value": "300", "label": "Light" },
+        { "value": "400", "label": "Regular" },
+        { "value": "500", "label": "Medium" },
+        { "value": "600", "label": "Semibold" }
+      ],
+      "default": "400"
+    },
+    {
+      "type": "range",
+      "id": "footer_font_size",
+      "label": "Footer font size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 13
+    },
+    {
+      "type": "header",
+      "content": "Card Link Settings"
+    },
+    {
+      "type": "url",
+      "id": "card_link",
+      "label": "Card link URL"
+    },
+    {
+      "type": "checkbox",
+      "id": "open_in_new_tab",
+      "label": "Open link in new tab",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Card Styling & Layout"
+    },
+    {
+      "type": "color",
+      "id": "card_bg_color",
+      "label": "Card background color",
+      "default": "#f7f7f5"
+    },
+    {
+      "type": "color",
+      "id": "card_border_color",
+      "label": "Card border color",
+      "default": "#e5e7eb"
+    },
+    {
+      "type": "range",
+      "id": "card_border_width",
+      "label": "Card border width",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "unit": "px",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "card_border_radius",
+      "label": "Card corner radius",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "unit": "px",
+      "default": 6
+    },
+    {
+      "type": "range",
+      "id": "card_padding_y",
+      "label": "Card vertical padding",
+      "min": 8,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "card_padding_x",
+      "label": "Card horizontal padding",
+      "min": 8,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "select",
+      "id": "alignment",
+      "label": "Text alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "header",
+      "content": "Appearance & Preset"
+    },
+    {
+      "type": "select",
+      "id": "type_preset",
+      "label": "Typography preset",
+      "options": [
+        { "value": "body", "label": "Body" },
+        { "value": "heading", "label": "Heading" },
+        { "value": "subheading", "label": "Subheading" },
+        { "value": "custom", "label": "Custom" }
+      ],
+      "default": "custom"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Block background color"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Block text color"
+    },
+    {
+      "type": "header",
+      "content": "t:content.borders"
+    },
+    {
+      "type": "select",
+      "id": "border",
+      "label": "t:settings.border",
+      "options": [
+        { "value": "none", "label": "t:options.none" },
+        { "value": "solid", "label": "Solid" },
+        { "value": "dashed", "label": "Dashed" },
+        { "value": "dotted", "label": "Dotted" }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "label": "t:settings.border_width",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 1,
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "t:settings.border_color",
+      "placeholder": "t:settings.default",
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "t:settings.border_radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "checkbox",
+      "id": "custom_mobile_padding",
+      "label": "Use custom mobile padding",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start-mobile",
+      "label": "Top (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end-mobile",
+      "label": "Bottom (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start-mobile",
+      "label": "Left (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end-mobile",
+      "label": "Right (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "header",
+      "content": "Custom CSS"
+    },
+    {
+      "type": "textarea",
+      "id": "custom_css",
+      "label": "Custom CSS",
+      "info": "Custom CSS applied to this Text Card block."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Text Card"
+    }
+  ]
+}
+{% endschema %}

@@ -1,7 +1,18 @@
-{% assign block_settings = block.settings %}
+{% liquid
+  assign block_settings = block.settings
+  assign target_product = block_settings.product | default: product
+
+  assign coverage_metafield = target_product.metafields.additional.coverage_per_gal | default: target_product.metafields.additional.coverage_per_gallon | default: target_product.metafields.additional.coverage | default: target_product.metafields.custom.coverage_per_gal | default: target_product.metafields.custom.coverage
+  assign coverage_per_gal = coverage_metafield.value | default: coverage_metafield | default: block_settings.default_coverage_per_gal | default: 50 | plus: 0
+
+  if coverage_per_gal <= 0
+    assign coverage_per_gal = 50
+  endif
+%}
 
 <coverage-calculator
   class="coverage-calculator coverage-calculator--{{ block.id }} spacing-style size-style"
+  data-coverage-per-gal="{{ coverage_per_gal }}"
   style="{% render 'spacing-style', settings: block_settings %}{% render 'size-style', settings: block_settings %}"
   {{ block.shopify_attributes }}
 >
@@ -19,7 +30,7 @@
         {% else %}
           <p class="coverage-calculator__description">
             Enter your project area to get a recommended quantity. Assumes two-coat application at the standard mil
-            thickness for A-3025.
+            thickness{% if target_product.title != blank %} for {{ target_product.title }}{% endif %}.
           </p>
         {% endif %}
 
@@ -180,7 +191,8 @@
             coatLabelText = 'Three-coat multiplier';
           }
 
-          const baseGallons = (area / 50) * surfaceMult;
+          const coveragePerGal = parseFloat(this.dataset.coveragePerGal) || 50;
+          const baseGallons = (area / coveragePerGal) * surfaceMult;
           const totalGallonsRaw = baseGallons * coatMult * marginMult;
           const totalGallons = Math.ceil(totalGallonsRaw);
 
@@ -384,6 +396,12 @@
     color: var(--calc-text-color, rgb(var(--color-foreground-rgb) / var(--opacity-70, 0.7)));
     font-size: var(--calc-text-size, 0.9375rem);
     line-height: 1.5;
+    text-transform: none;
+    font-weight: 400;
+  }
+  .coverage-calculator__description p {
+    font-size: var(--calc-text-size, 0.9375rem);
+    font-weight: 400;
   }
 
   .coverage-calculator__field {
@@ -405,7 +423,7 @@
     width: 100%;
     padding: 12px 14px;
     border: var(--style-border-width-inputs, 1px) solid
-      var(--calc-input-border, var(--color-input-border, rgb(var(--color-foreground-rgb) / var(--opacity-20, 0.2))));
+      var(--calc-input-border, var(--color-input-border, rgb(var(--color-foreground-rgb) / var(--opacity-20, 0.2)))) !important;
     border-radius: var(--calc-input-radius, var(--style-border-radius-inputs, 4px));
     background-color: var(--calc-input-bg, var(--color-background));
     color: var(--calc-input-color, var(--color-foreground));
@@ -504,6 +522,23 @@
   "class": "coverage-calculator",
   "tag": null,
   "settings": [
+    {
+      "type": "header",
+      "content": "Product & Coverage Settings"
+    },
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Product",
+      "info": "Select a product to read its coverage per gallon from metafields (e.g. additional.coverage_per_gal or custom.coverage_per_gal). Leave blank to use current page product."
+    },
+    {
+      "type": "number",
+      "id": "default_coverage_per_gal",
+      "label": "Default coverage per gallon (sq ft)",
+      "default": 50,
+      "info": "Fallback sq ft per gallon if the product metafield is empty."
+    },
     {
       "type": "text",
       "id": "title",

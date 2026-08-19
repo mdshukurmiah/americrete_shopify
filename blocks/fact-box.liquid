@@ -1,0 +1,706 @@
+{% liquid
+  assign block_settings = block.settings
+  assign target_product = block_settings.product | default: product
+  assign facts_metafield = target_product.metafields.additional.fatcs | default: target_product.metafields.additional.facts
+  assign facts_value = facts_metafield.value | default: facts_metafield
+
+  assign has_data = false
+%}
+
+{% render 'contrast-override',
+  background_color: block_settings.background_color,
+  text_color: block_settings.text_color,
+  section_id: block.id
+%}
+
+{% style %}
+  #block-{{ block.id }}.fact-box {
+    --frame-bg: {% if block_settings.frame_bg_color != blank %}{{ block_settings.frame_bg_color }}{% else %}#f4f4f5{% endif %};
+    --card-bg: {% if block_settings.card_bg_color != blank %}{{ block_settings.card_bg_color }}{% else %}#ffffff{% endif %};
+    --grid-border-color: {% if block_settings.grid_border_color != blank %}{{ block_settings.grid_border_color }}{% else %}#e4e4e7{% endif %};
+    --label-color: {% if block_settings.label_color != blank %}{{ block_settings.label_color }}{% else %}#64748b{% endif %};
+    --value-color: {% if block_settings.value_color != blank %}{{ block_settings.value_color }}{% else %}#0f172a{% endif %};
+    --frame-padding: {{ block_settings.frame_padding | default: 12 }}px;
+    --item-padding-y: {{ block_settings.item_padding_y | default: 20 }}px;
+    --item-padding-x: {{ block_settings.item_padding_x | default: 16 }}px;
+    --desktop-columns: {{ block_settings.desktop_columns | default: 2 }};
+    --mobile-columns: {{ block_settings.mobile_columns | default: 2 }};
+    --text-alignment: {{ block_settings.text_alignment | default: 'center' }};
+    --label-font-size: {{ block_settings.label_font_size | default: '0.75rem' }};
+    --value-font-size: {{ block_settings.value_font_size | default: '1.375rem' }};
+    --label-weight: {{ block_settings.label_weight | default: '700' }};
+    --value-weight: {{ block_settings.value_weight | default: '800' }};
+    background-color: {% if block_settings.background_color != blank %}{{ block_settings.background_color }}{% else %}transparent{% endif %};
+  }
+
+  {% if block_settings.custom_css != blank %}
+    {% if block_settings.custom_css contains 'selector' %}
+      {% assign target_selector = '#block-' | append: block.id %}
+      {{ block_settings.custom_css | replace: 'selector', target_selector }}
+    {% else %}
+      #block-{{ block.id }} {
+        {{ block_settings.custom_css }}
+      }
+    {% endif %}
+  {% endif %}
+{% endstyle %}
+
+<div
+  id="block-{{ block.id }}"
+  class="fact-box border-style spacing-style{% if block_settings.background_color != blank or block_settings.text_color != blank %} color-custom-{{ block.id }}{% endif %}"
+  style="
+    {% if block_settings.type_preset == 'custom' %}
+      {% render 'typography-style', settings: block_settings %}
+    {% else %}
+      --font-family: var(--font-{{ block_settings.type_preset }}--family);
+    {% endif %}
+    {% render 'spacing-style', settings: block_settings %}
+    {% render 'border-override', settings: block_settings %}
+  "
+  {{ block.shopify_attributes }}
+>
+  <div class="fact-box__frame">
+    <div class="fact-box__grid" style="--desktop-columns: {{ block_settings.desktop_columns | default: 2 }};">
+      {% capture facts_content %}
+        {% if facts_value != blank %}
+          {% comment %} Array / List metafield {% endcomment %}
+          {% if facts_value.first != blank %}
+            {% for item in facts_value %}
+              {% assign fact_label = '' %}
+              {% assign fact_val = '' %}
+
+              {% if item.label != blank or item.key != blank %}
+                {% assign fact_label = item.label | default: item.key | default: item.title %}
+                {% assign fact_val = item.value | default: item.val %}
+              {% else %}
+                {% assign item_str = item %}
+                {% if item_str contains '||' %}
+                  {% assign parts = item_str | split: '||' %}
+                  {% assign fact_label = parts[0] | strip %}
+                  {% assign fact_val = parts[1] | strip %}
+                {% elsif item_str contains '|' %}
+                  {% assign parts = item_str | split: '|' %}
+                  {% assign fact_label = parts[0] | strip %}
+                  {% assign fact_val = parts[1] | strip %}
+                {% elsif item_str contains ':' %}
+                  {% assign parts = item_str | split: ':' %}
+                  {% assign fact_label = parts[0] | strip %}
+                  {% assign val_parts = parts | slice: 1, parts.size %}
+                  {% assign fact_val = val_parts | join: ':' | strip %}
+                {% endif %}
+              {% endif %}
+
+              {% if fact_label != blank and fact_val != blank %}
+                <div class="fact-box__item">
+                  <div class="fact-box__label">{{ fact_label }}</div>
+                  <div class="fact-box__value">{{ fact_val }}</div>
+                </div>
+                {% assign has_data = true %}
+              {% endif %}
+            {% endfor %}
+          {% elsif facts_value contains '||' or facts_value contains '|' or facts_value contains ':' %}
+            {% comment %} Multi-line text string {% endcomment %}
+            {% assign lines = facts_value | newline_to_br | split: '<br />' %}
+            {% for line in lines %}
+              {% assign trimmed = line | strip %}
+              {% assign fact_label = '' %}
+              {% assign fact_val = '' %}
+
+              {% if trimmed contains '||' %}
+                {% assign parts = trimmed | split: '||' %}
+                {% assign fact_label = parts[0] | strip %}
+                {% assign fact_val = parts[1] | strip %}
+              {% elsif trimmed contains '|' %}
+                {% assign parts = trimmed | split: '|' %}
+                {% assign fact_label = parts[0] | strip %}
+                {% assign fact_val = parts[1] | strip %}
+              {% elsif trimmed contains ':' %}
+                {% assign parts = trimmed | split: ':' %}
+                {% assign fact_label = parts[0] | strip %}
+                {% assign val_parts = parts | slice: 1, parts.size %}
+                {% assign fact_val = val_parts | join: ':' | strip %}
+              {% endif %}
+
+              {% if fact_label != blank and fact_val != blank %}
+                <div class="fact-box__item">
+                  <div class="fact-box__label">{{ fact_label }}</div>
+                  <div class="fact-box__value">{{ fact_val }}</div>
+                </div>
+                {% assign has_data = true %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        {% endif %}
+
+        {% comment %} Fallback sample data matching screenshot {% endcomment %}
+        {% if has_data == false %}
+          {% if block_settings.show_sample_data or request.design_mode or target_product == blank or facts_value == blank %}
+            <div class="fact-box__item">
+              <div class="fact-box__label">ELONGATION</div>
+              <div class="fact-box__value">800%</div>
+            </div>
+            <div class="fact-box__item">
+              <div class="fact-box__label">CURE TIME</div>
+              <div class="fact-box__value">1 hr tack-free</div>
+            </div>
+            <div class="fact-box__item">
+              <div class="fact-box__label">COVERAGE</div>
+              <div class="fact-box__value">50 sq ft/gal</div>
+            </div>
+            <div class="fact-box__item">
+              <div class="fact-box__label">WARRANTY</div>
+              <div class="fact-box__value">10 years</div>
+            </div>
+            <div class="fact-box__item">
+              <div class="fact-box__label">VOC</div>
+              <div class="fact-box__value">&lt;50 g/L</div>
+            </div>
+            <div class="fact-box__item">
+              <div class="fact-box__label">ASTM</div>
+              <div class="fact-box__value">C 309 / C 1315</div>
+            </div>
+          {% endif %}
+        {% endif %}
+      {% endcapture %}
+
+      {{ facts_content }}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .fact-box {
+    width: 100%;
+    position: relative;
+  }
+
+  .fact-box__frame {
+    background-color: var(--frame-bg, #f4f4f5);
+    border: 1px solid var(--grid-border-color, #e4e4e7);
+    border-radius: var(--border-radius, 4px);
+    padding: var(--frame-padding, 12px);
+    width: 100%;
+  }
+
+  .fact-box__grid {
+    display: grid;
+    grid-template-columns: repeat(var(--desktop-columns, 2), minmax(0, 1fr));
+    background-color: var(--card-bg, #ffffff);
+    border: 1px solid var(--grid-border-color, #e4e4e7);
+    border-radius: max(0px, calc(var(--border-radius, 4px) - 2px));
+    overflow: hidden;
+    width: 100%;
+  }
+
+  @media screen and (max-width: 639px) {
+    .fact-box__grid {
+      grid-template-columns: repeat(var(--mobile-columns, 2), minmax(0, 1fr)) !important;
+    }
+  }
+
+  .fact-box__item {
+    display: flex;
+    flex-direction: column;
+    align-items: var(--text-alignment, center);
+    justify-content: center;
+    text-align: var(--text-alignment, center);
+    padding: var(--item-padding-y, 20px) var(--item-padding-x, 16px);
+    border-right: 1px solid var(--grid-border-color, #e4e4e7);
+    border-bottom: 1px solid var(--grid-border-color, #e4e4e7);
+    background-color: var(--card-bg, #ffffff);
+    box-sizing: border-box;
+  }
+
+  /* Grid lines formatting */
+  .fact-box__grid[style*='--desktop-columns: 2'] .fact-box__item:nth-child(2n) {
+    border-right: none;
+  }
+  .fact-box__grid[style*='--desktop-columns: 3'] .fact-box__item:nth-child(3n) {
+    border-right: none;
+  }
+  .fact-box__grid[style*='--desktop-columns: 4'] .fact-box__item:nth-child(4n) {
+    border-right: none;
+  }
+
+  @media screen and (max-width: 639px) {
+    .fact-box__grid[style*='--mobile-columns: 1'] .fact-box__item {
+      border-right: none !important;
+    }
+    .fact-box__grid[style*='--mobile-columns: 2'] .fact-box__item {
+      border-right: 1px solid var(--grid-border-color, #e4e4e7);
+    }
+    .fact-box__grid[style*='--mobile-columns: 2'] .fact-box__item:nth-child(2n) {
+      border-right: none !important;
+    }
+  }
+
+  .fact-box__label {
+    color: var(--label-color, #64748b);
+    font-size: var(--label-font-size, 0.75rem);
+    font-weight: var(--label-weight, 700);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+
+  .fact-box__value {
+    color: var(--value-color, #0f172a);
+    font-size: var(--value-font-size, 1.375rem);
+    font-weight: var(--value-weight, 800);
+    line-height: 1.25;
+    word-break: break-word;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Fact Box",
+  "tag": null,
+  "class": "fact-box-block-wrapper",
+  "settings": [
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Product",
+      "info": "Select a product to pull metafield data (additional.fatcs). Leave blank to use current page product."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_sample_data",
+      "label": "Show sample data if metafield is empty",
+      "default": true,
+      "info": "Renders standard fact box grid when product metafield has no data."
+    },
+    {
+      "type": "header",
+      "content": "Layout Settings"
+    },
+    {
+      "type": "range",
+      "id": "desktop_columns",
+      "label": "Desktop grid columns",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "type": "range",
+      "id": "mobile_columns",
+      "label": "Mobile grid columns",
+      "min": 1,
+      "max": 3,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "type": "select",
+      "id": "text_alignment",
+      "label": "t:settings.alignment",
+      "options": [
+        {
+          "value": "center",
+          "label": "t:options.center"
+        },
+        {
+          "value": "flex-start",
+          "label": "t:options.left"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "range",
+      "id": "frame_padding",
+      "label": "Outer frame padding",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "item_padding_y",
+      "label": "Cell vertical padding",
+      "min": 8,
+      "max": 40,
+      "step": 1,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "item_padding_x",
+      "label": "Cell horizontal padding",
+      "min": 8,
+      "max": 40,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "header",
+      "content": "Appearance & Colors"
+    },
+    {
+      "type": "color",
+      "id": "frame_bg_color",
+      "label": "Outer frame background",
+      "default": "#f4f4f5"
+    },
+    {
+      "type": "color",
+      "id": "card_bg_color",
+      "label": "Cell background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "grid_border_color",
+      "label": "Grid border color",
+      "default": "#e4e4e7"
+    },
+    {
+      "type": "color",
+      "id": "label_color",
+      "label": "Label text color",
+      "default": "#64748b"
+    },
+    {
+      "type": "color",
+      "id": "value_color",
+      "label": "Value text color",
+      "default": "#0f172a"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Block background color"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Block text color"
+    },
+    {
+      "type": "header",
+      "content": "t:content.typography"
+    },
+    {
+      "type": "select",
+      "id": "type_preset",
+      "label": "t:settings.preset",
+      "options": [
+        {
+          "value": "rte",
+          "label": "t:options.default"
+        },
+        {
+          "value": "paragraph",
+          "label": "t:options.paragraph"
+        },
+        {
+          "value": "h1",
+          "label": "t:options.h1"
+        },
+        {
+          "value": "h2",
+          "label": "t:options.h2"
+        },
+        {
+          "value": "h3",
+          "label": "t:options.h3"
+        },
+        {
+          "value": "h4",
+          "label": "t:options.h4"
+        },
+        {
+          "value": "h5",
+          "label": "t:options.h5"
+        },
+        {
+          "value": "h6",
+          "label": "t:options.h6"
+        },
+        {
+          "value": "custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "custom"
+    },
+    {
+      "type": "select",
+      "id": "label_font_size",
+      "label": "Label font size",
+      "options": [
+        {
+          "value": "0.5625rem",
+          "label": "9px"
+        },
+        {
+          "value": "0.625rem",
+          "label": "10px"
+        },
+        {
+          "value": "0.6875rem",
+          "label": "11px"
+        },
+        {
+          "value": "0.75rem",
+          "label": "12px"
+        },
+        {
+          "value": "0.8125rem",
+          "label": "13px"
+        },
+        {
+          "value": "0.875rem",
+          "label": "14px"
+        }
+      ],
+      "default": "0.75rem"
+    },
+    {
+      "type": "select",
+      "id": "label_weight",
+      "label": "Label font weight",
+      "options": [
+        {
+          "value": "500",
+          "label": "t:options.medium"
+        },
+        {
+          "value": "600",
+          "label": "t:options.semibold"
+        },
+        {
+          "value": "700",
+          "label": "t:options.bold"
+        }
+      ],
+      "default": "700"
+    },
+    {
+      "type": "select",
+      "id": "value_font_size",
+      "label": "Value font size",
+      "options": [
+        {
+          "value": "1rem",
+          "label": "16px"
+        },
+        {
+          "value": "1.125rem",
+          "label": "18px"
+        },
+        {
+          "value": "1.25rem",
+          "label": "20px"
+        },
+        {
+          "value": "1.375rem",
+          "label": "22px"
+        },
+        {
+          "value": "1.5rem",
+          "label": "24px"
+        },
+        {
+          "value": "1.75rem",
+          "label": "28px"
+        }
+      ],
+      "default": "1.375rem"
+    },
+    {
+      "type": "select",
+      "id": "value_weight",
+      "label": "Value font weight",
+      "options": [
+        {
+          "value": "600",
+          "label": "t:options.semibold"
+        },
+        {
+          "value": "700",
+          "label": "t:options.bold"
+        },
+        {
+          "value": "800",
+          "label": "800"
+        }
+      ],
+      "default": "800"
+    },
+    {
+      "type": "header",
+      "content": "t:content.borders"
+    },
+    {
+      "type": "select",
+      "id": "border",
+      "label": "t:settings.border",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:options.none"
+        },
+        {
+          "value": "solid",
+          "label": "Solid"
+        },
+        {
+          "value": "dashed",
+          "label": "Dashed"
+        },
+        {
+          "value": "dotted",
+          "label": "Dotted"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "label": "t:settings.border_width",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 1,
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "t:settings.border_color",
+      "placeholder": "t:settings.default",
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "t:settings.border_radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "checkbox",
+      "id": "custom_mobile_padding",
+      "label": "Use custom mobile padding",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start-mobile",
+      "label": "Top (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end-mobile",
+      "label": "Bottom (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start-mobile",
+      "label": "Left (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end-mobile",
+      "label": "Right (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "header",
+      "content": "Custom CSS"
+    },
+    {
+      "type": "textarea",
+      "id": "custom_css",
+      "label": "Custom CSS",
+      "info": "Custom CSS applied to this Fact Box block."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Fact Box"
+    }
+  ]
+}
+{% endschema %}

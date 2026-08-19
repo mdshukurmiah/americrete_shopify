@@ -2293,7 +2293,8 @@ label:has(input[name="Requested Tier"]:checked) span.onst-field-roption-value sp
   color: rgb(255 255 255 / 70%) !important;
 }
 
-label[for="wRegisterForm-radio-23"] label[for="wRegisterForm-radio-26"],
+label[for="wRegisterForm-radio-23"],
+label[for="wRegisterForm-radio-26"],
 label[for="wRegisterForm-radio-34"],
 label[for="wRegisterForm-radio-35"],
 label[for="wRegisterForm-radio-36"] {
