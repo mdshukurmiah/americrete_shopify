@@ -1,0 +1,686 @@
+{% liquid
+  assign block_settings = block.settings
+  assign target_product = block_settings.product | default: product
+  assign tech_specs_metafield = target_product.metafields.additional.tech_specs
+  assign tech_specs_value = tech_specs_metafield.value | default: tech_specs_metafield
+
+  assign has_data = false
+%}
+
+{% render 'contrast-override',
+  background_color: block_settings.background_color,
+  text_color: block_settings.text_color,
+  section_id: block.id
+%}
+
+{% style %}
+  #block-{{ block.id }}.tech-specs {
+    --label-color: {% if block_settings.label_color != blank %}{{ block_settings.label_color }}{% else %}#475569{% endif %};
+    --value-color: {% if block_settings.value_color != blank %}{{ block_settings.value_color }}{% else %}#0f172a{% endif %};
+    --divider-color: {% if block_settings.divider_color != blank %}{{ block_settings.divider_color }}{% else %}#e2e8f0{% endif %};
+    --row-padding-y: {{ block_settings.row_padding_y | default: 14 }}px;
+    --col-gap: {{ block_settings.col_gap | default: 24 }}px;
+    --label-width: {{ block_settings.label_width | default: 45 }}%;
+    --label-font-size: {{ block_settings.label_font_size | default: '0.875rem' }};
+    --value-font-size: {{ block_settings.value_font_size | default: '0.875rem' }};
+    --label-weight: {{ block_settings.label_weight | default: '600' }};
+    --value-weight: {{ block_settings.value_weight | default: '600' }};
+    background-color: {% if block_settings.background_color != blank %}{{ block_settings.background_color }}{% else %}transparent{% endif %};
+  }
+
+  {% if block_settings.custom_css != blank %}
+    {% if block_settings.custom_css contains 'selector' %}
+      {% assign target_selector = '#block-' | append: block.id %}
+      {{ block_settings.custom_css | replace: 'selector', target_selector }}
+    {% else %}
+      #block-{{ block.id }} {
+        {{ block_settings.custom_css }}
+      }
+    {% endif %}
+  {% endif %}
+{% endstyle %}
+
+<div
+  id="block-{{ block.id }}"
+  class="tech-specs border-style spacing-style{% if block_settings.background_color != blank or block_settings.text_color != blank %} color-custom-{{ block.id }}{% endif %}"
+  style="
+    {% if block_settings.type_preset == 'custom' %}
+      {% render 'typography-style', settings: block_settings %}
+    {% else %}
+      --font-family: var(--font-{{ block_settings.type_preset }}--family);
+    {% endif %}
+    {% render 'spacing-style', settings: block_settings %}
+    {% render 'border-override', settings: block_settings %}
+  "
+  {{ block.shopify_attributes }}
+>
+  <div class="tech-specs__container">
+    {% capture tech_specs_content %}
+      {% if tech_specs_value != blank %}
+        {% comment %} Array / List metafield (e.g. list.single_line_text_field) {% endcomment %}
+        {% if tech_specs_value.first != blank %}
+          {% for item in tech_specs_value %}
+            {% assign spec_label = '' %}
+            {% assign spec_val = '' %}
+
+            {% if item.label != blank or item.key != blank %}
+              {% assign spec_label = item.label | default: item.key | default: item.title %}
+              {% assign spec_val = item.value | default: item.val %}
+            {% else %}
+              {% assign item_str = item %}
+              {% if item_str contains '||' %}
+                {% assign parts = item_str | split: '||' %}
+                {% assign spec_label = parts[0] | strip %}
+                {% assign spec_val = parts[1] | strip %}
+              {% elsif item_str contains '|' %}
+                {% assign parts = item_str | split: '|' %}
+                {% assign spec_label = parts[0] | strip %}
+                {% assign spec_val = parts[1] | strip %}
+              {% elsif item_str contains ':' %}
+                {% assign parts = item_str | split: ':' %}
+                {% assign spec_label = parts[0] | strip %}
+                {% assign val_parts = parts | slice: 1, parts.size %}
+                {% assign spec_val = val_parts | join: ':' | strip %}
+              {% endif %}
+            {% endif %}
+
+            {% if spec_label != blank and spec_val != blank %}
+              <div class="tech-specs__row">
+                <div class="tech-specs__label">{{ spec_label }}</div>
+                <div class="tech-specs__value">{{ spec_val }}</div>
+              </div>
+              {% assign has_data = true %}
+            {% endif %}
+          {% endfor %}
+        {% elsif tech_specs_value contains '||' or tech_specs_value contains '|' or tech_specs_value contains ':' %}
+          {% comment %} Multi-line text string formatted with ||, |, or : {% endcomment %}
+          {% assign lines = tech_specs_value | newline_to_br | split: '<br />' %}
+          {% for line in lines %}
+            {% assign trimmed = line | strip %}
+            {% assign spec_label = '' %}
+            {% assign spec_val = '' %}
+
+            {% if trimmed contains '||' %}
+              {% assign parts = trimmed | split: '||' %}
+              {% assign spec_label = parts[0] | strip %}
+              {% assign spec_val = parts[1] | strip %}
+            {% elsif trimmed contains '|' %}
+              {% assign parts = trimmed | split: '|' %}
+              {% assign spec_label = parts[0] | strip %}
+              {% assign spec_val = parts[1] | strip %}
+            {% elsif trimmed contains ':' %}
+              {% assign parts = trimmed | split: ':' %}
+              {% assign spec_label = parts[0] | strip %}
+              {% assign val_parts = parts | slice: 1, parts.size %}
+              {% assign spec_val = val_parts | join: ':' | strip %}
+            {% endif %}
+
+            {% if spec_label != blank and spec_val != blank %}
+              <div class="tech-specs__row">
+                <div class="tech-specs__label">{{ spec_label }}</div>
+                <div class="tech-specs__value">{{ spec_val }}</div>
+              </div>
+              {% assign has_data = true %}
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          {% comment %} HTML or Rich Text Fallback {% endcomment %}
+          <div class="tech-specs__rich-content">
+            {{ tech_specs_value }}
+          </div>
+          {% assign has_data = true %}
+        {% endif %}
+      {% endif %}
+
+      {% comment %} Fallback sample data matching screenshot {% endcomment %}
+      {% if has_data == false %}
+        {% if block_settings.show_sample_data or request.design_mode or target_product == blank or tech_specs_value == blank %}
+          <div class="tech-specs__row">
+            <div class="tech-specs__label">Product code</div>
+            <div class="tech-specs__value">A-3025</div>
+          </div>
+          <div class="tech-specs__row">
+            <div class="tech-specs__label">Chemistry</div>
+            <div class="tech-specs__value">Water-based elastomeric acrylic emulsion</div>
+          </div>
+          <div class="tech-specs__row">
+            <div class="tech-specs__label">Solids by weight</div>
+            <div class="tech-specs__value">62% ± 2%</div>
+          </div>
+          <div class="tech-specs__row">
+            <div class="tech-specs__label">Solids by volume</div>
+            <div class="tech-specs__value">48% ± 2%</div>
+          </div>
+          <div class="tech-specs__row">
+            <div class="tech-specs__label">Elongation at break (ASTM D 412)</div>
+            <div class="tech-specs__value">800% minimum</div>
+          </div>
+          <div class="tech-specs__row">
+            <div class="tech-specs__label">Tensile strength (ASTM D 412)</div>
+            <div class="tech-specs__value">240 psi</div>
+          </div>
+          <div class="tech-specs__row">
+            <div class="tech-specs__label">Adhesion (ASTM D 4541)</div>
+            <div class="tech-specs__value">&gt; 60 psi on prepared concrete</div>
+          </div>
+          <div class="tech-specs__row">
+            <div class="tech-specs__label">Water permeability (ASTM E 96)</div>
+            <div class="tech-specs__value">0.12 perms at 20 mils DFT</div>
+          </div>
+          <div class="tech-specs__row">
+            <div class="tech-specs__label">Coverage — first coat</div>
+            <div class="tech-specs__value">50 sq ft per gallon at 20 mils WFT</div>
+          </div>
+          <div class="tech-specs__row">
+            <div class="tech-specs__label">Coverage — second coat</div>
+            <div class="tech-specs__value">60 sq ft per gallon at 15 mils WFT</div>
+          </div>
+          <div class="tech-specs__row">
+            <div class="tech-specs__label">Dry to touch (77°F, 50% RH)</div>
+            <div class="tech-specs__value">1 hour</div>
+          </div>
+          <div class="tech-specs__row">
+            <div class="tech-specs__label">Recoat window</div>
+            <div class="tech-specs__value">2–4 hours; up to 24 hours</div>
+          </div>
+          <div class="tech-specs__row">
+            <div class="tech-specs__label">Full cure</div>
+            <div class="tech-specs__value">7 days</div>
+          </div>
+          <div class="tech-specs__row">
+            <div class="tech-specs__label">Application methods</div>
+            <div class="tech-specs__value">Brush, roller, or airless sprayer (0.021"–0.027" tip)</div>
+          </div>
+        {% endif %}
+      {% endif %}
+    {% endcapture %}
+
+    {{ tech_specs_content }}
+  </div>
+</div>
+
+{% stylesheet %}
+  .tech-specs {
+    width: 100%;
+    position: relative;
+  }
+
+  .tech-specs__container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .tech-specs__row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-block: var(--row-padding-y, 14px);
+    border-bottom: 1px solid var(--divider-color, #e2e8f0);
+    gap: var(--col-gap, 24px);
+    width: 100%;
+  }
+
+  .tech-specs__row:last-child {
+    border-bottom: none;
+  }
+
+  .tech-specs__label {
+    flex: 0 0 var(--label-width, 45%);
+    max-width: var(--label-width, 45%);
+    color: var(--label-color, #475569);
+    font-size: var(--label-font-size, 0.875rem);
+    font-weight: var(--label-weight, 600);
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .tech-specs__value {
+    flex: 1;
+    color: var(--value-color, #0f172a);
+    font-size: var(--value-font-size, 0.875rem);
+    font-weight: var(--value-weight, 600);
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .tech-specs__rich-content {
+    padding-block: var(--row-padding-y, 14px);
+    color: var(--value-color, #0f172a);
+    font-size: var(--value-font-size, 0.875rem);
+  }
+
+  @media screen and (max-width: 639px) {
+    .tech-specs__row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      padding-block: max(10px, calc(var(--row-padding-y, 14px) * 0.8));
+    }
+
+    .tech-specs__label {
+      flex: 1 1 100%;
+      max-width: 100%;
+      width: 100%;
+    }
+
+    .tech-specs__value {
+      width: 100%;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Tech Specs",
+  "tag": null,
+  "class": "tech-specs-block-wrapper",
+  "settings": [
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Product",
+      "info": "Select a product to pull metafield data (additional.tech_specs). Leave blank to use current page product."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_sample_data",
+      "label": "Show sample data if metafield is empty",
+      "default": true,
+      "info": "Renders standard technical specifications list when product metafield has no data."
+    },
+    {
+      "type": "header",
+      "content": "Layout Settings"
+    },
+    {
+      "type": "range",
+      "id": "label_width",
+      "label": "Label column width",
+      "min": 25,
+      "max": 60,
+      "step": 5,
+      "unit": "%",
+      "default": 45
+    },
+    {
+      "type": "range",
+      "id": "row_padding_y",
+      "label": "Row vertical padding",
+      "min": 6,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "col_gap",
+      "label": "Column gap",
+      "min": 8,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "Appearance & Colors"
+    },
+    {
+      "type": "color",
+      "id": "label_color",
+      "label": "Label color",
+      "default": "#475569"
+    },
+    {
+      "type": "color",
+      "id": "value_color",
+      "label": "Value color",
+      "default": "#0f172a"
+    },
+    {
+      "type": "color",
+      "id": "divider_color",
+      "label": "Divider line color",
+      "default": "#e2e8f0"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Block background color"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Block text color"
+    },
+    {
+      "type": "header",
+      "content": "t:content.typography"
+    },
+    {
+      "type": "select",
+      "id": "type_preset",
+      "label": "t:settings.preset",
+      "options": [
+        {
+          "value": "rte",
+          "label": "t:options.default"
+        },
+        {
+          "value": "paragraph",
+          "label": "t:options.paragraph"
+        },
+        {
+          "value": "h1",
+          "label": "t:options.h1"
+        },
+        {
+          "value": "h2",
+          "label": "t:options.h2"
+        },
+        {
+          "value": "h3",
+          "label": "t:options.h3"
+        },
+        {
+          "value": "h4",
+          "label": "t:options.h4"
+        },
+        {
+          "value": "h5",
+          "label": "t:options.h5"
+        },
+        {
+          "value": "h6",
+          "label": "t:options.h6"
+        },
+        {
+          "value": "custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "custom"
+    },
+    {
+      "type": "select",
+      "id": "label_font_size",
+      "label": "Label font size",
+      "options": [
+        {
+          "value": "0.75rem",
+          "label": "12px"
+        },
+        {
+          "value": "0.8125rem",
+          "label": "13px"
+        },
+        {
+          "value": "0.875rem",
+          "label": "14px"
+        },
+        {
+          "value": "0.9375rem",
+          "label": "15px"
+        },
+        {
+          "value": "1rem",
+          "label": "16px"
+        },
+        {
+          "value": "1.125rem",
+          "label": "18px"
+        }
+      ],
+      "default": "0.875rem"
+    },
+    {
+      "type": "select",
+      "id": "label_weight",
+      "label": "Label font weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "t:options.regular"
+        },
+        {
+          "value": "500",
+          "label": "t:options.medium"
+        },
+        {
+          "value": "600",
+          "label": "t:options.semibold"
+        },
+        {
+          "value": "700",
+          "label": "t:options.bold"
+        }
+      ],
+      "default": "600"
+    },
+    {
+      "type": "select",
+      "id": "value_font_size",
+      "label": "Value font size",
+      "options": [
+        {
+          "value": "0.75rem",
+          "label": "12px"
+        },
+        {
+          "value": "0.8125rem",
+          "label": "13px"
+        },
+        {
+          "value": "0.875rem",
+          "label": "14px"
+        },
+        {
+          "value": "0.9375rem",
+          "label": "15px"
+        },
+        {
+          "value": "1rem",
+          "label": "16px"
+        },
+        {
+          "value": "1.125rem",
+          "label": "18px"
+        }
+      ],
+      "default": "0.875rem"
+    },
+    {
+      "type": "select",
+      "id": "value_weight",
+      "label": "Value font weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "t:options.regular"
+        },
+        {
+          "value": "500",
+          "label": "t:options.medium"
+        },
+        {
+          "value": "600",
+          "label": "t:options.semibold"
+        },
+        {
+          "value": "700",
+          "label": "t:options.bold"
+        }
+      ],
+      "default": "600"
+    },
+    {
+      "type": "header",
+      "content": "t:content.borders"
+    },
+    {
+      "type": "select",
+      "id": "border",
+      "label": "t:settings.border",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:options.none"
+        },
+        {
+          "value": "solid",
+          "label": "Solid"
+        },
+        {
+          "value": "dashed",
+          "label": "Dashed"
+        },
+        {
+          "value": "dotted",
+          "label": "Dotted"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "label": "t:settings.border_width",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 1,
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "t:settings.border_color",
+      "placeholder": "t:settings.default",
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "t:settings.border_radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "checkbox",
+      "id": "custom_mobile_padding",
+      "label": "Use custom mobile padding",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start-mobile",
+      "label": "Top (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end-mobile",
+      "label": "Bottom (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start-mobile",
+      "label": "Left (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end-mobile",
+      "label": "Right (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "header",
+      "content": "Custom CSS"
+    },
+    {
+      "type": "textarea",
+      "id": "custom_css",
+      "label": "Custom CSS",
+      "info": "Custom CSS applied to this Tech Specs block."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Tech Specs"
+    }
+  ]
+}
+{% endschema %}
