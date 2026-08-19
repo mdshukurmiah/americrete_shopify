@@ -33,6 +33,7 @@ html {
 }
 
 @media (min-width: 990px) {
+
   html:has(.page-wrapper),
   html:has(.page-wrapper) body {
     height: 100dvh;
@@ -122,6 +123,7 @@ select {
 }
 
 @media (any-pointer: fine) and (prefers-reduced-motion: no-preference) {
+
   .card-hover-effect-lift .product-card:hover,
   .card-hover-effect-lift .collection-card:hover,
   .card-hover-effect-lift .predictive-search-results__card:hover {
@@ -178,7 +180,7 @@ p:empty {
 }
 
 :first-child:is(p, h1, h2, h3, h4, h5, h6),
-:first-child:empty + :where(p, h1, h2, h3, h4, h5, h6) {
+:first-child:empty+ :where(p, h1, h2, h3, h4, h5, h6) {
   margin-block-start: 0;
 }
 
@@ -199,6 +201,7 @@ p:empty {
  * take effect once an `@view-transition` opt-in is active, so they are inert without it.
  */
 @media (prefers-reduced-motion: no-preference) {
+
   /* Keep page interactive while view transitions are running */
   :root {
     view-transition-name: none;
@@ -288,7 +291,7 @@ p:empty {
   flex-direction: column;
 }
 
-.content-for-layout > .shopify-section:last-child {
+.content-for-layout>.shopify-section:last-child {
   flex-grow: 1;
 }
 
@@ -301,6 +304,7 @@ p:empty {
 }
 
 @media screen and (min-width: 750px) {
+
   .page-width-wide,
   .page-width-normal,
   .page-width-narrow,
@@ -337,19 +341,14 @@ p:empty {
    full-width background image even if the section content is constrained by the page width. Do not try
    to rewrite this to max-width: --page-width; margin: 0 auto;, it doesn't work. */
 .section {
-  --full-page-grid-central-column-width: min(
-    var(--page-width) - var(--page-margin) * 2,
-    calc(100% - var(--page-margin) * 2)
-  );
+  --full-page-grid-central-column-width: min(var(--page-width) - var(--page-margin) * 2,
+      calc(100% - var(--page-margin) * 2));
   --full-page-grid-margin: minmax(var(--page-margin), 1fr);
-  --full-page-grid-with-margins: var(--full-page-grid-margin) var(--full-page-grid-central-column-width)
-    var(--full-page-grid-margin);
+  --full-page-grid-with-margins: var(--full-page-grid-margin) var(--full-page-grid-central-column-width) var(--full-page-grid-margin);
 
   /* Utility variable gives the grid's first column width. Provides an offset width for components like carousels */
-  --util-page-margin-offset: max(
-    var(--page-margin),
-    calc((100% - min(var(--page-content-width), 100% - var(--page-margin) * 2)) / 2)
-  );
+  --util-page-margin-offset: max(var(--page-margin),
+      calc((100% - min(var(--page-content-width), 100% - var(--page-margin) * 2)) / 2));
 
   /* Offset for full-width sections to account for the page margin,
   used for Marquee — note that --util-page-margin-offset doesn't work here */
@@ -367,7 +366,7 @@ p:empty {
 }
 
 /* Place all direct children in the center column by default */
-.section > * {
+.section>* {
   grid-column: 2;
 }
 
@@ -389,28 +388,28 @@ p:empty {
 }
 
 /* For page-width sections, all content goes in the center column */
-.section--page-width > * {
+.section--page-width>* {
   grid-column: 2;
 }
 
 /* For full-width sections, content spans all columns */
-.section--full-width > * {
+.section--full-width>* {
   grid-column: 1 / -1;
 }
 
 @media screen and (max-width: 749px) {
-  .section--mobile-full-width > * {
+  .section--mobile-full-width>* {
     grid-column: 1 / -1;
   }
 }
 
 /* Some page-width sections should still extend all the way to the right edge of the page, e.g. collection carousel */
-.section--page-width.section--full-width-right > * {
+.section--page-width.section--full-width-right>* {
   grid-column: 2 / 4;
 }
 
 /* For full-width sections with margin, content still spans full width but with space on the sides */
-.section--full-width.section--full-width-margin > * {
+.section--full-width.section--full-width-margin>* {
   grid-column: 1 / -1;
 
   @media screen and (min-width: 750px) {
@@ -420,7 +419,7 @@ p:empty {
 }
 
 /* Some section content break out to full width of the page */
-.section > .force-full-width {
+.section>.force-full-width {
   grid-column: 1 / -1;
 }
 
@@ -455,6 +454,7 @@ p:empty {
 }
 
 @media screen and (max-width: 749px) {
+
   .hidden--mobile,
   .mobile\:hidden {
     /* stylelint-disable-next-line declaration-no-important */
@@ -463,6 +463,7 @@ p:empty {
 }
 
 @media screen and (min-width: 750px) {
+
   .hidden--desktop,
   .desktop\:hidden {
     /* stylelint-disable-next-line declaration-no-important */
@@ -520,11 +521,8 @@ p:empty {
 @media screen and (min-width: 1400px) {
   .grid {
     grid-template-columns:
-      1fr repeat(
-        var(--centered-column-number),
-        minmax(0, calc((var(--page-width) - var(--page-margin) * 2) / var(--centered-column-number)))
-      )
-      1fr;
+      1fr repeat(var(--centered-column-number),
+        minmax(0, calc((var(--page-width) - var(--page-margin) * 2) / var(--centered-column-number)))) 1fr;
   }
 }
 
@@ -630,7 +628,7 @@ p:empty {
   height: var(--icon-size-xs);
 }
 
-.svg-wrapper > svg {
+.svg-wrapper>svg {
   width: var(--icon-size-sm);
   height: var(--icon-size-sm);
 }
@@ -666,7 +664,7 @@ p:empty {
 /* Base text and heading styles */
 body,
 .paragraph:not(.button),
-.paragraph > *,
+.paragraph>*,
 .text-block.paragraph :is(h1, h2, h3, h4, h5, h6) {
   font-family: var(--font-paragraph--family);
   font-style: var(--font-paragraph--style);
@@ -680,6 +678,7 @@ body,
 
 /* Ensure inputs with type presets maintain minimum 16px on mobile to prevent iOS zoom */
 @media screen and (max-width: 1200px) {
+
   input.paragraph.paragraph,
   input.paragraph.paragraph:not([type]),
   textarea.paragraph.paragraph,
@@ -688,7 +687,7 @@ body,
   }
 }
 
-.paragraph > small {
+.paragraph>small {
   font-size: smaller;
 }
 
@@ -696,7 +695,7 @@ body,
 
 h1,
 .h1.h1,
-.text-block.h1 > *,
+.text-block.h1>*,
 .text-block.h1 :is(h1, h2, h3, h4, h5, h6) {
   font-family: var(--font-h1--family);
   font-style: var(--font-h1--style);
@@ -709,6 +708,7 @@ h1,
 }
 
 @media screen and (max-width: 1200px) {
+
   input.h1.h1,
   textarea.h1.h1,
   select.h1.h1 {
@@ -718,7 +718,7 @@ h1,
 
 h2,
 .h2.h2,
-.text-block.h2 > *,
+.text-block.h2>*,
 .text-block.h2 :is(h1, h2, h3, h4, h5, h6) {
   font-family: var(--font-h2--family);
   font-style: var(--font-h2--style);
@@ -731,6 +731,7 @@ h2,
 }
 
 @media screen and (max-width: 1200px) {
+
   input.h2.h2,
   textarea.h2.h2,
   select.h2.h2 {
@@ -741,7 +742,7 @@ h2,
 h3,
 .h3,
 .h3.h3,
-.text-block.h3 > *,
+.text-block.h3>*,
 .text-block.h3 :is(h1, h2, h3, h4, h5, h6) {
   font-family: var(--font-h3--family);
   font-style: var(--font-h3--style);
@@ -754,6 +755,7 @@ h3,
 }
 
 @media screen and (max-width: 1200px) {
+
   input.h3,
   textarea.h3,
   select.h3 {
@@ -763,7 +765,7 @@ h3,
 
 h4,
 .h4.h4,
-.text-block.h4 > *,
+.text-block.h4>*,
 .text-block.h4 :is(h1, h2, h3, h4, h5, h6) {
   font-family: var(--font-h4--family);
   font-style: var(--font-h4--style);
@@ -776,6 +778,7 @@ h4,
 }
 
 @media screen and (max-width: 1200px) {
+
   input.h4.h4,
   textarea.h4.h4,
   select.h4.h4 {
@@ -785,7 +788,7 @@ h4,
 
 h5,
 .h5.h5,
-.text-block.h5 > *,
+.text-block.h5>*,
 .text-block.h5 :is(h1, h2, h3, h4, h5, h6) {
   font-family: var(--font-h5--family);
   font-style: var(--font-h5--style);
@@ -798,6 +801,7 @@ h5,
 }
 
 @media screen and (max-width: 1200px) {
+
   input.h5.h5,
   textarea.h5.h5,
   select.h5.h5 {
@@ -807,7 +811,7 @@ h5,
 
 h6,
 .h6.h6,
-.text-block.h6 > *,
+.text-block.h6>*,
 .text-block.h6 :is(h1, h2, h3, h4, h5, h6) {
   font-family: var(--font-h6--family);
   font-style: var(--font-h6--style);
@@ -820,6 +824,7 @@ h6,
 }
 
 @media screen and (max-width: 1200px) {
+
   input.h6.h6,
   textarea.h6.h6,
   select.h6.h6 {
@@ -845,7 +850,7 @@ a {
     color var(--animation-speed) var(--animation-easing);
 }
 
-:is(h1, h2, h3, h4, h5, h6, p) > a:hover {
+:is(h1, h2, h3, h4, h5, h6, p)>a:hover {
   color: rgb(var(--color-rgb, var(--color-foreground-rgb)) / 0.7);
 }
 
@@ -874,7 +879,7 @@ details:not([open]) .summary-open {
   display: none;
 }
 
-details[open] > summary .icon-animated > svg {
+details[open]>summary .icon-animated>svg {
   transform: rotate(180deg);
 }
 
@@ -884,17 +889,17 @@ summary::-webkit-details-marker {
 }
 
 /* When header is transparent, pull the first main content section up to sit under the floating header */
-body:has(.header[transparent]) .content-for-layout > .shopify-section:first-child {
+body:has(.header[transparent]) .content-for-layout>.shopify-section:first-child {
   margin-top: calc(var(--header-group-height) * -1);
 }
 
-body:has(.header[transparent]) #header-group > .header-section {
+body:has(.header[transparent]) #header-group>.header-section {
   z-index: var(--layer-menu-drawer);
 }
 
 /* All other header group content should be beneath the floating header,
 but above the rest of the page content */
-body:has(.header[transparent]) #header-group > *:not(.header-section) {
+body:has(.header[transparent]) #header-group>*:not(.header-section) {
   z-index: calc(var(--layer-menu-drawer) - 1);
 }
 
@@ -902,18 +907,18 @@ body:has(.header[transparent]) #header-group > *:not(.header-section) {
   width: 100%;
 }
 
-.text-block > *:first-child,
-.text-block > *:first-child:empty + * {
+.text-block>*:first-child,
+.text-block>*:first-child:empty+* {
   margin-block-start: 0;
 }
 
-.text-block > *:last-child,
-.text-block > *:has(+ *:last-child:empty) {
+.text-block>*:last-child,
+.text-block>*:has(+ *:last-child:empty) {
   margin-block-end: 0;
 }
 
 /* This is to deal with the margin applied to the p when custom styles are enabled. The p isn't the first child anymore due to the style tag */
-.text-block > style + * {
+.text-block>style+* {
   margin-block-start: 0;
 }
 
@@ -969,6 +974,7 @@ body:has(.header[transparent]) #header-group > *:not(.header-section) {
   --dialog-drawer-opening-animation: move-and-fade;
   --dialog-drawer-closing-animation: move-and-fade;
 }
+
 /* stylelint-enable value-keyword-case */
 
 .dialog-drawer[open] {
@@ -1214,11 +1220,11 @@ summary .icon-plus :is(.horizontal, .vertical) {
   opacity: 1;
 }
 
-details[open] > summary .icon-plus .horizontal {
+details[open]>summary .icon-plus .horizontal {
   transform: rotate(90deg);
 }
 
-details[open] > summary .icon-plus .vertical {
+details[open]>summary .icon-plus .vertical {
   transform: rotate(90deg);
   opacity: 0;
 }
@@ -1290,8 +1296,9 @@ details[open] > summary .icon-plus .vertical {
 }
 
 @media screen and (min-width: 750px) {
+
   .sticky-content--desktop,
-  .sticky-content--desktop.full-height--desktop > .group-block {
+  .sticky-content--desktop.full-height--desktop>.group-block {
     position: sticky;
     top: var(--sticky-header-offset, 0);
     z-index: var(--layer-flat);
@@ -1320,7 +1327,7 @@ details[open] > summary .icon-plus .vertical {
   display: none;
 }
 
-product-price.text-block:is(.h1, .h2, .h3, .h4, .h5, .h6) > *:not(.tax-note) {
+product-price.text-block:is(.h1, .h2, .h3, .h4, .h5, .h6)>*:not(.tax-note) {
   margin-block: 0;
 }
 
@@ -1398,7 +1405,7 @@ product-price.text-block:is(.h1, .h2, .h3, .h4, .h5, .h6) .volume-pricing-note {
 
 /* Custom Typography style */
 .custom-typography,
-.custom-typography > * {
+.custom-typography>* {
   font-family: var(--font-family);
   font-weight: var(--font-weight);
   text-transform: var(--text-transform);
@@ -1424,19 +1431,20 @@ product-price.text-block:is(.h1, .h2, .h3, .h4, .h5, .h6) .volume-pricing-note {
 }
 
 .custom-font-size,
-.custom-font-size > * {
+.custom-font-size>* {
   font-size: var(--font-size);
 }
 
 @media screen and (max-width: 749px) {
+
   .custom-font-size,
-  .custom-font-size > * {
+  .custom-font-size>* {
     font-size: var(--font-size-mobile, var(--font-size));
   }
 }
 
 .custom-font-weight,
-.custom-font-weight > * {
+.custom-font-weight>* {
   font-weight: var(--font-weight);
 }
 
@@ -1491,23 +1499,23 @@ product-price.text-block:is(.h1, .h2, .h3, .h4, .h5, .h6) .volume-pricing-note {
     flex-wrap: var(--flex-wrap-mobile);
     height: auto;
 
-    > .menu {
+    >.menu {
       flex: 1 1 min-content;
     }
 
-    > .text-block {
+    >.text-block {
       flex: 1 1 var(--max-width--display-tight);
     }
 
-    > .image-block {
+    >.image-block {
       flex: 1 1 var(--size-style-width-mobile-min);
     }
 
-    > .button {
+    >.button {
       flex: 0 0 fit-content;
     }
 
-    > .group-block--height-fill {
+    >.group-block--height-fill {
       height: calc(var(--section-min-height, auto) - var(--section-height-offset, 0px));
     }
   }
@@ -1578,7 +1586,7 @@ product-price.text-block:is(.h1, .h2, .h3, .h4, .h5, .h6) .volume-pricing-note {
   }
 
   :first-child:is(p, h1, h2, h3, h4, h5, h6),
-  :first-child:empty + :is(p, h1, h2, h3, h4, h5, h6) {
+  :first-child:empty+ :is(p, h1, h2, h3, h4, h5, h6) {
     margin-block-start: 0;
   }
 
@@ -1749,15 +1757,15 @@ input[type='radio'] {
 }
 
 /* Shared styles for radio buttons and checkboxes */
-:where(input[type='radio']) + label,
-:where(input[type='checkbox']) + label {
+:where(input[type='radio'])+label,
+:where(input[type='checkbox'])+label {
   display: inline;
   vertical-align: middle;
   cursor: pointer;
 }
 
-:where(input[type='radio']):disabled + label,
-:where(input[type='checkbox']):disabled + label {
+:where(input[type='radio']):disabled+label,
+:where(input[type='checkbox']):disabled+label {
   color: var(--input-disabled-text-color);
   cursor: not-allowed;
 }
@@ -1946,6 +1954,7 @@ label:has(input[type='checkbox']:disabled) {
 }
 
 @keyframes thumbnail-selected {
+
   0%,
   100% {
     box-shadow: 0 0 0 2px transparent;
@@ -2014,11 +2023,7 @@ label:has(input[type='checkbox']:disabled) {
 
 /* Slideshow Arrow Hover Animation - must stay in base.css for proper CSS cascade */
 
-:not(.media-gallery--carousel)
-  > :is(slideshow-component:hover, slideshow-component:focus-within):not(:has(slideshow-controls:hover))
-  > slideshow-container
-  > slideshow-arrows
-  .slideshow-control {
+:not(.media-gallery--carousel)> :is(slideshow-component:hover, slideshow-component:focus-within):not(:has(slideshow-controls:hover))>slideshow-container>slideshow-arrows .slideshow-control {
   animation: arrowsSlideIn var(--animation-speed) var(--animation-easing) forwards;
 }
 
@@ -2055,11 +2060,10 @@ label:has(input[type='checkbox']:disabled) {
   display: none;
 }
 
-:where(.section-resource-list.section--full-width) product-card[data-product-transition] > .group-block,
-:where(.section-carousel.section--full-width) product-card[data-product-transition] > .group-block {
+:where(.section-resource-list.section--full-width) product-card[data-product-transition]>.group-block,
+:where(.section-carousel.section--full-width) product-card[data-product-transition]>.group-block {
   @media screen and (max-width: 749px) {
-    padding-inline: max(var(--padding-xs), var(--padding-inline-start))
-      max(var(--padding-xs), var(--padding-inline-end));
+    padding-inline: max(var(--padding-xs), var(--padding-inline-start)) max(var(--padding-xs), var(--padding-inline-end));
   }
 }
 
@@ -2085,15 +2089,15 @@ label:has(input[type='checkbox']:disabled) {
 }
 
 /* Flex behavior for width variants */
-.layout-panel-flex--row > .group-block--width-fit {
+.layout-panel-flex--row>.group-block--width-fit {
   flex: 0;
 }
 
-.layout-panel-flex--row > .group-block--width-fill {
+.layout-panel-flex--row>.group-block--width-fill {
   flex: 1;
 }
 
-.layout-panel-flex--row > .group-block--width-custom {
+.layout-panel-flex--row>.group-block--width-custom {
   flex-basis: var(--size-style-width);
 }
 
@@ -2108,15 +2112,15 @@ label:has(input[type='checkbox']:disabled) {
 }
 
 /* Flex behavior for height variants */
-.layout-panel-flex--column > .group-block--height-fit {
+.layout-panel-flex--column>.group-block--height-fit {
   flex: 0 1 auto;
 }
 
-.layout-panel-flex--column > .group-block--height-fill {
+.layout-panel-flex--column>.group-block--height-fill {
   flex: 1;
 }
 
-.layout-panel-flex--column > .group-block--height-custom {
+.layout-panel-flex--column>.group-block--height-custom {
   flex-basis: var(--size-style-height);
 }
 
@@ -2174,6 +2178,7 @@ label:has(input[type='checkbox']:disabled) {
 
 /* Prevent iOS zoom on input focus by ensuring minimum 16px font size on mobile */
 @media screen and (max-width: 1200px) {
+
   input,
   textarea,
   select,
@@ -2206,7 +2211,8 @@ label:has(input[type='checkbox']:disabled) {
 /* When the header is transparent, and when there is no header-section below it, offset the first main-section with
  * the height of the header
  */
-main > .shopify-section:first-child .section:not(.disable-section-top-offset) {
+main>.shopify-section:first-child .section:not(.disable-section-top-offset) {
+
   &.spacing-style,
   .spacing-style {
     --section-top-offset: calc(var(--header-height) * var(--transparent-header-offset-boolean));
@@ -2221,4 +2227,75 @@ main > .shopify-section:first-child .section:not(.disable-section-top-offset) {
   .sticky-content {
     margin-top: calc(var(--header-height) * var(--transparent-header-offset-boolean) * -1);
   }
+}
+
+
+
+.onst-field-roptions:has(input[name="Requested Tier"]) {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr);
+  width: 100%;
+}
+
+input[name="Requested Tier"] {
+  display: none !important;
+}
+
+label:has(input[name="Requested Tier"]) {
+  padding: 20px 16px !important;
+  border: 2px solid #D1D5DB;
+  height: 100%;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+label:has(input[name="Requested Tier"]:checked) {
+  background: #2c3644;
+  border: 2px solid #2c3644;
+}
+
+label:has(input[name="Requested Tier"]) span.onst-field-roption-value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 11px;
+  text-transform: uppercase;
+  gap: 8px;
+  color: #A11B2A;
+  font-weight: 600;
+}
+
+label:has(input[name="Requested Tier"]) span.onst-field-roption-value span.discount {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  text-transform: capitalize;
+  color: #2C3644;
+}
+
+label:has(input[name="Requested Tier"]) span.onst-field-roption-value span.description {
+  text-transform: capitalize;
+  color: #6B7280;
+  font-weight: 400 !important;
+}
+
+label:has(input[name="Requested Tier"]:checked) span.onst-field-roption-value {
+  color: #D4A82C;
+}
+
+label:has(input[name="Requested Tier"]:checked) span.onst-field-roption-value span.discount {
+  color: #fff !important;
+}
+
+label:has(input[name="Requested Tier"]:checked) span.onst-field-roption-value span.description {
+  color: rgb(255 255 255 / 70%) !important;
+}
+
+label[for="wRegisterForm-radio-23"] label[for="wRegisterForm-radio-26"],
+label[for="wRegisterForm-radio-34"],
+label[for="wRegisterForm-radio-35"],
+label[for="wRegisterForm-radio-36"] {
+  display: none !important;
 }
