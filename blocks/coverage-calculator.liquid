@@ -1,0 +1,1441 @@
+{% assign block_settings = block.settings %}
+
+<coverage-calculator
+  class="coverage-calculator coverage-calculator--{{ block.id }} spacing-style size-style"
+  style="{% render 'spacing-style', settings: block_settings %}{% render 'size-style', settings: block_settings %}"
+  {{ block.shopify_attributes }}
+>
+  <div class="coverage-calculator__panel" id="pdp-tab-coverage-{{ block.id }}">
+    <div class="coverage-calculator__wrap">
+      <div class="coverage-calculator__inputs">
+        {% if block_settings.title != blank %}
+          <h4 class="coverage-calculator__title">{{ block_settings.title }}</h4>
+        {% endif %}
+
+        {% if block_settings.text != blank %}
+          <div class="coverage-calculator__description rte">
+            {{ block_settings.text }}
+          </div>
+        {% else %}
+          <p class="coverage-calculator__description">
+            Enter your project area to get a recommended quantity. Assumes two-coat application at the standard mil
+            thickness for A-3025.
+          </p>
+        {% endif %}
+
+        <div class="coverage-calculator__field">
+          <label class="coverage-calculator__label" for="calc-area-{{ block.id }}">Project area (square feet)</label>
+          <input
+            type="number"
+            class="coverage-calculator__input"
+            id="calc-area-{{ block.id }}"
+            value="2500"
+            min="0"
+            ref="areaInput"
+            oninput="if(this.closest('coverage-calculator')) this.closest('coverage-calculator').calculate()"
+          >
+        </div>
+
+        <div class="coverage-calculator__field">
+          <label class="coverage-calculator__label" for="calc-surface-{{ block.id }}">Surface type</label>
+          <select
+            class="coverage-calculator__select"
+            id="calc-surface-{{ block.id }}"
+            ref="surfaceSelect"
+            onchange="if(this.closest('coverage-calculator')) this.closest('coverage-calculator').calculate()"
+          >
+            <option value="1.0">Smooth concrete or metal (standard coverage)</option>
+            <option value="1.15">Weathered concrete (+15% for absorption)</option>
+            <option value="1.25">Porous or textured surface (+25%)</option>
+            <option value="1.10">Mobile home roof (+10% for seams)</option>
+          </select>
+        </div>
+
+        <div class="coverage-calculator__field">
+          <label class="coverage-calculator__label" for="calc-coats-{{ block.id }}">Number of coats</label>
+          <select
+            class="coverage-calculator__select"
+            id="calc-coats-{{ block.id }}"
+            ref="coatsSelect"
+            onchange="if(this.closest('coverage-calculator')) this.closest('coverage-calculator').calculate()"
+          >
+            <option value="2" selected>Two coats (recommended for warranty)</option>
+            <option value="1">One coat (touch-up only)</option>
+            <option value="3">Three coats (heavy waterproofing)</option>
+          </select>
+        </div>
+
+        <div class="coverage-calculator__field">
+          <label class="coverage-calculator__label" for="calc-margin-{{ block.id }}">Add safety margin</label>
+          <select
+            class="coverage-calculator__select"
+            id="calc-margin-{{ block.id }}"
+            ref="marginSelect"
+            onchange="if(this.closest('coverage-calculator')) this.closest('coverage-calculator').calculate()"
+          >
+            <option value="1.10" selected>+10% for waste (recommended)</option>
+            <option value="1.05">+5%</option>
+            <option value="1.00">None</option>
+            <option value="1.15">+15%</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="coverage-calculator__results">
+        <div class="coverage-calculator__result-card">
+          <div class="coverage-calculator__result-label">You need approximately</div>
+          <div class="coverage-calculator__result-value" id="calc-gallons-{{ block.id }}" ref="gallonsOutput">
+            100 gallons
+          </div>
+          <div class="coverage-calculator__result-hint" id="calc-hint-{{ block.id }}" ref="hintOutput">
+            1 × 55-gal drum, plus 9 × 5-gal pails
+          </div>
+
+          <div class="coverage-calculator__breakdown" id="calc-breakdown-{{ block.id }}">
+            <div class="coverage-calculator__breakdown-row">
+              <span>Base coverage</span>
+              <span id="calc-base-{{ block.id }}" ref="baseOutput">50.0 gal</span>
+            </div>
+            <div class="coverage-calculator__breakdown-row">
+              <span id="calc-coat-label-{{ block.id }}" ref="coatLabel">Two-coat multiplier</span>
+              <span id="calc-coat-mult-{{ block.id }}" ref="coatMultOutput">×1.8</span>
+            </div>
+            <div class="coverage-calculator__breakdown-row">
+              <span>Safety margin</span>
+              <span id="calc-safety-mult-{{ block.id }}" ref="safetyMultOutput">×1.10</span>
+            </div>
+            <div class="coverage-calculator__breakdown-row coverage-calculator__breakdown-row--total">
+              <span>Recommended total</span>
+              <span id="calc-total-{{ block.id }}" ref="totalOutput">100 gal</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="coverage-calculator__button button button--primary"
+            ref="applyBtn"
+            onclick="if(this.closest('coverage-calculator')) this.closest('coverage-calculator').applyToQuantity()"
+          >
+            <span data-lang="en">Apply to Quantity</span>
+            <span data-lang="es" style="display:none">Aplicar Cantidad</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</coverage-calculator>
+
+<script>
+  if (!customElements.get('coverage-calculator')) {
+    customElements.define(
+      'coverage-calculator',
+      class CoverageCalculator extends HTMLElement {
+        connectedCallback() {
+          this.areaInput = this.querySelector('[ref="areaInput"]');
+          this.surfaceSelect = this.querySelector('[ref="surfaceSelect"]');
+          this.coatsSelect = this.querySelector('[ref="coatsSelect"]');
+          this.marginSelect = this.querySelector('[ref="marginSelect"]');
+
+          this.gallonsOutput = this.querySelector('[ref="gallonsOutput"]');
+          this.hintOutput = this.querySelector('[ref="hintOutput"]');
+          this.baseOutput = this.querySelector('[ref="baseOutput"]');
+          this.coatLabel = this.querySelector('[ref="coatLabel"]');
+          this.coatMultOutput = this.querySelector('[ref="coatMultOutput"]');
+          this.safetyMultOutput = this.querySelector('[ref="safetyMultOutput"]');
+          this.totalOutput = this.querySelector('[ref="totalOutput"]');
+
+          this.applyBtn = this.querySelector('[ref="applyBtn"]');
+
+          this.bindEvents();
+          this.calculate();
+        }
+
+        bindEvents() {
+          if (this.areaInput) this.areaInput.addEventListener('input', () => this.calculate());
+          if (this.surfaceSelect) this.surfaceSelect.addEventListener('change', () => this.calculate());
+          if (this.coatsSelect) this.coatsSelect.addEventListener('change', () => this.calculate());
+          if (this.marginSelect) this.marginSelect.addEventListener('change', () => this.calculate());
+
+          if (this.applyBtn) {
+            this.applyBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              this.applyToQuantity();
+            });
+          }
+        }
+
+        calculate() {
+          const area = parseFloat(this.areaInput ? this.areaInput.value : 0) || 0;
+          const surfaceMult = parseFloat(this.surfaceSelect ? this.surfaceSelect.value : 1.0) || 1.0;
+          const coatsVal = this.coatsSelect ? this.coatsSelect.value : '2';
+          const marginMult = parseFloat(this.marginSelect ? this.marginSelect.value : 1.1) || 1.1;
+
+          let coatMult = 1.8;
+          let coatLabelText = 'Two-coat multiplier';
+          if (coatsVal === '1') {
+            coatMult = 1.0;
+            coatLabelText = 'One-coat multiplier';
+          } else if (coatsVal === '3') {
+            coatMult = 2.5;
+            coatLabelText = 'Three-coat multiplier';
+          }
+
+          const baseGallons = (area / 50) * surfaceMult;
+          const totalGallonsRaw = baseGallons * coatMult * marginMult;
+          const totalGallons = Math.ceil(totalGallonsRaw);
+
+          let drums = Math.floor(totalGallons / 55);
+          let remGallons = totalGallons % 55;
+          let pails = Math.ceil(remGallons / 5);
+
+          let hintStr = '';
+          if (drums > 0 && pails > 0) {
+            hintStr = `${drums} × 55-gal drum${drums > 1 ? 's' : ''}, plus ${pails} × 5-gal pail${
+              pails > 1 ? 's' : ''
+            }`;
+          } else if (drums > 0) {
+            hintStr = `${drums} × 55-gal drum${drums > 1 ? 's' : ''}`;
+          } else {
+            hintStr = `${pails} × 5-gal pail${pails > 1 ? 's' : ''}`;
+          }
+
+          if (this.gallonsOutput) this.gallonsOutput.textContent = `${totalGallons} gallons`;
+          if (this.totalOutput) this.totalOutput.textContent = `${totalGallons} gal`;
+          if (this.baseOutput) this.baseOutput.textContent = `${baseGallons.toFixed(1)} gal`;
+          if (this.coatLabel) this.coatLabel.textContent = coatLabelText;
+          if (this.coatMultOutput) this.coatMultOutput.textContent = `×${coatMult.toFixed(1)}`;
+          if (this.safetyMultOutput) this.safetyMultOutput.textContent = `×${marginMult.toFixed(2)}`;
+          if (this.hintOutput) this.hintOutput.textContent = hintStr;
+
+          this.calculatedTotal = totalGallons;
+        }
+
+        applyToQuantity() {
+          const qtyInput =
+            document.querySelector('quantity-selector-component input[name="quantity"]') ||
+            document.querySelector('input[name="quantity"]') ||
+            document.querySelector('.quantity-selector input');
+
+          if (qtyInput && this.calculatedTotal) {
+            qtyInput.value = this.calculatedTotal;
+            qtyInput.dispatchEvent(new Event('input', { bubbles: true }));
+            qtyInput.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        }
+      }
+    );
+  }
+
+  if (typeof window.calcRun !== 'function') {
+    window.calcRun = function () {
+      const calc = document.querySelector('coverage-calculator');
+      if (calc && typeof calc.calculate === 'function') calc.calculate();
+    };
+  }
+  if (typeof window.applyCalc !== 'function') {
+    window.applyCalc = function () {
+      const calc = document.querySelector('coverage-calculator');
+      if (calc && typeof calc.applyToQuantity === 'function') calc.applyToQuantity();
+    };
+  }
+</script>
+{% style %}
+  .coverage-calculator--{{ block.id }} {
+    {% if block_settings.title_font_size != blank %}
+      --calc-title-size: {{ block_settings.title_font_size }}px;
+    {% endif %}
+    {% if block_settings.title_color != blank %}
+      --calc-title-color: {{ block_settings.title_color }};
+    {% endif %}
+
+    {% if block_settings.text_font_size != blank %}
+      --calc-text-size: {{ block_settings.text_font_size }}px;
+    {% endif %}
+    {% if block_settings.text_color != blank %}
+      --calc-text-color: {{ block_settings.text_color }};
+    {% endif %}
+
+    {% if block_settings.label_font_size != blank %}
+      --calc-label-size: {{ block_settings.label_font_size }}px;
+    {% endif %}
+    {% if block_settings.label_color != blank %}
+      --calc-label-color: {{ block_settings.label_color }};
+    {% endif %}
+
+    {% if block_settings.input_font_size != blank %}
+      --calc-input-size: {{ block_settings.input_font_size }}px;
+    {% endif %}
+    {% if block_settings.input_text_color != blank %}
+      --calc-input-color: {{ block_settings.input_text_color }};
+    {% endif %}
+    {% if block_settings.input_background_color != blank and block_settings.input_background_color != 'rgba(0,0,0,0)' %}
+      --calc-input-bg: {{ block_settings.input_background_color }};
+    {% endif %}
+    {% if block_settings.input_border_color != blank %}
+      --calc-input-border: {{ block_settings.input_border_color }};
+    {% endif %}
+    {% if block_settings.input_border_radius != blank %}
+      --calc-input-radius: {{ block_settings.input_border_radius }}px;
+    {% endif %}
+
+    {% if block_settings.card_background_color != blank and block_settings.card_background_color != 'rgba(0,0,0,0)' %}
+      --calc-card-bg: {{ block_settings.card_background_color }};
+    {% endif %}
+    {% if block_settings.card_border_color != blank %}
+      --calc-card-border: {{ block_settings.card_border_color }};
+    {% endif %}
+    {% if block_settings.card_border_radius != blank %}
+      --calc-card-radius: {{ block_settings.card_border_radius }}px;
+    {% endif %}
+
+    {% if block_settings.result_label_font_size != blank %}
+      --calc-result-label-size: {{ block_settings.result_label_font_size }}px;
+    {% endif %}
+    {% if block_settings.result_label_color != blank %}
+      --calc-result-label-color: {{ block_settings.result_label_color }};
+    {% endif %}
+
+    {% if block_settings.result_value_font_size != blank %}
+      --calc-result-value-size: {{ block_settings.result_value_font_size }}px;
+    {% endif %}
+    {% if block_settings.result_value_color != blank %}
+      --calc-result-value-color: {{ block_settings.result_value_color }};
+    {% endif %}
+
+    {% if block_settings.result_hint_font_size != blank %}
+      --calc-result-hint-size: {{ block_settings.result_hint_font_size }}px;
+    {% endif %}
+    {% if block_settings.result_hint_color != blank %}
+      --calc-result-hint-color: {{ block_settings.result_hint_color }};
+    {% endif %}
+
+    {% if block_settings.breakdown_font_size != blank %}
+      --calc-breakdown-size: {{ block_settings.breakdown_font_size }}px;
+    {% endif %}
+    {% if block_settings.breakdown_text_color != blank %}
+      --calc-breakdown-color: {{ block_settings.breakdown_text_color }};
+    {% endif %}
+
+    {% if block_settings.button_font_size != blank %}
+      --calc-btn-size: {{ block_settings.button_font_size }}px;
+    {% endif %}
+    {% if block_settings.button_text_color != blank %}
+      --calc-btn-color: {{ block_settings.button_text_color }};
+    {% endif %}
+    {% if block_settings.button_background_color != blank and block_settings.button_background_color != 'rgba(0,0,0,0)' %}
+      --calc-btn-bg: {{ block_settings.button_background_color }};
+    {% endif %}
+    {% if block_settings.button_border_color != blank %}
+      --calc-btn-border: {{ block_settings.button_border_color }};
+    {% endif %}
+    {% if block_settings.button_border_radius != blank %}
+      --calc-btn-radius: {{ block_settings.button_border_radius }}px;
+    {% endif %}
+
+    {% if block_settings.background and block_settings.background_color != blank %}
+      background-color: {{ block_settings.background_color }};
+      {% if block_settings.corner_radius > 0 %}
+        border-radius: {{ block_settings.corner_radius }}px;
+      {% endif %}
+    {% endif %}
+  }
+{% endstyle %}
+
+{% stylesheet %}
+  .coverage-calculator {
+    display: block;
+    width: 100%;
+  }
+
+  .coverage-calculator__wrap {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+    align-items: start;
+  }
+
+  @media screen and (min-width: 750px) {
+    .coverage-calculator__wrap {
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+  }
+
+  .coverage-calculator__inputs {
+    display: flex;
+    flex-direction: column;
+  }
+  .coverage-calculator__field {
+    margin-bottom: 18px;
+  }
+
+  .coverage-calculator__field:last-child {
+    margin: 0px;
+  }
+  .coverage-calculator__title {
+    margin: 0 0 8px 0;
+    font-size: var(--calc-title-size, var(--font-heading-size, 1.25rem));
+    font-weight: 700;
+    color: var(--calc-title-color, var(--color-foreground));
+  }
+
+  .coverage-calculator__description {
+    margin: 0 0 12px 0;
+    color: var(--calc-text-color, rgb(var(--color-foreground-rgb) / var(--opacity-70, 0.7)));
+    font-size: var(--calc-text-size, 0.9375rem);
+    line-height: 1.5;
+  }
+
+  .coverage-calculator__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .coverage-calculator__label {
+    font-size: var(--calc-label-size, 0.875rem);
+    font-weight: 600;
+    color: var(--calc-label-color, var(--color-foreground));
+    text-transform: uppercase;
+    letter-spacing: 1.65px;
+  }
+
+  .coverage-calculator__input,
+  .coverage-calculator__select {
+    width: 100%;
+    padding: 12px 14px;
+    border: var(--style-border-width-inputs, 1px) solid
+      var(--calc-input-border, var(--color-input-border, rgb(var(--color-foreground-rgb) / var(--opacity-20, 0.2))));
+    border-radius: var(--calc-input-radius, var(--style-border-radius-inputs, 4px));
+    background-color: var(--calc-input-bg, var(--color-background));
+    color: var(--calc-input-color, var(--color-foreground));
+    font-size: var(--calc-input-size, 0.9375rem);
+    line-height: 1.4;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    font-weight: 500;
+  }
+
+  .coverage-calculator__input:focus,
+  .coverage-calculator__select:focus {
+    outline: none;
+    border-color: var(--style-border-width-inputs, 1px) solid
+      var(--calc-input-border, var(--color-input-border, rgb(var(--color-foreground-rgb) / var(--opacity-20, 0.2))));
+    box-shadow: none;
+  }
+
+  .coverage-calculator__results {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .coverage-calculator__result-card {
+    padding: 24px;
+    background-color: var(--calc-card-bg, rgb(var(--color-foreground-rgb) / var(--opacity-5, 0.05)));
+    border: 1px solid var(--calc-card-border, rgb(var(--color-foreground-rgb) / var(--opacity-15, 0.15)));
+    border-radius: var(--calc-card-radius, var(--style-border-radius-inputs, 8px));
+  }
+
+  .coverage-calculator__result-label {
+    font-size: var(--calc-result-label-size);
+    color: color-mix(in srgb, var(--calc-result-label-color) 60%, transparent);
+    text-transform: uppercase;
+    letter-spacing: 2.2px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .coverage-calculator__result-value {
+    font-size: var(--calc-result-value-size, 2.25rem);
+    font-weight: 800;
+    color: var(--calc-result-value-color, var(--color-foreground));
+    line-height: 1.1;
+    margin-bottom: 6px;
+  }
+
+  .coverage-calculator__result-hint {
+    font-size: var(--calc-result-hint-size, 0.875rem);
+    color: var(--calc-result-hint-color, rgb(var(--color-foreground-rgb) / var(--opacity-75, 0.75)));
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+
+  .coverage-calculator__breakdown {
+    border-top: 1px solid color-mix(in srgb, var(--calc-card-border) 20%, transparent);
+    padding-top: 16px;
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+    font-size: var(--calc-breakdown-size, 0.875rem);
+  }
+
+  .coverage-calculator__breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--calc-breakdown-color, rgb(var(--color-foreground-rgb) / var(--opacity-75, 0.75)));
+  }
+
+  .coverage-calculator__breakdown-row--total {
+    border-top: 1px solid color-mix(in srgb, var(--calc-card-border) 20%, transparent);
+    padding-top: 10px;
+    margin-top: 4px;
+    font-weight: 700;
+    color: var(--calc-breakdown-color, var(--color-foreground));
+    font-size: 0.875rem;
+  }
+
+  .coverage-calculator__button {
+    width: 100%;
+    margin-top: 20px;
+    cursor: pointer;
+    font-size: var(--calc-btn-size, inherit);
+    color: var(--calc-btn-color, inherit);
+    background-color: var(--calc-btn-bg, inherit);
+    border-color: var(--calc-btn-border, inherit);
+    border-radius: var(--calc-btn-radius, var(--style-border-radius-buttons-primary, inherit));
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Coverage calculator",
+  "class": "coverage-calculator",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Coverage calculator"
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "t:settings.text"
+    },
+    {
+      "type": "header",
+      "content": "Title & Description Settings"
+    },
+    {
+      "type": "range",
+      "id": "title_font_size",
+      "label": "Title font size",
+      "min": 12,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Title color"
+    },
+    {
+      "type": "range",
+      "id": "text_font_size",
+      "label": "Description font size",
+      "min": 10,
+      "max": 36,
+      "step": 1,
+      "unit": "px",
+      "default": 15
+    },
+    {
+      "type": "header",
+      "content": "Input & Form Settings"
+    },
+    {
+      "type": "range",
+      "id": "label_font_size",
+      "label": "Label font size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "color",
+      "id": "label_color",
+      "label": "Label color"
+    },
+    {
+      "type": "range",
+      "id": "input_font_size",
+      "label": "Input & select font size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 15
+    },
+    {
+      "type": "color",
+      "id": "input_text_color",
+      "label": "Input text color"
+    },
+    {
+      "type": "color",
+      "id": "input_background_color",
+      "label": "Input background color",
+      "alpha": true
+    },
+    {
+      "type": "color",
+      "id": "input_border_color",
+      "label": "Input border color"
+    },
+    {
+      "type": "range",
+      "id": "input_border_radius",
+      "label": "Input border radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "header",
+      "content": "Result Card Settings"
+    },
+    {
+      "type": "color",
+      "id": "card_background_color",
+      "label": "Result card background color",
+      "alpha": true
+    },
+    {
+      "type": "color",
+      "id": "card_border_color",
+      "label": "Result card border color"
+    },
+    {
+      "type": "range",
+      "id": "card_border_radius",
+      "label": "Result card border radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "result_label_font_size",
+      "label": "Result header font size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "color",
+      "id": "result_label_color",
+      "label": "Result header color"
+    },
+    {
+      "type": "range",
+      "id": "result_value_font_size",
+      "label": "Result value font size",
+      "min": 16,
+      "max": 72,
+      "step": 1,
+      "unit": "px",
+      "default": 36
+    },
+    {
+      "type": "color",
+      "id": "result_value_color",
+      "label": "Result value color"
+    },
+    {
+      "type": "range",
+      "id": "result_hint_font_size",
+      "label": "Result hint font size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "color",
+      "id": "result_hint_color",
+      "label": "Result hint color"
+    },
+    {
+      "type": "range",
+      "id": "breakdown_font_size",
+      "label": "Breakdown font size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "color",
+      "id": "breakdown_text_color",
+      "label": "Breakdown text color"
+    },
+    {
+      "type": "header",
+      "content": "Button Settings"
+    },
+    {
+      "type": "range",
+      "id": "button_font_size",
+      "label": "Button font size",
+      "min": 10,
+      "max": 30,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button text color"
+    },
+    {
+      "type": "color",
+      "id": "button_background_color",
+      "label": "Button background color",
+      "alpha": true
+    },
+    {
+      "type": "color",
+      "id": "button_border_color",
+      "label": "Button border color"
+    },
+    {
+      "type": "range",
+      "id": "button_border_radius",
+      "label": "Button border radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "header",
+      "content": "t:content.layout"
+    },
+    {
+      "type": "select",
+      "id": "width",
+      "label": "t:settings.width",
+      "options": [
+        {
+          "value": "fit-content",
+          "label": "t:options.fit"
+        },
+        {
+          "value": "100%",
+          "label": "t:options.fill"
+        }
+      ],
+      "default": "fit-content"
+    },
+    {
+      "type": "select",
+      "id": "max_width",
+      "label": "t:settings.max_width",
+      "options": [
+        {
+          "value": "narrow",
+          "label": "t:options.narrow"
+        },
+        {
+          "value": "normal",
+          "label": "t:options.normal"
+        },
+        {
+          "value": "none",
+          "label": "t:options.none"
+        }
+      ],
+      "default": "normal"
+    },
+    {
+      "type": "text_alignment",
+      "id": "alignment",
+      "label": "t:settings.alignment",
+      "default": "left",
+      "visible_if": "{{ block.settings.width == '100%' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.typography"
+    },
+    {
+      "type": "select",
+      "id": "type_preset",
+      "label": "t:settings.preset",
+      "options": [
+        {
+          "value": "rte",
+          "label": "t:options.default"
+        },
+        {
+          "value": "paragraph",
+          "label": "t:options.paragraph"
+        },
+        {
+          "value": "h1",
+          "label": "t:options.h1"
+        },
+        {
+          "value": "h2",
+          "label": "t:options.h2"
+        },
+        {
+          "value": "h3",
+          "label": "t:options.h3"
+        },
+        {
+          "value": "h4",
+          "label": "t:options.h4"
+        },
+        {
+          "value": "h5",
+          "label": "t:options.h5"
+        },
+        {
+          "value": "h6",
+          "label": "t:options.h6"
+        },
+        {
+          "value": "custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "rte",
+      "info": "t:info.edit_presets_in_theme_settings"
+    },
+    {
+      "type": "select",
+      "id": "font",
+      "label": "t:settings.font",
+      "options": [
+        {
+          "value": "var(--font-body--family)",
+          "label": "t:options.body"
+        },
+        {
+          "value": "var(--font-subheading--family)",
+          "label": "t:options.subheading"
+        },
+        {
+          "value": "var(--font-heading--family)",
+          "label": "t:options.heading"
+        },
+        {
+          "value": "var(--font-accent--family)",
+          "label": "t:options.accent"
+        }
+      ],
+      "default": "var(--font-body--family)",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "font_size",
+      "label": "t:settings.size",
+      "options": [
+        {
+          "value": "",
+          "label": "t:options.default"
+        },
+        {
+          "value": "0.625rem",
+          "label": "10px"
+        },
+        {
+          "value": "0.6875rem",
+          "label": "11px"
+        },
+        {
+          "value": "0.75rem",
+          "label": "12px"
+        },
+        {
+          "value": "0.8125rem",
+          "label": "13px"
+        },
+        {
+          "value": "0.875rem",
+          "label": "14px"
+        },
+        {
+          "value": "0.9375rem",
+          "label": "15px"
+        },
+        {
+          "value": "1rem",
+          "label": "16px"
+        },
+        {
+          "value": "1.0625rem",
+          "label": "17px"
+        },
+        {
+          "value": "1.125rem",
+          "label": "18px"
+        },
+        {
+          "value": "1.1875rem",
+          "label": "19px"
+        },
+        {
+          "value": "1.25rem",
+          "label": "20px"
+        },
+        {
+          "value": "1.3125rem",
+          "label": "21px"
+        },
+        {
+          "value": "1.375rem",
+          "label": "22px"
+        },
+        {
+          "value": "1.4375rem",
+          "label": "23px"
+        },
+        {
+          "value": "1.5rem",
+          "label": "24px"
+        },
+        {
+          "value": "1.5625rem",
+          "label": "25px"
+        },
+        {
+          "value": "1.625rem",
+          "label": "26px"
+        },
+        {
+          "value": "1.6875rem",
+          "label": "27px"
+        },
+        {
+          "value": "1.75rem",
+          "label": "28px"
+        },
+        {
+          "value": "1.8125rem",
+          "label": "29px"
+        },
+        {
+          "value": "1.875rem",
+          "label": "30px"
+        },
+        {
+          "value": "1.9375rem",
+          "label": "31px"
+        },
+        {
+          "value": "2rem",
+          "label": "32px"
+        },
+        {
+          "value": "2.0625rem",
+          "label": "33px"
+        },
+        {
+          "value": "2.125rem",
+          "label": "34px"
+        },
+        {
+          "value": "2.1875rem",
+          "label": "35px"
+        },
+        {
+          "value": "2.25rem",
+          "label": "36px"
+        },
+        {
+          "value": "2.3125rem",
+          "label": "37px"
+        },
+        {
+          "value": "2.375rem",
+          "label": "38px"
+        },
+        {
+          "value": "2.4375rem",
+          "label": "39px"
+        },
+        {
+          "value": "2.5rem",
+          "label": "40px"
+        },
+        {
+          "value": "2.5625rem",
+          "label": "41px"
+        },
+        {
+          "value": "2.625rem",
+          "label": "42px"
+        },
+        {
+          "value": "2.6875rem",
+          "label": "43px"
+        },
+        {
+          "value": "2.75rem",
+          "label": "44px"
+        },
+        {
+          "value": "2.8125rem",
+          "label": "45px"
+        },
+        {
+          "value": "2.875rem",
+          "label": "46px"
+        },
+        {
+          "value": "2.9375rem",
+          "label": "47px"
+        },
+        {
+          "value": "3rem",
+          "label": "48px"
+        },
+        {
+          "value": "3.0625rem",
+          "label": "49px"
+        },
+        {
+          "value": "3.125rem",
+          "label": "50px"
+        },
+        {
+          "value": "3.5rem",
+          "label": "56px"
+        },
+        {
+          "value": "4.5rem",
+          "label": "72px"
+        },
+        {
+          "value": "5.5rem",
+          "label": "88px"
+        },
+        {
+          "value": "7.5rem",
+          "label": "120px"
+        },
+        {
+          "value": "9.5rem",
+          "label": "152px"
+        },
+        {
+          "value": "11.5rem",
+          "label": "184px"
+        }
+      ],
+      "default": "1rem",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "font_size_mobile",
+      "label": "Mobile font size",
+      "options": [
+        {
+          "value": "",
+          "label": "t:options.default"
+        },
+        {
+          "value": "0.625rem",
+          "label": "10px"
+        },
+        {
+          "value": "0.6875rem",
+          "label": "11px"
+        },
+        {
+          "value": "0.75rem",
+          "label": "12px"
+        },
+        {
+          "value": "0.8125rem",
+          "label": "13px"
+        },
+        {
+          "value": "0.875rem",
+          "label": "14px"
+        },
+        {
+          "value": "0.9375rem",
+          "label": "15px"
+        },
+        {
+          "value": "1rem",
+          "label": "16px"
+        },
+        {
+          "value": "1.0625rem",
+          "label": "17px"
+        },
+        {
+          "value": "1.125rem",
+          "label": "18px"
+        },
+        {
+          "value": "1.1875rem",
+          "label": "19px"
+        },
+        {
+          "value": "1.25rem",
+          "label": "20px"
+        },
+        {
+          "value": "1.3125rem",
+          "label": "21px"
+        },
+        {
+          "value": "1.375rem",
+          "label": "22px"
+        },
+        {
+          "value": "1.4375rem",
+          "label": "23px"
+        },
+        {
+          "value": "1.5rem",
+          "label": "24px"
+        },
+        {
+          "value": "1.5625rem",
+          "label": "25px"
+        },
+        {
+          "value": "1.625rem",
+          "label": "26px"
+        },
+        {
+          "value": "1.6875rem",
+          "label": "27px"
+        },
+        {
+          "value": "1.75rem",
+          "label": "28px"
+        },
+        {
+          "value": "1.8125rem",
+          "label": "29px"
+        },
+        {
+          "value": "1.875rem",
+          "label": "30px"
+        },
+        {
+          "value": "1.9375rem",
+          "label": "31px"
+        },
+        {
+          "value": "2rem",
+          "label": "32px"
+        },
+        {
+          "value": "2.0625rem",
+          "label": "33px"
+        },
+        {
+          "value": "2.125rem",
+          "label": "34px"
+        },
+        {
+          "value": "2.1875rem",
+          "label": "35px"
+        },
+        {
+          "value": "2.25rem",
+          "label": "36px"
+        },
+        {
+          "value": "2.3125rem",
+          "label": "37px"
+        },
+        {
+          "value": "2.375rem",
+          "label": "38px"
+        },
+        {
+          "value": "2.4375rem",
+          "label": "39px"
+        },
+        {
+          "value": "2.5rem",
+          "label": "40px"
+        },
+        {
+          "value": "2.5625rem",
+          "label": "41px"
+        },
+        {
+          "value": "2.625rem",
+          "label": "42px"
+        },
+        {
+          "value": "2.6875rem",
+          "label": "43px"
+        },
+        {
+          "value": "2.75rem",
+          "label": "44px"
+        },
+        {
+          "value": "2.8125rem",
+          "label": "45px"
+        },
+        {
+          "value": "2.875rem",
+          "label": "46px"
+        },
+        {
+          "value": "2.9375rem",
+          "label": "47px"
+        },
+        {
+          "value": "3rem",
+          "label": "48px"
+        },
+        {
+          "value": "3.0625rem",
+          "label": "49px"
+        },
+        {
+          "value": "3.125rem",
+          "label": "50px"
+        },
+        {
+          "value": "3.5rem",
+          "label": "56px"
+        }
+      ],
+      "default": "",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "weight",
+      "label": "t:settings.weight",
+      "options": [
+        {
+          "value": "",
+          "label": "t:options.default"
+        },
+        {
+          "value": "100",
+          "label": "t:options.thin"
+        },
+        {
+          "value": "300",
+          "label": "t:options.light"
+        },
+        {
+          "value": "400",
+          "label": "t:options.regular"
+        },
+        {
+          "value": "500",
+          "label": "t:options.medium"
+        },
+        {
+          "value": "600",
+          "label": "t:options.semibold"
+        },
+        {
+          "value": "700",
+          "label": "t:options.bold"
+        },
+        {
+          "value": "900",
+          "label": "t:options.black"
+        }
+      ],
+      "default": "",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "line_height",
+      "label": "t:settings.line_height",
+      "options": [
+        {
+          "value": "tight",
+          "label": "t:options.tight"
+        },
+        {
+          "value": "normal",
+          "label": "t:options.normal"
+        },
+        {
+          "value": "loose",
+          "label": "t:options.loose"
+        }
+      ],
+      "default": "normal",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "letter_spacing",
+      "label": "t:settings.letter_spacing",
+      "options": [
+        {
+          "value": "tight",
+          "label": "t:options.tight"
+        },
+        {
+          "value": "normal",
+          "label": "t:options.normal"
+        },
+        {
+          "value": "loose",
+          "label": "t:options.loose"
+        }
+      ],
+      "default": "normal",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "case",
+      "label": "t:settings.case",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:options.default"
+        },
+        {
+          "value": "uppercase",
+          "label": "t:options.uppercase"
+        }
+      ],
+      "default": "none",
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "wrap",
+      "label": "t:settings.wrap",
+      "options": [
+        {
+          "value": "pretty",
+          "label": "t:options.pretty"
+        },
+        {
+          "value": "balance",
+          "label": "t:options.balance"
+        },
+        {
+          "value": "nowrap",
+          "label": "t:options.none"
+        }
+      ],
+      "visible_if": "{{ block.settings.type_preset == 'custom' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.appearance"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "t:settings.text_color",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "color",
+      "id": "highlight_color",
+      "label": "Highlight text color",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "checkbox",
+      "id": "background",
+      "label": "t:settings.background",
+      "default": false
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "t:settings.background_color",
+      "alpha": true,
+      "default": "#00000026",
+      "visible_if": "{{ block.settings.background }}"
+    },
+    {
+      "type": "range",
+      "id": "corner_radius",
+      "label": "t:settings.corner_radius",
+      "default": 0,
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "visible_if": "{{ block.settings.background }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Coverage calculator"
+    }
+  ]
+}
+{% endschema %}
