@@ -68,7 +68,15 @@
     "section_FhmEVQ": {
       "type": "section",
       "blocks": {
-        "bss_b2b_solution_form_pVaWh8": {
+        "custom_liquid_kMqjaD": {
+          "type": "custom-liquid",
+          "name": "t:names.custom_liquid",
+          "settings": {
+            "custom_liquid": "<div id=\"bss-b2b-registration-form\" form-id=\"35323\"/>"
+          },
+          "blocks": {}
+        },
+        "bss_b2b_solution_form_jbdKeU": {
           "type": "shopify://apps/bss-b2b-solution/blocks/form/451233f2-9631-4c49-8b6f-057e4ebcde7f",
           "settings": {
             "form_id": "35323"
@@ -76,7 +84,8 @@
         }
       },
       "block_order": [
-        "bss_b2b_solution_form_pVaWh8"
+        "custom_liquid_kMqjaD",
+        "bss_b2b_solution_form_jbdKeU"
       ],
       "name": "t:names.custom_section",
       "settings": {
