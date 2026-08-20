@@ -68,14 +68,6 @@
     "section_FhmEVQ": {
       "type": "section",
       "blocks": {
-        "custom_liquid_kMqjaD": {
-          "type": "custom-liquid",
-          "name": "t:names.custom_liquid",
-          "settings": {
-            "custom_liquid": "<div id=\"bss-b2b-registration-form\" form-id=\"35323\"/>"
-          },
-          "blocks": {}
-        },
         "bss_b2b_solution_form_jbdKeU": {
           "type": "shopify://apps/bss-b2b-solution/blocks/form/451233f2-9631-4c49-8b6f-057e4ebcde7f",
           "settings": {
@@ -84,7 +76,6 @@
         }
       },
       "block_order": [
-        "custom_liquid_kMqjaD",
         "bss_b2b_solution_form_jbdKeU"
       ],
       "name": "t:names.custom_section",
@@ -94,8 +85,8 @@
         "horizontal_alignment": "flex-start",
         "vertical_alignment": "center",
         "align_baseline": false,
-        "horizontal_alignment_flex_direction_column": "flex-start",
-        "vertical_alignment_flex_direction_column": "center",
+        "horizontal_alignment_flex_direction_column": "center",
+        "vertical_alignment_flex_direction_column": "flex-start",
         "gap": 12,
         "section_width": "page-width",
         "section_height": "small",
