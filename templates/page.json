@@ -105,7 +105,7 @@
         "border_color": "",
         "border_radius": 0,
         "padding-block-start": 0,
-        "padding-block-end": 0,
+        "padding-block-end": 56,
         "custom_mobile_padding": false,
         "padding-block-start-mobile": 0,
         "padding-block-end-mobile": 0
