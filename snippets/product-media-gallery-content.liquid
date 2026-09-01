@@ -26,12 +26,41 @@
 {%- endif -%}
 {%- liquid
   assign selected_product = closest.product
-  assign selected_variant_media = selected_product.selected_or_first_available_variant.featured_media
   assign first_3d_model = selected_product.media | where: 'media_type', 'model' | first
 
   if block_settings.hide_variants
     assign variant_images = selected_product.images | where: 'attached_to_variant?', true | map: 'src'
   endif
+
+  # Construct all_gallery_media containing product media + all variant metafield gallery media
+  assign all_gallery_media = '' | split: ','
+  assign added_all_ids = ','
+
+  for media in selected_product.media
+    assign m_id_check = ',' | append: media.id | append: ','
+    unless added_all_ids contains m_id_check
+      assign single_arr = selected_product.media | where: 'id', media.id
+      assign all_gallery_media = all_gallery_media | concat: single_arr
+      assign added_all_ids = added_all_ids | append: media.id | append: ','
+    endunless
+  endfor
+
+  for var in selected_product.variants
+    if var.metafields.custom.variant_gallery != blank and var.metafields.custom.variant_gallery.value != blank
+      for item in var.metafields.custom.variant_gallery.value
+        assign item_id_check = ',' | append: item.id | append: ','
+        unless added_all_ids contains item_id_check
+          assign item_arr = var.metafields.custom.variant_gallery.value | where: 'id', item.id
+          if item_arr.size > 0
+            assign all_gallery_media = all_gallery_media | concat: item_arr
+            assign added_all_ids = added_all_ids | append: item.id | append: ','
+          endif
+        endunless
+      endfor
+    endif
+  endfor
+
+  assign sorted_media = all_gallery_media
 
   if block_settings.slideshow_controls_style == 'thumbnails'
     assign controls_on_media = false
@@ -63,13 +92,13 @@
 
   assign slideshow_controls_style = block_settings.slideshow_controls_style
   # Use a counter instead of dots when there are many images to avoid cropping/overflow.
-  if slideshow_controls_style == 'dots' and selected_product.media.size > 15
+  if slideshow_controls_style == 'dots' and sorted_media.size > 15
     assign slideshow_controls_style = 'counter'
   endif
 
   assign render_slideshow_arrows = false
 
-  if selected_product.media.size <= 1
+  if sorted_media.size <= 1
     assign slideshow_class = 'product-media-gallery__slideshow--single-media slideshow--single-media'
   else
     assign slideshow_class = ''
@@ -101,23 +130,6 @@
     endif
   endif
 
-  assign sorted_media = '' | split: ','
-  if selected_variant_media
-    assign sorted_media = sorted_media | concat: selected_product.media | where: 'id', selected_variant_media.id
-
-    for media in selected_product.media
-      if block_settings.hide_variants and variant_images contains media.src and sorted_media.size > 0
-        continue
-      endif
-
-      if media.id != selected_variant_media.id
-        assign found_media = selected_product.media | where: 'id', media.id
-        assign sorted_media = sorted_media | concat: found_media
-      endif
-    endfor
-  else
-    assign sorted_media = selected_product.media
-  endif
   assign has_image_drop = sorted_media | has: 'media_type', 'image'
 
   # Determine if we're in single column mode (carousel or grid with one column)
@@ -349,6 +361,30 @@
       data-presentation="{{ media_presentation }}"
       {{ block_shopify_attributes }}
     >
+      <script type="application/json" class="variant-gallery-data">
+        {
+          "product_featured_media_id": {{ selected_product.featured_media.id | json }},
+          "variants": {
+            {% for variant in selected_product.variants %}
+              {% liquid
+                assign g_ids = '' | split: ','
+                if variant.metafields.custom.variant_gallery != blank and variant.metafields.custom.variant_gallery.value != blank
+                  for item in variant.metafields.custom.variant_gallery.value
+                    assign item_id_str = item.id | append: ''
+                    assign item_id_arr = item_id_str | split: ','
+                    assign g_ids = g_ids | concat: item_id_arr
+                  endfor
+                endif
+              %}
+              "{{ variant.id }}": {
+                "featured_media_id": {{ variant.featured_media.id | json }},
+                "variant_gallery": {{ g_ids | json }}
+              }{% unless forloop.last %},{% endunless %}
+            {% endfor %}
+          }
+        }
+      </script>
+
       {% capture slides %}
       {% for media in sorted_media %}
         {% capture children %}
@@ -377,9 +413,11 @@
           {% endcapture %}
         {% endif %}
         {% if block_settings.zoom and media.media_type == 'model' %}
-          {%- capture attributes -%}"{% if settings.transition_to_main_product and forloop.first %} data-view-transition-type="product-image-transition"{% endif %}{% endcapture -%}
+          {%- capture attributes -%}data-media-id="{{ media.id }}"{% if settings.transition_to_main_product and forloop.first %} data-view-transition-type="product-image-transition"{% endif %}{% endcapture -%}
         {% elsif block_settings.zoom %}
-          {%- capture attributes -%}on:click="#zoom-dialog-{{ block_id }}/open/{{ forloop.index0 }}"{% if settings.transition_to_main_product and forloop.first %} data-view-transition-type="product-image-transition"{% endif %}{% endcapture -%}
+          {%- capture attributes -%}data-media-id="{{ media.id }}" on:click="#zoom-dialog-{{ block_id }}/open/{{ forloop.index0 }}"{% if settings.transition_to_main_product and forloop.first %} data-view-transition-type="product-image-transition"{% endif %}{% endcapture -%}
+        {% else %}
+          {%- capture attributes -%}data-media-id="{{ media.id }}"{% endcapture -%}
         {% endif %}
 
         {% render 'slideshow-slide',
@@ -447,6 +485,7 @@
           {% for media in sorted_media %}
             <li
               ref="media[]"
+              data-media-id="{{ media.id }}"
               class="{{ product_media_container_class }} product-media-container--{{ media.media_type }} {% unless block_settings.aspect_ratio == 'adapt' %}product-media-container--force-aspect{% endunless %}"
               style="{% if block_settings.aspect_ratio == 'adapt' %} --media-preview-ratio: {{ media.preview_image.aspect_ratio | default: 1.0 }};{% endif %} --media-radius: {{ block_settings.media_radius }}px;"
               {% if settings.transition_to_main_product and forloop.first %}
