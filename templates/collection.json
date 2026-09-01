@@ -155,6 +155,8 @@
               "type": "_product-card-gallery",
               "settings": {
                 "image_ratio": "square",
+                "image_fit": "contain",
+                "constrain_to_viewport": "",
                 "border": "none",
                 "border_width": 1,
                 "border_opacity": 100,
