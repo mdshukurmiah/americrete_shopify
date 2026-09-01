@@ -151,13 +151,8 @@
   if block_settings.constrain_to_viewport
     assign product_media_container_class = product_media_container_class | append: ' constrain-height'
   endif
-  if block_settings.aspect_ratio != 'adapt'
-    assign product_media_container_class = product_media_container_class | append: ' media-fit-cover'
-  elsif block_settings.constrain_to_viewport
-    assign product_media_container_class = product_media_container_class | append: ' media-fit-' | append: block_settings.media_fit
-  else
-    assign product_media_container_class = product_media_container_class | append: ' media-fit-contain'
-  endif
+
+  assign product_media_container_class = product_media_container_class | append: ' media-fit-' | append: block_settings.media_fit
 
   if block_settings.aspect_ratio == 'adapt'
     assign lowest_aspect_ratio = 50
