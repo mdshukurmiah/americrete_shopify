@@ -1914,6 +1914,9 @@
       "block_order": [
         "judge_me_reviews_review_widget_n6eLdc"
       ],
+      "custom_css": [
+        "span.jm-star-rating__font-icon {color: #ff6200 !important; font-size: 15px !important;}"
+      ],
       "settings": {
         "content_direction": "column",
         "vertical_on_mobile": true,
