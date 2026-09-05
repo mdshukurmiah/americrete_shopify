@@ -15,7 +15,7 @@
         "text_FkCpxU": {
           "type": "text",
           "settings": {
-            "text": "<h2>New arrivals</h2>",
+            "text": "<h2>{{ closest.metaobject.project.title.value }}</h2>",
             "width": "fit-content",
             "max_width": "narrow",
             "alignment": "left",
