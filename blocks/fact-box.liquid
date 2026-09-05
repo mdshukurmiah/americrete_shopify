@@ -7,166 +7,149 @@
   assign has_data = false
 %}
 
-{% render 'contrast-override',
-  background_color: block_settings.background_color,
-  text_color: block_settings.text_color,
-  section_id: block.id
-%}
+{% capture facts_content %}
+  {% if facts_value != blank %}
+    {% comment %} Array / List metafield {% endcomment %}
+    {% if facts_value.first != blank %}
+      {% for item in facts_value %}
+        {% assign fact_label = '' %}
+        {% assign fact_val = '' %}
 
-{% style %}
-  #block-{{ block.id }}.fact-box {
-    --frame-bg: {% if block_settings.frame_bg_color != blank %}{{ block_settings.frame_bg_color }}{% else %}#f4f4f5{% endif %};
-    --card-bg: {% if block_settings.card_bg_color != blank %}{{ block_settings.card_bg_color }}{% else %}#ffffff{% endif %};
-    --grid-border-color: {% if block_settings.grid_border_color != blank %}{{ block_settings.grid_border_color }}{% else %}#e4e4e7{% endif %};
-    --label-color: {% if block_settings.label_color != blank %}{{ block_settings.label_color }}{% else %}#64748b{% endif %};
-    --value-color: {% if block_settings.value_color != blank %}{{ block_settings.value_color }}{% else %}#0f172a{% endif %};
-    --frame-padding: {{ block_settings.frame_padding | default: 12 }}px;
-    --item-padding-y: {{ block_settings.item_padding_y | default: 20 }}px;
-    --item-padding-x: {{ block_settings.item_padding_x | default: 16 }}px;
-    --desktop-columns: {{ block_settings.desktop_columns | default: 2 }};
-    --mobile-columns: {{ block_settings.mobile_columns | default: 2 }};
-    --text-alignment: {{ block_settings.text_alignment | default: 'center' }};
-    --label-font-size: {{ block_settings.label_font_size | default: '0.75rem' }};
-    --value-font-size: {{ block_settings.value_font_size | default: '1.375rem' }};
-    --label-weight: {{ block_settings.label_weight | default: '700' }};
-    --value-weight: {{ block_settings.value_weight | default: '800' }};
-    background-color: {% if block_settings.background_color != blank %}{{ block_settings.background_color }}{% else %}transparent{% endif %};
-  }
+        {% if item.label != blank or item.key != blank or item.title != blank or item.name != blank %}
+          {% assign fact_label = item.label | default: item.key | default: item.title | default: item.name | default: item.heading %}
+          {% assign fact_val = item.value | default: item.val | default: item.text %}
+        {% else %}
+          {% assign item_str = item | strip %}
+          {% if item_str contains '||' %}
+            {% assign parts = item_str | split: '||' %}
+            {% assign fact_label = parts[0] | strip %}
+            {% assign fact_val = parts[1] | strip %}
+          {% elsif item_str contains '|' %}
+            {% assign parts = item_str | split: '|' %}
+            {% assign fact_label = parts[0] | strip %}
+            {% assign fact_val = parts[1] | strip %}
+          {% elsif item_str contains ':' %}
+            {% assign parts = item_str | split: ':' %}
+            {% assign fact_label = parts[0] | strip %}
+            {% assign val_parts = parts | slice: 1, parts.size %}
+            {% assign fact_val = val_parts | join: ':' | strip %}
+          {% endif %}
+        {% endif %}
 
-  {% if block_settings.custom_css != blank %}
-    {% if block_settings.custom_css contains 'selector' %}
-      {% assign target_selector = '#block-' | append: block.id %}
-      {{ block_settings.custom_css | replace: 'selector', target_selector }}
-    {% else %}
-      #block-{{ block.id }} {
-        {{ block_settings.custom_css }}
-      }
+        {% if fact_label != blank and fact_val != blank %}
+          <div class="fact-box__item">
+            <div class="fact-box__label">{{ fact_label }}</div>
+            <div class="fact-box__value">{{ fact_val }}</div>
+          </div>
+          {% assign has_data = true %}
+        {% endif %}
+      {% endfor %}
+    {% elsif facts_value.label != blank or facts_value.key != blank or facts_value.title != blank or facts_value.name != blank or facts_value.value != blank %}
+      {% comment %} Single metaobject / object metafield {% endcomment %}
+      {% assign fact_label = facts_value.label | default: facts_value.key | default: facts_value.title | default: facts_value.name | default: facts_value.heading %}
+      {% assign fact_val = facts_value.value | default: facts_value.val | default: facts_value.text %}
+      {% if fact_label != blank and fact_val != blank %}
+        <div class="fact-box__item">
+          <div class="fact-box__label">{{ fact_label }}</div>
+          <div class="fact-box__value">{{ fact_val }}</div>
+        </div>
+        {% assign has_data = true %}
+      {% endif %}
+    {% elsif facts_value contains '||' or facts_value contains '|' or facts_value contains ':' %}
+      {% comment %} Multi-line text string {% endcomment %}
+      {% assign lines = facts_value | newline_to_br | split: '<br />' %}
+      {% for line in lines %}
+        {% assign trimmed = line | strip %}
+        {% assign fact_label = '' %}
+        {% assign fact_val = '' %}
+
+        {% if trimmed contains '||' %}
+          {% assign parts = trimmed | split: '||' %}
+          {% assign fact_label = parts[0] | strip %}
+          {% assign fact_val = parts[1] | strip %}
+        {% elsif trimmed contains '|' %}
+          {% assign parts = trimmed | split: '|' %}
+          {% assign fact_label = parts[0] | strip %}
+          {% assign fact_val = parts[1] | strip %}
+        {% elsif trimmed contains ':' %}
+          {% assign parts = trimmed | split: ':' %}
+          {% assign fact_label = parts[0] | strip %}
+          {% assign val_parts = parts | slice: 1, parts.size %}
+          {% assign fact_val = val_parts | join: ':' | strip %}
+        {% endif %}
+
+        {% if fact_label != blank and fact_val != blank %}
+          <div class="fact-box__item">
+            <div class="fact-box__label">{{ fact_label }}</div>
+            <div class="fact-box__value">{{ fact_val }}</div>
+          </div>
+          {% assign has_data = true %}
+        {% endif %}
+      {% endfor %}
     {% endif %}
   {% endif %}
-{% endstyle %}
+{% endcapture %}
 
-<div
-  id="block-{{ block.id }}"
-  class="fact-box border-style spacing-style{% if block_settings.background_color != blank or block_settings.text_color != blank %} color-custom-{{ block.id }}{% endif %}"
-  style="
-    {% if block_settings.type_preset == 'custom' %}
-      {% render 'typography-style', settings: block_settings %}
-    {% else %}
-      --font-family: var(--font-{{ block_settings.type_preset }}--family);
+{% if has_data %}
+  {% render 'contrast-override',
+    background_color: block_settings.background_color,
+    text_color: block_settings.text_color,
+    section_id: block.id
+  %}
+
+  {% style %}
+    #block-{{ block.id }}.fact-box {
+      --frame-bg: {% if block_settings.frame_bg_color != blank %}{{ block_settings.frame_bg_color }}{% else %}#f4f4f5{% endif %};
+      --card-bg: {% if block_settings.card_bg_color != blank %}{{ block_settings.card_bg_color }}{% else %}#ffffff{% endif %};
+      --grid-border-color: {% if block_settings.grid_border_color != blank %}{{ block_settings.grid_border_color }}{% else %}#e4e4e7{% endif %};
+      --label-color: {% if block_settings.label_color != blank %}{{ block_settings.label_color }}{% else %}#64748b{% endif %};
+      --value-color: {% if block_settings.value_color != blank %}{{ block_settings.value_color }}{% else %}#0f172a{% endif %};
+      --frame-padding: {{ block_settings.frame_padding | default: 12 }}px;
+      --item-padding-y: {{ block_settings.item_padding_y | default: 20 }}px;
+      --item-padding-x: {{ block_settings.item_padding_x | default: 16 }}px;
+      --desktop-columns: {{ block_settings.desktop_columns | default: 2 }};
+      --mobile-columns: {{ block_settings.mobile_columns | default: 2 }};
+      --text-alignment: {{ block_settings.text_alignment | default: 'center' }};
+      --label-font-size: {{ block_settings.label_font_size | default: '0.75rem' }};
+      --value-font-size: {{ block_settings.value_font_size | default: '1.375rem' }};
+      --label-weight: {{ block_settings.label_weight | default: '700' }};
+      --value-weight: {{ block_settings.value_weight | default: '800' }};
+      background-color: {% if block_settings.background_color != blank %}{{ block_settings.background_color }}{% else %}transparent{% endif %};
+    }
+
+    {% if block_settings.custom_css != blank %}
+      {% if block_settings.custom_css contains 'selector' %}
+        {% assign target_selector = '#block-' | append: block.id %}
+        {{ block_settings.custom_css | replace: 'selector', target_selector }}
+      {% else %}
+        #block-{{ block.id }} {
+          {{ block_settings.custom_css }}
+        }
+      {% endif %}
     {% endif %}
-    {% render 'spacing-style', settings: block_settings %}
-    {% render 'border-override', settings: block_settings %}
-  "
-  {{ block.shopify_attributes }}
->
-  <div class="fact-box__frame">
-    <div class="fact-box__grid" style="--desktop-columns: {{ block_settings.desktop_columns | default: 2 }};">
-      {% capture facts_content %}
-        {% if facts_value != blank %}
-          {% comment %} Array / List metafield {% endcomment %}
-          {% if facts_value.first != blank %}
-            {% for item in facts_value %}
-              {% assign fact_label = '' %}
-              {% assign fact_val = '' %}
+  {% endstyle %}
 
-              {% if item.label != blank or item.key != blank %}
-                {% assign fact_label = item.label | default: item.key | default: item.title %}
-                {% assign fact_val = item.value | default: item.val %}
-              {% else %}
-                {% assign item_str = item %}
-                {% if item_str contains '||' %}
-                  {% assign parts = item_str | split: '||' %}
-                  {% assign fact_label = parts[0] | strip %}
-                  {% assign fact_val = parts[1] | strip %}
-                {% elsif item_str contains '|' %}
-                  {% assign parts = item_str | split: '|' %}
-                  {% assign fact_label = parts[0] | strip %}
-                  {% assign fact_val = parts[1] | strip %}
-                {% elsif item_str contains ':' %}
-                  {% assign parts = item_str | split: ':' %}
-                  {% assign fact_label = parts[0] | strip %}
-                  {% assign val_parts = parts | slice: 1, parts.size %}
-                  {% assign fact_val = val_parts | join: ':' | strip %}
-                {% endif %}
-              {% endif %}
-
-              {% if fact_label != blank and fact_val != blank %}
-                <div class="fact-box__item">
-                  <div class="fact-box__label">{{ fact_label }}</div>
-                  <div class="fact-box__value">{{ fact_val }}</div>
-                </div>
-                {% assign has_data = true %}
-              {% endif %}
-            {% endfor %}
-          {% elsif facts_value contains '||' or facts_value contains '|' or facts_value contains ':' %}
-            {% comment %} Multi-line text string {% endcomment %}
-            {% assign lines = facts_value | newline_to_br | split: '<br />' %}
-            {% for line in lines %}
-              {% assign trimmed = line | strip %}
-              {% assign fact_label = '' %}
-              {% assign fact_val = '' %}
-
-              {% if trimmed contains '||' %}
-                {% assign parts = trimmed | split: '||' %}
-                {% assign fact_label = parts[0] | strip %}
-                {% assign fact_val = parts[1] | strip %}
-              {% elsif trimmed contains '|' %}
-                {% assign parts = trimmed | split: '|' %}
-                {% assign fact_label = parts[0] | strip %}
-                {% assign fact_val = parts[1] | strip %}
-              {% elsif trimmed contains ':' %}
-                {% assign parts = trimmed | split: ':' %}
-                {% assign fact_label = parts[0] | strip %}
-                {% assign val_parts = parts | slice: 1, parts.size %}
-                {% assign fact_val = val_parts | join: ':' | strip %}
-              {% endif %}
-
-              {% if fact_label != blank and fact_val != blank %}
-                <div class="fact-box__item">
-                  <div class="fact-box__label">{{ fact_label }}</div>
-                  <div class="fact-box__value">{{ fact_val }}</div>
-                </div>
-                {% assign has_data = true %}
-              {% endif %}
-            {% endfor %}
-          {% endif %}
-        {% endif %}
-
-        {% comment %} Fallback sample data matching screenshot {% endcomment %}
-        {% if has_data == false %}
-          {% if block_settings.show_sample_data or request.design_mode or target_product == blank or facts_value == blank %}
-            <div class="fact-box__item">
-              <div class="fact-box__label">ELONGATION</div>
-              <div class="fact-box__value">800%</div>
-            </div>
-            <div class="fact-box__item">
-              <div class="fact-box__label">CURE TIME</div>
-              <div class="fact-box__value">1 hr tack-free</div>
-            </div>
-            <div class="fact-box__item">
-              <div class="fact-box__label">COVERAGE</div>
-              <div class="fact-box__value">50 sq ft/gal</div>
-            </div>
-            <div class="fact-box__item">
-              <div class="fact-box__label">WARRANTY</div>
-              <div class="fact-box__value">10 years</div>
-            </div>
-            <div class="fact-box__item">
-              <div class="fact-box__label">VOC</div>
-              <div class="fact-box__value">&lt;50 g/L</div>
-            </div>
-            <div class="fact-box__item">
-              <div class="fact-box__label">ASTM</div>
-              <div class="fact-box__value">C 309 / C 1315</div>
-            </div>
-          {% endif %}
-        {% endif %}
-      {% endcapture %}
-
-      {{ facts_content }}
+  <div
+    id="block-{{ block.id }}"
+    class="fact-box border-style spacing-style{% if block_settings.background_color != blank or block_settings.text_color != blank %} color-custom-{{ block.id }}{% endif %}"
+    style="
+      {% if block_settings.type_preset == 'custom' %}
+        {% render 'typography-style', settings: block_settings %}
+      {% else %}
+        --font-family: var(--font-{{ block_settings.type_preset }}--family);
+      {% endif %}
+      {% render 'spacing-style', settings: block_settings %}
+      {% render 'border-override', settings: block_settings %}
+    "
+    {{ block.shopify_attributes }}
+  >
+    <div class="fact-box__frame">
+      <div class="fact-box__grid" style="--desktop-columns: {{ block_settings.desktop_columns | default: 2 }};">
+        {{ facts_content }}
+      </div>
     </div>
   </div>
-</div>
+{% endif %}
 
 {% stylesheet %}
   .fact-box {
@@ -263,14 +246,7 @@
       "type": "product",
       "id": "product",
       "label": "Product",
-      "info": "Select a product to pull metafield data (additional.fatcs). Leave blank to use current page product."
-    },
-    {
-      "type": "checkbox",
-      "id": "show_sample_data",
-      "label": "Show sample data if metafield is empty",
-      "default": true,
-      "info": "Renders standard fact box grid when product metafield has no data."
+      "info": "Select a product to pull metafield data (additional.fatcs or additional.facts). Leave blank to use current page product."
     },
     {
       "type": "header",

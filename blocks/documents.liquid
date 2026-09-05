@@ -50,65 +50,219 @@
   assign has_metafield_data = false
 %}
 
-{% render 'contrast-override',
-  background_color: block_settings.background_color,
-  text_color: block_settings.text_color,
-  section_id: block.id
-%}
+{% capture docs_rendered_content %}
+  {% if docs_value != blank %}
+    {% comment %} Array of files, objects, or strings {% endcomment %}
+    {% for item in docs_value %}
+      {% assign doc_title = '' %}
+      {% assign doc_info = '' %}
+      {% assign doc_url = '' %}
+      {% if item.url != blank or item.public_url != blank or item.filename != blank %}
+        {% comment %} Shopify File object (list.file_reference) {% endcomment %}
+        {% assign doc_url = item.url | default: item.public_url %}
+        {% if doc_url == blank %}
+          {% assign doc_url = item | file_url %}
+        {% endif %}
 
-{% style %}
-  #block-{{ block.id }}.documents-block {
-    --doc-title-size: {{ block_settings.title_font_size | default: 22 }}px;
-    --doc-title-weight: {{ block_settings.title_font_weight | default: '700' }};
-    --doc-title-color: {% if block_settings.title_color != blank %}{{ block_settings.title_color }}{% else %}var(--color-foreground, #1e293b){% endif %};
+        {% if item.alt != blank and item.alt != item.filename %}
+          {% assign doc_title = item.alt %}
+        {% elsif item.filename != blank %}
+          {% assign raw_name = item.filename | split: '?' | first | split: '/' | last | split: '.' | first %}
+          {% assign doc_title = raw_name | replace: '-', ' ' | replace: '_', ' ' | capitalize %}
+        {% elsif item.name != blank %}
+          {% assign doc_title = item.name %}
+        {% endif %}
 
-    --doc-desc-size: {{ block_settings.description_font_size | default: 14 }}px;
-    --doc-desc-color: {% if block_settings.description_color != blank %}{{ block_settings.description_color }}{% else %}rgb(var(--color-foreground-rgb, 71 85 105) / 0.8){% endif %};
+        {% assign doc_type = 'PDF' %}
+        {% assign file_check = item.filename | default: doc_url | downcase %}
+        {% assign mime_check = item.mime_type | default: item.media_type | downcase %}
 
-    --doc-card-bg: {% if block_settings.card_background_color != blank %}{{ block_settings.card_background_color }}{% else %}#f7f7f5{% endif %};
-    --doc-card-border: {% if block_settings.card_border_color != blank %}{{ block_settings.card_border_color }}{% else %}transparent{% endif %};
-    --doc-card-radius: {{ block_settings.card_border_radius | default: 4 }}px;
-    --doc-card-padding-y: {{ block_settings.card_padding_y | default: 16 }}px;
-    --doc-card-padding-x: {{ block_settings.card_padding_x | default: 20 }}px;
-    --doc-list-gap: {{ block_settings.list_gap | default: 10 }}px;
+        {% if mime_check contains 'pdf' or file_check contains '.pdf' %}
+          {% assign doc_type = 'PDF' %}
+        {% elsif mime_check contains 'image' or file_check contains '.png' or file_check contains '.jpg' %}
+          {% assign doc_type = 'IMAGE' %}
+        {% elsif mime_check contains 'word' or file_check contains '.doc' %}
+          {% assign doc_type = 'DOC' %}
+        {% endif %}
 
-    --doc-item-title-size: {{ block_settings.doc_title_font_size | default: 16 }}px;
-    --doc-item-title-weight: {{ block_settings.doc_title_font_weight | default: '700' }};
-    --doc-item-title-color: {% if block_settings.doc_title_color != blank %}{{ block_settings.doc_title_color }}{% else %}#1e293b{% endif %};
+        {% assign doc_info = doc_type %}
+        {% assign item_bytes = item.size | default: item.file_size %}
+        {% if item_bytes != blank and item_bytes > 0 %}
+          {% if item_bytes >= 1048576 %}
+            {% assign mb_size = item_bytes | divided_by: 1048576.0 | round: 1 %}
+            {% assign doc_info = doc_info | append: ' · ' | append: mb_size | append: ' MB' %}
+          {% else %}
+            {% assign kb_size = item_bytes | divided_by: 1024 %}
+            {% assign doc_info = doc_info | append: ' · ' | append: kb_size | append: ' KB' %}
+          {% endif %}
+        {% endif %}
+      {% elsif item.title != blank or item.name != blank or item.label != blank %}
+        {% comment %} Metaobject item {% endcomment %}
+        {% assign doc_title = item.title | default: item.name | default: item.label %}
+        {% assign doc_info = item.info | default: item.subtitle | default: item.description | default: item.meta %}
+        {% assign doc_file = item.file | default: item.url | default: item.pdf | default: item.download_url %}
+        {% assign doc_url = doc_file.url | default: doc_file %}
+      {% else %}
+        {% comment %} String item formatted with | or || or raw URL {% endcomment %}
+        {% assign item_str = item %}
+        {% if item_str contains '||' %}
+          {% assign parts = item_str | split: '||' %}
+          {% assign doc_title = parts[0] | strip %}
+          {% assign doc_info = parts[1] | strip %}
+          {% assign doc_url = parts[2] | strip %}
+        {% elsif item_str contains '|' %}
+          {% assign parts = item_str | split: '|' %}
+          {% assign doc_title = parts[0] | strip %}
+          {% assign doc_info = parts[1] | strip %}
+          {% assign doc_url = parts[2] | strip %}
+        {% else %}
+          {% assign doc_url = item_str %}
+          {% assign raw_name = item_str | split: '?' | first | split: '/' | last | split: '.' | first %}
+          {% assign doc_title = raw_name | replace: '-', ' ' | replace: '_', ' ' | capitalize %}
+          {% assign doc_info = 'PDF' %}
+        {% endif %}
+      {% endif %}
 
-    --doc-item-info-size: {{ block_settings.doc_info_font_size | default: 13 }}px;
-    --doc-item-info-weight: {{ block_settings.doc_info_font_weight | default: '400' }};
-    --doc-item-info-color: {% if block_settings.doc_info_color != blank %}{{ block_settings.doc_info_color }}{% else %}#64748b{% endif %};
+      {% if doc_title == blank or doc_title == '#' %}
+        {% if doc_url != blank and doc_url != '#' %}
+          {% assign raw_name = doc_url | split: '?' | first | split: '/' | last | split: '.' | first %}
+          {% assign doc_title = raw_name | replace: '-', ' ' | replace: '_', ' ' | capitalize %}
+        {% endif %}
+      {% endif %}
 
-    --doc-btn-bg: {% if block_settings.button_bg_color != blank %}{{ block_settings.button_bg_color }}{% else %}#991b1b{% endif %};
-    --doc-btn-color: {% if block_settings.button_text_color != blank %}{{ block_settings.button_text_color }}{% else %}#ffffff{% endif %};
-    --doc-btn-hover-bg: {% if block_settings.button_hover_bg_color != blank %}{{ block_settings.button_hover_bg_color }}{% else %}#7f1d1d{% endif %};
-    --doc-btn-hover-color: {% if block_settings.button_hover_text_color != blank %}{{ block_settings.button_hover_text_color }}{% else %}#ffffff{% endif %};
-    --doc-btn-size: {{ block_settings.button_font_size | default: 12 }}px;
-    --doc-btn-weight: {{ block_settings.button_font_weight | default: '700' }};
-    --doc-btn-spacing: {{ block_settings.button_letter_spacing | default: 1 }}px;
-    --doc-btn-radius: {{ block_settings.button_border_radius | default: 4 }}px;
-    --doc-btn-padding-y: {{ block_settings.button_padding_y | default: 10 }}px;
-    --doc-btn-padding-x: {{ block_settings.button_padding_x | default: 22 }}px;
+      {% if doc_title == blank %}
+        {% assign doc_title = 'Document ' | append: forloop.index %}
+      {% endif %}
 
-    --doc-icon-bg: {% if block_settings.icon_bg_color != blank %}{{ block_settings.icon_bg_color }}{% else %}#ffffff{% endif %};
-    --doc-icon-color: {% if block_settings.icon_color != blank %}{{ block_settings.icon_color }}{% else %}#8b5cf6{% endif %};
-    --doc-icon-border: {% if block_settings.icon_border_color != blank %}{{ block_settings.icon_border_color }}{% else %}#e2e8f0{% endif %};
-
-    background-color: {% if block_settings.background_color != blank %}{{ block_settings.background_color }}{% else %}transparent{% endif %};
-  }
-
-  {% if block_settings.custom_css != blank %}
-    {% if block_settings.custom_css contains 'selector' %}
-      {% assign target_selector = '#block-' | append: block.id %}
-      {{ block_settings.custom_css | replace: 'selector', target_selector }}
-    {% else %}
-      #block-{{ block.id }} {
-        {{ block_settings.custom_css }}
-      }
-    {% endif %}
+      <div class="documents-block__item">
+        <div class="documents-block__item-left">
+          {% if block_settings.show_icon %}
+            <div class="documents-block__icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M14 2V8H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8 13H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8 17H14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          {% endif %}
+          <div class="documents-block__info">
+            <div class="documents-block__item-title">{{ doc_title }}</div>
+            {% if doc_info != blank %}
+              <div class="documents-block__item-meta">{{ doc_info }}</div>
+            {% endif %}
+          </div>
+        </div>
+        <a
+          href="{{ doc_url | default: '#' }}"
+          class="documents-block__button"
+          {% if doc_url != blank and doc_url != '#' %}
+            target="_blank" download
+          {% endif %}
+        >
+          {{ block_settings.button_label | default: 'DOWNLOAD' }}
+        </a>
+      </div>
+      {% assign has_metafield_data = true %}
+    {% endfor %}
   {% endif %}
-{% endstyle %}
+{% endcapture %}
+
+{% if has_metafield_data %}
+  {% render 'contrast-override',
+    background_color: block_settings.background_color,
+    text_color: block_settings.text_color,
+    section_id: block.id
+  %}
+
+  {% style %}
+    #block-{{ block.id }}.documents-block {
+      --doc-title-size: {{ block_settings.title_font_size | default: 22 }}px;
+      --doc-title-weight: {{ block_settings.title_font_weight | default: '700' }};
+      --doc-title-color: {% if block_settings.title_color != blank %}{{ block_settings.title_color }}{% else %}var(--color-foreground, #1e293b){% endif %};
+
+      --doc-desc-size: {{ block_settings.description_font_size | default: 14 }}px;
+      --doc-desc-color: {% if block_settings.description_color != blank %}{{ block_settings.description_color }}{% else %}rgb(var(--color-foreground-rgb, 71 85 105) / 0.8){% endif %};
+
+      --doc-card-bg: {% if block_settings.card_background_color != blank %}{{ block_settings.card_background_color }}{% else %}#f7f7f5{% endif %};
+      --doc-card-border: {% if block_settings.card_border_color != blank %}{{ block_settings.card_border_color }}{% else %}transparent{% endif %};
+      --doc-card-radius: {{ block_settings.card_border_radius | default: 4 }}px;
+      --doc-card-padding-y: {{ block_settings.card_padding_y | default: 16 }}px;
+      --doc-card-padding-x: {{ block_settings.card_padding_x | default: 20 }}px;
+      --doc-list-gap: {{ block_settings.list_gap | default: 10 }}px;
+
+      --doc-item-title-size: {{ block_settings.doc_title_font_size | default: 16 }}px;
+      --doc-item-title-weight: {{ block_settings.doc_title_font_weight | default: '700' }};
+      --doc-item-title-color: {% if block_settings.doc_title_color != blank %}{{ block_settings.doc_title_color }}{% else %}#1e293b{% endif %};
+
+      --doc-item-info-size: {{ block_settings.doc_info_font_size | default: 13 }}px;
+      --doc-item-info-weight: {{ block_settings.doc_info_font_weight | default: '400' }};
+      --doc-item-info-color: {% if block_settings.doc_info_color != blank %}{{ block_settings.doc_info_color }}{% else %}#64748b{% endif %};
+
+      --doc-btn-bg: {% if block_settings.button_bg_color != blank %}{{ block_settings.button_bg_color }}{% else %}#991b1b{% endif %};
+      --doc-btn-color: {% if block_settings.button_text_color != blank %}{{ block_settings.button_text_color }}{% else %}#ffffff{% endif %};
+      --doc-btn-hover-bg: {% if block_settings.button_hover_bg_color != blank %}{{ block_settings.button_hover_bg_color }}{% else %}#7f1d1d{% endif %};
+      --doc-btn-hover-color: {% if block_settings.button_hover_text_color != blank %}{{ block_settings.button_hover_text_color }}{% else %}#ffffff{% endif %};
+      --doc-btn-size: {{ block_settings.button_font_size | default: 12 }}px;
+      --doc-btn-weight: {{ block_settings.button_font_weight | default: '700' }};
+      --doc-btn-spacing: {{ block_settings.button_letter_spacing | default: 1 }}px;
+      --doc-btn-radius: {{ block_settings.button_border_radius | default: 4 }}px;
+      --doc-btn-padding-y: {{ block_settings.button_padding_y | default: 10 }}px;
+      --doc-btn-padding-x: {{ block_settings.button_padding_x | default: 22 }}px;
+
+      --doc-icon-bg: {% if block_settings.icon_bg_color != blank %}{{ block_settings.icon_bg_color }}{% else %}#ffffff{% endif %};
+      --doc-icon-color: {% if block_settings.icon_color != blank %}{{ block_settings.icon_color }}{% else %}#8b5cf6{% endif %};
+      --doc-icon-border: {% if block_settings.icon_border_color != blank %}{{ block_settings.icon_border_color }}{% else %}#e2e8f0{% endif %};
+
+      background-color: {% if block_settings.background_color != blank %}{{ block_settings.background_color }}{% else %}transparent{% endif %};
+    }
+
+    {% if block_settings.custom_css != blank %}
+      {% if block_settings.custom_css contains 'selector' %}
+        {% assign target_selector = '#block-' | append: block.id %}
+        {{ block_settings.custom_css | replace: 'selector', target_selector }}
+      {% else %}
+        #block-{{ block.id }} {
+          {{ block_settings.custom_css }}
+        }
+      {% endif %}
+    {% endif %}
+  {% endstyle %}
+
+  <div
+    id="block-{{ block.id }}"
+    class="documents-block border-style spacing-style{% if block_settings.background_color != blank or block_settings.text_color != blank %} color-custom-{{ block.id }}{% endif %}"
+    style="
+      {% if block_settings.type_preset == 'custom' %}
+        {% render 'typography-style', settings: block_settings %}
+      {% else %}
+        --font-family: var(--font-{{ block_settings.type_preset }}--family);
+      {% endif %}
+      {% render 'spacing-style', settings: block_settings %}
+      {% render 'border-override', settings: block_settings %}
+    "
+    {{ block.shopify_attributes }}
+  >
+    <div class="documents-block__container">
+      {% if block_settings.title != blank or block_settings.description != blank %}
+        <div class="documents-block__header">
+          {% if block_settings.title != blank %}
+            <h3 class="documents-block__title">{{ block_settings.title }}</h3>
+          {% endif %}
+          {% if block_settings.description != blank %}
+            <div class="documents-block__description rte">
+              {{ block_settings.description }}
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <div class="documents-block__list">
+        {{ docs_rendered_content }}
+      </div>
+    </div>
+  </div>
+{% endif %}
 
 {% stylesheet %}
   .documents-block {
@@ -271,283 +425,6 @@
     }
   }
 {% endstylesheet %}
-
-<div
-  id="block-{{ block.id }}"
-  class="documents-block border-style spacing-style{% if block_settings.background_color != blank or block_settings.text_color != blank %} color-custom-{{ block.id }}{% endif %}"
-  style="
-    {% if block_settings.type_preset == 'custom' %}
-      {% render 'typography-style', settings: block_settings %}
-    {% else %}
-      --font-family: var(--font-{{ block_settings.type_preset }}--family);
-    {% endif %}
-    {% render 'spacing-style', settings: block_settings %}
-    {% render 'border-override', settings: block_settings %}
-  "
-  {{ block.shopify_attributes }}
->
-  <div class="documents-block__container">
-    {% if block_settings.title != blank or block_settings.description != blank %}
-      <div class="documents-block__header">
-        {% if block_settings.title != blank %}
-          <h3 class="documents-block__title">{{ block_settings.title }}</h3>
-        {% endif %}
-        {% if block_settings.description != blank %}
-          <div class="documents-block__description rte">
-            {{ block_settings.description }}
-          </div>
-        {% endif %}
-      </div>
-    {% endif %}
-
-    <div class="documents-block__list">
-      {% capture docs_rendered_content %}
-        {% if docs_value != blank %}
-          {% comment %} Array of files, objects, or strings {% endcomment %}
-          {% for item in docs_value %}
-            {% assign doc_title = '' %}
-            {% assign doc_info = '' %}
-            {% assign doc_url = '' %}
-            {% if item.url != blank or item.public_url != blank or item.filename != blank %}
-              {% comment %} Shopify File object (list.file_reference) {% endcomment %}
-              {% assign doc_url = item.url | default: item.public_url %}
-              {% if doc_url == blank %}
-                {% assign doc_url = item | file_url %}
-              {% endif %}
-
-              {% if item.alt != blank and item.alt != item.filename %}
-                {% assign doc_title = item.alt %}
-              {% elsif item.filename != blank %}
-                {% assign raw_name = item.filename | split: '?' | first | split: '/' | last | split: '.' | first %}
-                {% assign doc_title = raw_name | replace: '-', ' ' | replace: '_', ' ' | capitalize %}
-              {% elsif item.name != blank %}
-                {% assign doc_title = item.name %}
-              {% endif %}
-
-              {% assign doc_type = 'PDF' %}
-              {% assign file_check = item.filename | default: doc_url | downcase %}
-              {% assign mime_check = item.mime_type | default: item.media_type | downcase %}
-
-              {% if mime_check contains 'pdf' or file_check contains '.pdf' %}
-                {% assign doc_type = 'PDF' %}
-              {% elsif mime_check contains 'image' or file_check contains '.png' or file_check contains '.jpg' %}
-                {% assign doc_type = 'IMAGE' %}
-              {% elsif mime_check contains 'word' or file_check contains '.doc' %}
-                {% assign doc_type = 'DOC' %}
-              {% endif %}
-
-              {% assign doc_info = doc_type %}
-              {% assign item_bytes = item.size | default: item.file_size %}
-              {% if item_bytes != blank and item_bytes > 0 %}
-                {% if item_bytes >= 1048576 %}
-                  {% assign mb_size = item_bytes | divided_by: 1048576.0 | round: 1 %}
-                  {% assign doc_info = doc_info | append: ' · ' | append: mb_size | append: ' MB' %}
-                {% else %}
-                  {% assign kb_size = item_bytes | divided_by: 1024 %}
-                  {% assign doc_info = doc_info | append: ' · ' | append: kb_size | append: ' KB' %}
-                {% endif %}
-              {% endif %}
-            {% elsif item.title != blank or item.name != blank or item.label != blank %}
-              {% comment %} Metaobject item {% endcomment %}
-              {% assign doc_title = item.title | default: item.name | default: item.label %}
-              {% assign doc_info = item.info | default: item.subtitle | default: item.description | default: item.meta %}
-              {% assign doc_file = item.file | default: item.url | default: item.pdf | default: item.download_url %}
-              {% assign doc_url = doc_file.url | default: doc_file %}
-            {% else %}
-              {% comment %} String item formatted with | or || or raw URL {% endcomment %}
-              {% assign item_str = item %}
-              {% if item_str contains '||' %}
-                {% assign parts = item_str | split: '||' %}
-                {% assign doc_title = parts[0] | strip %}
-                {% assign doc_info = parts[1] | strip %}
-                {% assign doc_url = parts[2] | strip %}
-              {% elsif item_str contains '|' %}
-                {% assign parts = item_str | split: '|' %}
-                {% assign doc_title = parts[0] | strip %}
-                {% assign doc_info = parts[1] | strip %}
-                {% assign doc_url = parts[2] | strip %}
-              {% else %}
-                {% assign doc_url = item_str %}
-                {% assign raw_name = item_str | split: '?' | first | split: '/' | last | split: '.' | first %}
-                {% assign doc_title = raw_name | replace: '-', ' ' | replace: '_', ' ' | capitalize %}
-                {% assign doc_info = 'PDF' %}
-              {% endif %}
-            {% endif %}
-
-            {% if doc_title == blank or doc_title == '#' %}
-              {% if doc_url != blank and doc_url != '#' %}
-                {% assign raw_name = doc_url | split: '?' | first | split: '/' | last | split: '.' | first %}
-                {% assign doc_title = raw_name | replace: '-', ' ' | replace: '_', ' ' | capitalize %}
-              {% endif %}
-            {% endif %}
-
-            {% if doc_title == blank %}
-              {% assign doc_title = 'Document ' | append: forloop.index %}
-            {% endif %}
-
-            <div class="documents-block__item">
-              <div class="documents-block__item-left">
-                {% if block_settings.show_icon %}
-                  <div class="documents-block__icon-wrap">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M14 2V8H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M8 13H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M8 17H14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </div>
-                {% endif %}
-                <div class="documents-block__info">
-                  <div class="documents-block__item-title">{{ doc_title }}</div>
-                  {% if doc_info != blank %}
-                    <div class="documents-block__item-meta">{{ doc_info }}</div>
-                  {% endif %}
-                </div>
-              </div>
-              <a
-                href="{{ doc_url | default: '#' }}"
-                class="documents-block__button"
-                {% if doc_url != blank and doc_url != '#' %}
-                  target="_blank" download
-                {% endif %}
-              >
-                {{ block_settings.button_label | default: 'DOWNLOAD' }}
-              </a>
-            </div>
-            {% assign has_metafield_data = true %}
-          {% endfor %}
-        {% endif %}
-      {% endcapture %}
-
-      {% if has_metafield_data %}
-        {{ docs_rendered_content }}
-      {% else %}
-        {% comment %} Fallback Sample Documents (Matching Screenshot) {% endcomment %}
-        <div class="documents-block__item">
-          <div class="documents-block__item-left">
-            {% if block_settings.show_icon %}
-              <div class="documents-block__icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M14 2V8H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M8 13H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M8 17H14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-            {% endif %}
-            <div class="documents-block__info">
-              <div class="documents-block__item-title">Safety Data Sheet (SDS)</div>
-              <div class="documents-block__item-meta">PDF · 480 KB · Revised January 2026</div>
-            </div>
-          </div>
-          <a href="#" class="documents-block__button">{{ block_settings.button_label | default: 'DOWNLOAD' }}</a>
-        </div>
-
-        <div class="documents-block__item">
-          <div class="documents-block__item-left">
-            {% if block_settings.show_icon %}
-              <div class="documents-block__icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M14 2V8H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M8 13H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M8 17H14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-            {% endif %}
-            <div class="documents-block__info">
-              <div class="documents-block__item-title">Technical Data Sheet (TDS)</div>
-              <div class="documents-block__item-meta">
-                PDF · 320 KB · Full performance and application specifications
-              </div>
-            </div>
-          </div>
-          <a href="#" class="documents-block__button">{{ block_settings.button_label | default: 'DOWNLOAD' }}</a>
-        </div>
-
-        <div class="documents-block__item">
-          <div class="documents-block__item-left">
-            {% if block_settings.show_icon %}
-              <div class="documents-block__icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M14 2V8H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M8 13H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M8 17H14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-            {% endif %}
-            <div class="documents-block__info">
-              <div class="documents-block__item-title">Application & Installation Guide</div>
-              <div class="documents-block__item-meta">PDF · 1.2 MB · Step-by-step for the A-3025/A-3050 system</div>
-            </div>
-          </div>
-          <a href="#" class="documents-block__button">{{ block_settings.button_label | default: 'DOWNLOAD' }}</a>
-        </div>
-
-        <div class="documents-block__item">
-          <div class="documents-block__item-left">
-            {% if block_settings.show_icon %}
-              <div class="documents-block__icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M14 2V8H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M8 13H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M8 17H14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-            {% endif %}
-            <div class="documents-block__info">
-              <div class="documents-block__item-title">10-Year Performance Warranty</div>
-              <div class="documents-block__item-meta">PDF · 180 KB · Terms and registration requirements</div>
-            </div>
-          </div>
-          <a href="#" class="documents-block__button">{{ block_settings.button_label | default: 'DOWNLOAD' }}</a>
-        </div>
-
-        <div class="documents-block__item">
-          <div class="documents-block__item-left">
-            {% if block_settings.show_icon %}
-              <div class="documents-block__icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M14 2V8H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M8 13H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M8 17H14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-            {% endif %}
-            <div class="documents-block__info">
-              <div class="documents-block__item-title">LEED Compliance & Cool Roof Rating</div>
-              <div class="documents-block__item-meta">PDF · 240 KB · ASTM E 903 solar reflectance data</div>
-            </div>
-          </div>
-          <a href="#" class="documents-block__button">{{ block_settings.button_label | default: 'DOWNLOAD' }}</a>
-        </div>
-
-        <div class="documents-block__item">
-          <div class="documents-block__item-left">
-            {% if block_settings.show_icon %}
-              <div class="documents-block__icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M14 2V8H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M8 13H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M8 17H14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-            {% endif %}
-            <div class="documents-block__info">
-              <div class="documents-block__item-title">Third-Party ASTM Testing Report</div>
-              <div class="documents-block__item-meta">PDF · 620 KB · Independent lab certification data</div>
-            </div>
-          </div>
-          <a href="#" class="documents-block__button">{{ block_settings.button_label | default: 'DOWNLOAD' }}</a>
-        </div>
-      {% endif %}
-    </div>
-  </div>
-</div>
 
 {% schema %}
 {
