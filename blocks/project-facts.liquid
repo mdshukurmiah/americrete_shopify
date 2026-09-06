@@ -1,0 +1,105 @@
+{% liquid
+  assign target_project = metaobject
+  if target_project == blank
+    assign target_project = closest.metaobject.project
+  endif
+  if target_project == blank
+    assign target_project = shop.metaobjects.project.values.first
+  endif
+  assign facts_data = target_project.facts.value | default: target_project.facts
+%}
+
+<div class="project-facts-block">
+  <div class="project-facts-block__container">
+    {% if facts_data != blank %}
+      {% for item in facts_data %}
+        {% assign fact_label = '' %}
+        {% assign fact_val = '' %}
+        {% if item.label != blank or item.key != blank or item.title != blank or item.name != blank %}
+          {% assign fact_label = item.label | default: item.key | default: item.title | default: item.name %}
+          {% assign fact_val = item.value | default: item.val | default: item.text %}
+        {% else %}
+          {% assign item_str = item.value | default: item | strip %}
+          {% if item_str contains '||' %}
+            {% assign parts = item_str | split: '||' %}
+            {% assign fact_label = parts[0] | strip %}
+            {% assign fact_val = parts[1] | strip %}
+          {% elsif item_str contains '|' %}
+            {% assign parts = item_str | split: '|' %}
+            {% assign fact_label = parts[0] | strip %}
+            {% assign fact_val = parts[1] | strip %}
+          {% elsif item_str contains ':' %}
+            {% assign parts = item_str | split: ':' %}
+            {% assign fact_label = parts[0] | strip %}
+            {% assign val_parts = parts | slice: 1, parts.size %}
+            {% assign fact_val = val_parts | join: ':' | strip %}
+          {% else %}
+            {% assign fact_val = item_str %}
+          {% endif %}
+        {% endif %}
+        {% if fact_val != blank %}
+          <div class="project-facts__item">
+            {% if fact_label != blank %}
+              <div class="project-facts__label">{{ fact_label }}</div>
+            {% endif %}
+            <div class="project-facts__value">{{ fact_val }}</div>
+          </div>
+          {% assign has_data = true %}
+        {% endif %}
+      {% endfor %}
+      {% comment %} Multi-line text string {% endcomment %}
+      {% assign lines = facts_data | newline_to_br | split: '<br />' %}
+    {% endif %}
+  </div>
+</div>
+{% style %}
+  .project-facts__label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: {{ block.settings.heading_color }};
+    opacity: 0.5;
+    letter-spacing: 0.15em;
+    line-height: 1.5;
+    margin-bottom: 4px;
+  }
+  .project-facts__value {
+    font-size: 14px;
+    color: {{ block.settings.value_color }};
+    line-height: 1.5;
+    font-weight: 800;
+  }
+  .project-facts-block__container {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .project-facts-block {
+    width: 100%;
+  }
+{% endstyle %}
+{% schema %}
+{
+  "name": "Project facts",
+  "tag": null,
+  "settings": [
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading color",
+      "default": "#fff"
+    },
+    {
+      "type": "color",
+      "id": "value_color",
+      "label": "Value color",
+      "default": "#fff"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Project facts"
+    }
+  ]
+}
+{% endschema %}

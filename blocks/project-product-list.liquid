@@ -1,0 +1,114 @@
+{% liquid
+  assign target_project = metaobject
+  if target_project == blank
+    assign target_project = closest.metaobject.project
+  endif
+%}
+<div class="project-product-list-wrapper">
+  {% for product in target_project.products.value %}
+    <a href="{{ product.url }}">
+      <div class="project-product-item">
+        <div class="project-product-item__image">
+          {% if product.featured_image != blank %}
+            {{
+              product.featured_image
+              | image_url: width: 300
+              | image_tag:
+                width: product.featured_image.width,
+                height: product.image.height,
+                class: 'image-block__image border-style'
+            }}
+          {% else %}
+            <div class="product-req-thumb">{{ product.metafields.additional.product_code.value }}</div>
+          {% endif %}
+        </div>
+
+        <div class="project-product-item__content">
+          {% if product.metafields.additional.product_code != blank %}
+            <div class="project-product-item__code">{{ product.metafields.additional.product_code.value }}</div>
+          {% endif %}
+          {% if product.title != blank %}
+            <div class="project-product-item__title">{{ product.title }}</div>
+          {% endif %}
+        </div>
+        {% if product.price != blank %}
+          <div class="project-product-item-price">{{ product.price | money }}</div>
+        {% endif %}
+      </div>
+    </a>
+  {% endfor %}
+</div>
+{% style %}
+  .project-product-item {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 60px 1fr auto;
+    padding: 12px 14px;
+    border: 1px solid #e5e5e2;
+    border-radius: 3px;
+    transition: border-color 0.15s;
+    cursor: pointer;
+    align-items: center;
+  }
+  .project-product-item__title {
+    font-size: 13px;
+    margin-bottom: 4px;
+    font-weight: 700;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .project-product-item:hover {
+    border-color: #2c3644;
+  }
+  .project-product-list-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .project-product-item__code {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    font-weight: 800;
+    color: #a11b2a;
+    margin-bottom: 2px;
+    line-height: 1.5;
+  }
+  .product-req-thumb {
+    width: 60px;
+    height: 60px;
+    background: #e5e4df;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #6b7280;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+  .project-product-item__image img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 3px;
+  }
+  .project-product-item-price {
+    font-size: 13px;
+    font-weight: 800;
+    color: #2c3644;
+  }
+{% endstyle %}
+{% schema %}
+{
+  "name": "Project prduct list",
+  "tag": null,
+  "settings": [],
+  "presets": [
+    {
+      "name": "Project prduct list"
+    }
+  ]
+}
+{% endschema %}

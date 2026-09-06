@@ -1,0 +1,276 @@
+{% liquid
+  assign target_project = metaobject
+  if target_project == blank
+    assign target_project = closest.metaobject.project
+  endif
+  assign bundle_url = target_project.bundle_url.value | default: target_project.bundle_url | default: '#'
+%}
+
+<div
+  id="block-{{ block.id }}"
+  class="project-cta-card-wrapper"
+  {{ block.shopify_attributes }}
+>
+  <div
+    class="project-cta-card border-style spacing-style"
+    style="
+      {% render 'spacing-style', settings: block.settings %}
+      {% render 'border-override', settings: block.settings %}
+      --card-bg: {{ block.settings.card_background | default: '#000000' }};
+      --title-color: {{ block.settings.title_color | default: '#ffffff' }};
+      --description-color: {{ block.settings.description_color | default: '#ffffff' }};
+      --button-color: {{ block.settings.button_color | default: '#ffffff' }};
+      --button-bg: {{ block.settings.button_background | default: '#000000' }};
+    "
+  >
+    <div class="project-cta-card__content">
+      <div class="project-cta-card__title">Ready to order the full system?</div>
+      <div class="project-cta-card__description">
+        Add all four products above at recommended quantities, or customize to your project size.
+      </div>
+    </div>
+    <div class="project-cta-card__actions">
+      <a href="{{ bundle_url }}" class="project-cta-card__button"> Add Complete Kit </a>
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .project-cta-card-wrapper {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .project-cta-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: column;
+    background-color: var(--card-bg, #000000);
+    padding-block-start: var(--padding-block-start);
+    padding-block-end: var(--padding-block-end);
+    padding-inline-start: var(--padding-inline-start);
+    padding-inline-end: var(--padding-inline-end);
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .project-cta-card__content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .project-cta-card__title {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+    color: var(--title-color);
+  }
+
+  .project-cta-card__description {
+    font-size: 12px;
+    line-height: 1.55;
+    margin-bottom: 16px;
+    color: var(--description-color);
+    opacity: 0.7;
+  }
+
+  .project-cta-card__actions {
+    width: 100%;
+  }
+
+  .project-cta-card__button {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--button-bg, #000000);
+    color: var(--button-color, #ffffff);
+    padding: 12px 24px;
+    border-radius: 3px;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background 0.15s, opacity 0.15s, transform 0.15s;
+    border: none;
+    cursor: pointer;
+  }
+
+  .project-cta-card__button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  @media screen and (max-width: 767px) {
+    .project-cta-card {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 20px;
+    }
+
+    .project-cta-card__actions {
+      width: 100%;
+    }
+
+    .project-cta-card__button {
+      width: 100%;
+      text-align: center;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Project CTA card",
+  "tag": null,
+  "settings": [
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Title color",
+      "default": "#fff"
+    },
+    {
+      "type": "color",
+      "id": "description_color",
+      "label": "Description color",
+      "default": "#fff"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Button color",
+      "default": "#fff"
+    },
+    {
+      "type": "color",
+      "id": "button_background",
+      "label": "Button background",
+      "default": "#000"
+    },
+    {
+      "type": "header",
+      "content": "Card settings"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card background",
+      "default": "#000"
+    },
+    {
+      "type": "header",
+      "content": "t:content.borders"
+    },
+    {
+      "type": "select",
+      "id": "border",
+      "label": "t:settings.style",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:options.none"
+        },
+        {
+          "value": "solid",
+          "label": "t:options.solid"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "t:settings.thickness",
+      "default": 1,
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "range",
+      "id": "border_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "label": "t:settings.opacity",
+      "default": 100,
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "t:settings.color",
+      "placeholder": "t:settings.default",
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "t:settings.border_radius",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    }
+  ],
+  "presets": [
+    {
+      "name": "Project CTA card"
+    }
+  ]
+}
+{% endschema %}
