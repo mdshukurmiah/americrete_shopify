@@ -257,6 +257,7 @@
                   "name": "t:names.video",
                   "settings": {
                     "source": "uploaded",
+                    "video": "shopify://files/videos/videoTile.mp4",
                     "video_url": "",
                     "video_autoplay": false,
                     "video_loop": true,
@@ -1416,7 +1417,7 @@
         "section_height": "small",
         "section_height_custom": 50,
         "background_media": "none",
-        "background_color": "#E5E5E5",
+        "background_color": "#e5e5e5",
         "video_position": "cover",
         "background_image_position": "cover",
         "toggle_overlay": false,
