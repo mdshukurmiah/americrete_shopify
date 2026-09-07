@@ -334,9 +334,49 @@
         "padding-block-start-mobile": 0,
         "padding-block-end-mobile": 0
       }
+    },
+    "section_WErtUY": {
+      "type": "section",
+      "custom_css": [
+        ".metafield-rich_text_field h4 {font-size: 18px; color: #2c3644; margin-bottom: 10px; letter-spacing: -0.01em;}",
+        ".metafield-rich_text_field p {font-size: 13px; line-height: 1.65; margin-bottom: 0; color: #2c3644;}"
+      ],
+      "name": "t:names.custom_section",
+      "settings": {
+        "content_direction": "column",
+        "vertical_on_mobile": true,
+        "horizontal_alignment": "flex-start",
+        "vertical_alignment": "center",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 12,
+        "section_width": "page-width",
+        "section_height": "small",
+        "section_height_custom": 50,
+        "background_media": "none",
+        "background_color": "",
+        "video_position": "cover",
+        "background_image_position": "cover",
+        "toggle_overlay": false,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_color": "",
+        "border_radius": 0,
+        "padding-block-start": 60,
+        "padding-block-end": 60,
+        "custom_mobile_padding": false,
+        "padding-block-start-mobile": 0,
+        "padding-block-end-mobile": 0
+      }
     }
   },
   "order": [
-    "section_dmbUir"
+    "section_dmbUir",
+    "section_WErtUY"
   ]
 }
