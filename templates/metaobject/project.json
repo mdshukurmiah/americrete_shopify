@@ -489,7 +489,7 @@
                       "type": "text",
                       "name": "t:names.heading",
                       "settings": {
-                        "text": "<p>What You'll Need</p>",
+                        "text": "<p>What You'</p>",
                         "width": "fit-content",
                         "max_width": "normal",
                         "alignment": "left",
@@ -643,7 +643,7 @@
                         "step_number_color": "{{ settings.color_palette.color5 }}",
                         "step_number_bg": "{{ settings.color_palette.foreground }}",
                         "p_code_color": "#a11b2a",
-                        "p_code_bg": "#F2F2F0",
+                        "p_code_bg": "#f2f2f0",
                         "card_background": "#ffffff"
                       },
                       "blocks": {}
@@ -955,7 +955,7 @@
                         "heading_color": "{{ settings.color_palette.color1 }}",
                         "title_color": "{{ settings.color_palette.foreground }}",
                         "arrow_color": "{{ settings.color_palette.color3 }}",
-                        "icon_bg": "#C8C8C8",
+                        "icon_bg": "#c8c8c8",
                         "icon_color": "{{ settings.color_palette.color1 }}",
                         "card_background": "#ffffff",
                         "divider_color": "#f1f1f0"
