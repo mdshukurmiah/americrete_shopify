@@ -1,0 +1,543 @@
+{% liquid
+  assign section_settings = section.settings
+
+  if section_settings.background_color != blank
+    render 'contrast-override', background_color: section_settings.background_color, section_id: section.id
+  endif
+%}
+
+<div
+  class="section-background{% if section_settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}"
+></div>
+
+<div
+  class="
+    section
+    section--{{ section_settings.section_width }}
+    {% if section_settings.background_color != blank %}color-custom-{{ section.id }}{% endif %}
+    spacing-style
+  "
+  style="
+    {% render 'spacing-style', settings: section_settings %}
+    --columns-desktop: {{ section_settings.columns_desktop | default: 3 }};
+    --columns-mobile: {{ section_settings.columns_mobile | default: 1 }};
+    --columns-gap: {{ section_settings.columns_gap | default: 24 }}px;
+    --columns-gap-mobile: {{ section_settings.columns_gap_mobile | default: 16 }}px;
+    --rows-gap: {{ section_settings.rows_gap | default: 24 }}px;
+    {% if section_settings.card_background != blank %}--card-bg: {{ section_settings.card_background }};{% endif %}
+    {% if section_settings.card_border_color != blank %}--card-border-color: {{ section_settings.card_border_color }};{% endif %}
+    {% if section_settings.quote_color != blank %}--quote-color: {{ section_settings.quote_color }};{% endif %}
+    {% if section_settings.author_name_color != blank %}--author-name-color: {{ section_settings.author_name_color }};{% endif %}
+    {% if section_settings.author_info_color != blank %}--author-info-color: {{ section_settings.author_info_color }};{% endif %}
+    {% if section_settings.avatar_bg != blank %}--avatar-bg: {{ section_settings.avatar_bg }};{% endif %}
+    {% if section_settings.avatar_text_color != blank %}--avatar-text-color: {{ section_settings.avatar_text_color }};{% endif %}
+  "
+  {{ section.shopify_attributes }}
+>
+  <div class="testimonial-section">
+    {% if section_settings.heading != blank or section_settings.subheading != blank %}
+      <div class="testimonial-section__header testimonial-section__header--{{ section_settings.header_alignment | default: 'center' }}">
+        {% if section_settings.subheading != blank %}
+          <div class="testimonial-section__subheading">{{ section_settings.subheading }}</div>
+        {% endif %}
+        {% if section_settings.heading != blank %}
+          <h2 class="testimonial-section__heading">{{ section_settings.heading }}</h2>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="testimonial-grid">
+      {% for block in section.blocks %}
+        {% liquid
+          assign block_settings = block.settings
+          assign quote_text = block_settings.quote
+          assign author_name = block_settings.author_name
+          assign author_info = block_settings.author_info
+          assign author_initials = block_settings.author_initials
+
+          if author_initials == blank and author_name != blank
+            assign parts = author_name | split: ' '
+            if parts.size > 1
+              assign first_char = parts[0] | slice: 0, 1
+              assign second_char = parts[1] | slice: 0, 1
+              assign author_initials = first_char | append: second_char | upcase
+            else
+              assign author_initials = author_name | slice: 0, 2 | upcase
+            endif
+          endif
+        %}
+
+        <div class="testimonial-card border-style" {{ block.shopify_attributes }}>
+          <div class="testimonial-card__content">
+            {% if quote_text != blank %}
+              <div class="testimonial-card__quote">
+                &ldquo;{{ quote_text | strip_html }}&rdquo;
+              </div>
+            {% endif %}
+
+            <div class="testimonial-card__footer">
+              <div class="testimonial-card__author-wrapper">
+                {% if block_settings.image != blank %}
+                  <div class="testimonial-card__avatar testimonial-card__avatar--img">
+                    {{
+                      block_settings.image
+                      | image_url: width: 120
+                      | image_tag: loading: 'lazy', class: 'testimonial-card__avatar-img', alt: author_name
+                    }}
+                  </div>
+                {% else %}
+                  <div class="testimonial-card__avatar testimonial-card__avatar--initials">
+                    <span>{{ author_initials }}</span>
+                  </div>
+                {% endif %}
+
+                <div class="testimonial-card__author-details">
+                  {% if author_name != blank %}
+                    <div class="testimonial-card__author-name">{{ author_name }}</div>
+                  {% endif %}
+                  {% if author_info != blank %}
+                    <div class="testimonial-card__author-info">{{ author_info }}</div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .testimonial-section {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .testimonial-section__header {
+    margin-bottom: 32px;
+  }
+
+  .testimonial-section__header--center {
+    text-align: center;
+  }
+
+  .testimonial-section__header--left {
+    text-align: left;
+  }
+
+  .testimonial-section__subheading {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--author-info-color, #6b7280);
+    margin-bottom: 8px;
+  }
+
+  .testimonial-section__heading {
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.3;
+    margin: 0;
+  }
+
+  .testimonial-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--columns-desktop, 3), minmax(0, 1fr));
+    column-gap: var(--columns-gap, 24px);
+    row-gap: var(--rows-gap, 24px);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  @media screen and (max-width: 767px) {
+    .testimonial-grid {
+      grid-template-columns: repeat(var(--columns-mobile, 1), minmax(0, 1fr));
+      column-gap: var(--columns-gap-mobile, 16px);
+    }
+  }
+
+  .testimonial-card {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--card-bg, #ffffff);
+    border: 1px solid var(--card-border-color, #e5e5e0);
+    border-radius: 2px;
+    overflow: hidden;
+    height: 100%;
+    box-sizing: border-box;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .testimonial-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    transform: translateY(-2px);
+  }
+
+  .testimonial-card__content {
+    padding: 24px 24px 20px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: space-between;
+    box-sizing: border-box;
+  }
+
+  .testimonial-card__quote {
+    font-size: 13px;
+    font-style: italic;
+    line-height: 1.6;
+    color: var(--quote-color, #374151);
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eaeae6;
+    flex-grow: 1;
+  }
+
+  .testimonial-card__footer {
+    display: flex;
+    align-items: center;
+  }
+
+  .testimonial-card__author-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .testimonial-card__avatar {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--avatar-bg, #e5e4df);
+    color: var(--avatar-text-color, #4b5563);
+  }
+
+  .testimonial-card__avatar--initials {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  .testimonial-card__avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .testimonial-card__author-details {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .testimonial-card__author-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--author-name-color, #111827);
+    line-height: 1.3;
+    margin-bottom: 2px;
+  }
+
+  .testimonial-card__author-info {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--author-info-color, #6b7280);
+    line-height: 1.4;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Testimonials",
+  "tag": "section",
+  "class": "section-testimonials",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading"
+    },
+    {
+      "type": "select",
+      "id": "header_alignment",
+      "label": "Header alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "header",
+      "content": "Layout Settings"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Section width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "Page width"
+        },
+        {
+          "value": "full-width",
+          "label": "Full width"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "label": "Desktop Columns",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "select",
+      "id": "columns_mobile",
+      "label": "Mobile Columns",
+      "options": [
+        {
+          "value": "1",
+          "label": "1 Column"
+        },
+        {
+          "value": "2",
+          "label": "2 Columns"
+        }
+      ],
+      "default": "1"
+    },
+    {
+      "type": "range",
+      "id": "columns_gap",
+      "label": "Desktop Column Gap",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "columns_gap_mobile",
+      "label": "Mobile Column Gap",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "rows_gap",
+      "label": "Row Gap",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "Colors & Styling"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "placeholder": "Default"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "card_border_color",
+      "label": "Card border color",
+      "default": "#e5e5e0"
+    },
+    {
+      "type": "color",
+      "id": "quote_color",
+      "label": "Quote text color",
+      "default": "#374151"
+    },
+    {
+      "type": "color",
+      "id": "author_name_color",
+      "label": "Author name color",
+      "default": "#111827"
+    },
+    {
+      "type": "color",
+      "id": "author_info_color",
+      "label": "Author info color",
+      "default": "#6b7280"
+    },
+    {
+      "type": "color",
+      "id": "avatar_bg",
+      "label": "Avatar circle background",
+      "default": "#e5e4df"
+    },
+    {
+      "type": "color",
+      "id": "avatar_text_color",
+      "label": "Avatar initials color",
+      "default": "#4b5563"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top padding",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "checkbox",
+      "id": "custom_mobile_padding",
+      "label": "Custom mobile padding",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start-mobile",
+      "label": "Mobile top padding",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 24,
+      "visible_if": "{{ section.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end-mobile",
+      "label": "Mobile bottom padding",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 24,
+      "visible_if": "{{ section.settings.custom_mobile_padding }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "testimonial",
+      "name": "Testimonial",
+      "settings": [
+        {
+          "type": "textarea",
+          "id": "quote",
+          "label": "Quote / Testimonial text",
+          "default": "Placeholder testimonial. Product performance quote from a Pro tier contractor about a specific job win or long-term relationship with Americrete."
+        },
+        {
+          "type": "text",
+          "id": "author_name",
+          "label": "Author name",
+          "default": "Franklin C."
+        },
+        {
+          "type": "text",
+          "id": "author_initials",
+          "label": "Author initials (e.g. FC)",
+          "placeholder": "FC",
+          "info": "Leave blank to generate automatically from name"
+        },
+        {
+          "type": "text",
+          "id": "author_info",
+          "label": "Author details / info",
+          "default": "Owner · West Coast Deck Waterproofing · Long Beach, CA"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Author avatar photo (optional)"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Testimonials Grid",
+      "blocks": [
+        {
+          "type": "testimonial",
+          "settings": {
+            "quote": "Placeholder testimonial. Product performance quote from a Pro tier contractor about a specific job win or long-term relationship with Americrete.",
+            "author_name": "Franklin C.",
+            "author_initials": "FC",
+            "author_info": "Owner · West Coast Deck Waterproofing · Long Beach, CA"
+          }
+        },
+        {
+          "type": "testimonial",
+          "settings": {
+            "quote": "Placeholder testimonial. Something about the Pro program discount tiers, Net-30 terms, or the customer service experience.",
+            "author_name": "Sarah M.",
+            "author_initials": "SM",
+            "author_info": "Owner · Southwest Roof & Deck · Phoenix, AZ"
+          }
+        },
+        {
+          "type": "testimonial",
+          "settings": {
+            "quote": "Placeholder testimonial. Reference to the 10-year warranty coming through when needed, or the tech support responsiveness.",
+            "author_name": "Mike R.",
+            "author_initials": "MR",
+            "author_info": "Foreman · Coastal Concrete Solutions · San Diego, CA"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
