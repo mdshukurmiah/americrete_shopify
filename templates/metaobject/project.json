@@ -196,12 +196,22 @@
                     "padding-inline-end": 0
                   },
                   "blocks": {}
+                },
+                "project_facts_D88Lkf": {
+                  "type": "project-facts",
+                  "name": "Project facts",
+                  "settings": {
+                    "heading_color": "#fff",
+                    "value_color": "{{ settings.color_palette.color5 }}"
+                  },
+                  "blocks": {}
                 }
               },
               "block_order": [
                 "text_FJrGCx",
                 "text_QYaqCM",
-                "text_k8Jmw8"
+                "text_k8Jmw8",
+                "project_facts_D88Lkf"
               ]
             },
             "group_YdafEb": {
