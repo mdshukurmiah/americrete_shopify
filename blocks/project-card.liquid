@@ -1,0 +1,699 @@
+{% liquid
+  assign block_settings = block.settings
+
+  # Determine target project context or list
+  assign target_project = block_settings.project
+  if target_project == blank
+    assign target_project = metaobject
+  endif
+  if target_project == blank
+    assign target_project = closest.metaobject.project
+  endif
+
+  assign meta_projects = shop.metaobjects.project.values
+
+  assign is_single = false
+
+  if block_settings.show_all_projects and meta_projects != blank and meta_projects.size > 0
+    assign projects_to_render = meta_projects
+  elsif target_project != blank
+    assign is_single = true
+  elsif meta_projects != blank and meta_projects.size > 0
+    assign projects_to_render = meta_projects
+  else
+    assign is_single = true
+    assign target_project = meta_projects.first
+  endif
+
+  assign max_count = block_settings.max_projects | default: 6
+  assign cta_text = block_settings.cta_text | default: 'SEE PRODUCTS'
+  assign aspect_ratio = block_settings.image_aspect_ratio | default: '4/3'
+%}
+
+<div
+  id="block-{{ block.id }}"
+  class="project-cards-wrapper spacing-style"
+  style="
+    {% render 'spacing-style', settings: block_settings %}
+    {% render 'border-override', settings: block_settings %}
+    --columns-desktop: {{ block_settings.columns_desktop | default: 3 }};
+    --columns-mobile: {{ block_settings.columns_mobile | default: 1 }};
+    --columns-gap: {{ block_settings.columns_gap | default: 24 }}px;
+    --columns-gap-mobile: {{ block_settings.columns_gap_mobile | default: 16 }}px;
+    --rows-gap: {{ block_settings.rows_gap | default: 24 }}px;
+    {% if block_settings.card_background != blank %}--card-bg: {{ block_settings.card_background }};{% endif %}
+    {% if block_settings.image_placeholder_bg != blank %}--image-bg: {{ block_settings.image_placeholder_bg }};{% endif %}
+    {% if block_settings.badge_background != blank %}--badge-bg: {{ block_settings.badge_background }};{% endif %}
+    {% if block_settings.badge_color != blank %}--badge-color: {{ block_settings.badge_color }};{% endif %}
+    {% if block_settings.title_color != blank %}--title-color: {{ block_settings.title_color }};{% endif %}
+    {% if block_settings.description_color != blank %}--description-color: {{ block_settings.description_color }};{% endif %}
+    {% if block_settings.meta_color != blank %}--meta-color: {{ block_settings.meta_color }};{% endif %}
+    {% if block_settings.link_color != blank %}--link-color: {{ block_settings.link_color }};{% endif %}
+    --aspect-ratio: {% if aspect_ratio == 'adapt' %}auto{% else %}{{ aspect_ratio }}{% endif %};
+  "
+  {{ block.shopify_attributes }}
+>
+  <div class="project-cards-grid">
+    {% if is_single %}
+      {% if target_project != blank %}
+        {% liquid
+          assign proj = target_project
+          assign proj_category = proj.category.value | default: proj.category | default: proj.system_type.value | default: proj.system_type | default: proj.type
+          assign proj_title = proj.title.value | default: proj.title | default: proj.name.value | default: proj.name
+
+          assign proj_desc = proj.description | metafield_tag | strip_html
+          if proj_desc contains 'root' and proj_desc contains 'children'
+            assign proj_desc = proj.short_description.value | default: proj.short_description
+          endif
+
+          assign proj_image = proj.featured_image.value | default: proj.featured_image | default: proj.image.value | default: proj.image | default: proj.photo.value | default: proj.photo
+
+          # Metaobject Single Page URL Resolution (Shopify Official Standard)
+          assign proj_handle = proj.system.handle | default: proj.handle
+          assign proj_url = proj.system.url | default: proj.url | default: proj.system_url.value | default: proj.system_url | default: proj.bundle_url.value | default: proj.bundle_url
+          if proj_url == blank and proj_handle != blank
+            assign proj_url = '/pages/project/' | append: proj_handle
+          endif
+
+          assign products_val = proj.products.value | default: proj.products
+          assign products_count = 0
+          if products_val != blank
+            assign products_count = products_val.size
+          endif
+
+          assign kits_val = proj.kits.value | default: proj.kits
+          assign kits_count = 0
+          if kits_val != blank and kits_val.size > 0
+            assign kits_count = kits_val.size
+          elsif proj.kits_count.value != blank
+            assign kits_count = proj.kits_count.value
+          elsif proj.kits_count != blank
+            assign kits_count = proj.kits_count
+          endif
+        %}
+
+        {% if proj_url != blank %}
+          <a
+            href="{{ proj_url }}"
+            class="project-card project-card--link border-style"
+            aria-label="{{ proj_title | escape }}"
+          >
+        {% else %}
+          <div class="project-card border-style">
+        {% endif %}
+        <div class="project-card__media">
+          {% if proj_category != blank %}
+            <span class="project-card__badge">{{ proj_category | upcase }}</span>
+          {% endif %}
+          {% if proj_image != blank %}
+            {{
+              proj_image
+              | image_url: width: 800
+              | image_tag: loading: 'lazy', class: 'project-card__image', alt: proj_title
+            }}
+          {% else %}
+            <div class="project-card__placeholder">
+              <span>PROJECT PHOTO</span>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="project-card__content">
+          {% if proj_title != blank %}
+            <h3 class="project-card__title">
+              {{ proj_title }}
+            </h3>
+          {% endif %}
+          {% if proj_desc != blank %}
+            <p class="project-card__description">{{ proj_desc }}</p>
+          {% endif %}
+          <div class="project-card__footer">
+            <div class="project-card__meta">
+              {% if products_count > 0 %}
+                {{ products_count }} PRODUCT{% if products_count != 1 %}S{% endif %}
+                {%- if kits_count > 0 %}
+                  &middot; {{ kits_count }} KIT{% if kits_count != 1 %}S{% endif -%}
+                {%- endif -%}
+              {% elsif kits_count > 0 %}
+                {{ kits_count }} KIT{% if kits_count != 1 %}S{% endif %}
+              {% endif %}
+            </div>
+            <span class="project-card__cta">
+              {{ cta_text }}
+              <span class="project-card__arrow" aria-hidden="true">&rsaquo;</span>
+            </span>
+          </div>
+        </div>
+        {% if proj_url != blank %}
+          </a>
+        {% else %}
+          </div>
+        {% endif %}
+      {% endif %}
+    {% else %}
+      {% for proj in projects_to_render limit: max_count %}
+        {% liquid
+          assign proj_category = proj.category.value | default: proj.category | default: proj.system_type.value | default: proj.system_type | default: proj.type
+          assign proj_title = proj.title.value | default: proj.title | default: proj.name.value | default: proj.name
+
+          assign proj_desc = proj.description | metafield_tag | strip_html
+          if proj_desc contains 'root' and proj_desc contains 'children'
+            assign proj_desc = proj.short_description.value | default: proj.short_description
+          endif
+
+          assign proj_image = proj.featured_image.value | default: proj.featured_image | default: proj.image.value | default: proj.image | default: proj.photo.value | default: proj.photo
+
+          # Metaobject Single Page URL Resolution (Shopify Official Standard)
+          assign proj_handle = proj.system.handle | default: proj.handle
+          assign proj_url = proj.system.url | default: proj.url | default: proj.system_url.value | default: proj.system_url | default: proj.bundle_url.value | default: proj.bundle_url
+          if proj_url == blank and proj_handle != blank
+            assign proj_url = '/pages/project/' | append: proj_handle
+          endif
+
+          assign products_val = proj.products.value | default: proj.products
+          assign products_count = 0
+          if products_val != blank
+            assign products_count = products_val.size
+          endif
+
+          assign kits_val = proj.kits.value | default: proj.kits
+          assign kits_count = 0
+          if kits_val != blank and kits_val.size > 0
+            assign kits_count = kits_val.size
+          elsif proj.kits_count.value != blank
+            assign kits_count = proj.kits_count.value
+          elsif proj.kits_count != blank
+            assign kits_count = proj.kits_count
+          endif
+        %}
+
+        {% if proj_url != blank %}
+          <a
+            href="{{ proj_url }}"
+            class="project-card project-card--link border-style"
+            aria-label="{{ proj_title | escape }}"
+          >
+        {% else %}
+          <div class="project-card border-style">
+        {% endif %}
+        <div class="project-card__media">
+          {% if proj_category != blank %}
+            <span class="project-card__badge">{{ proj_category | upcase }}</span>
+          {% endif %}
+          {% if proj_image != blank %}
+            {{
+              proj_image
+              | image_url: width: 800
+              | image_tag: loading: 'lazy', class: 'project-card__image', alt: proj_title
+            }}
+          {% else %}
+            <div class="project-card__placeholder">
+              <span>PROJECT PHOTO</span>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="project-card__content">
+          {% if proj_title != blank %}
+            <h3 class="project-card__title">
+              {{ proj_title }}
+            </h3>
+          {% endif %}
+          {% if proj_desc != blank %}
+            <p class="project-card__description">{{ proj_desc }}</p>
+          {% endif %}
+
+          <div class="project-card__footer">
+            <div class="project-card__meta">
+              {% if products_count > 0 %}
+                {{ products_count }} PRODUCT{% if products_count != 1 %}S{% endif %}
+                {%- if kits_count > 0 %}
+                  &middot; {{ kits_count }} KIT{% if kits_count != 1 %}S{% endif -%}
+                {%- endif -%}
+              {% elsif kits_count > 0 %}
+                {{ kits_count }} KIT{% if kits_count != 1 %}S{% endif %}
+              {% endif %}
+            </div>
+            <span class="project-card__cta">
+              {{ cta_text }}
+              <span class="project-card__arrow" aria-hidden="true">&rsaquo;</span>
+            </span>
+          </div>
+        </div>
+        {% if proj_url != blank %}
+          </a>
+        {% else %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  </div>
+</div>
+
+{% stylesheet %}
+  .project-cards-wrapper {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .project-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--columns-desktop, 3), minmax(0, 1fr));
+    column-gap: var(--columns-gap, 24px);
+    row-gap: var(--rows-gap, 24px);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  @media screen and (max-width: 767px) {
+    .project-cards-grid {
+      grid-template-columns: repeat(var(--columns-mobile, 1), minmax(0, 1fr));
+      column-gap: var(--columns-gap-mobile, 16px);
+    }
+  }
+
+  .project-card {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--card-bg);
+    overflow: hidden;
+    height: 100%;
+    box-sizing: border-box;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: inherit;
+  }
+  .project-card:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+  a.project-card,
+  a.project-card:visited,
+  a.project-card:hover,
+  a.project-card:focus,
+  a.project-card:active {
+    text-decoration: none;
+    color: inherit;
+  }
+  .project-card__media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: var(--aspect-ratio);
+    background-color: var(--image-bg);
+    overflow: hidden;
+  }
+
+  .project-card__placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: inherit;
+    background-color: var(--image-bg);
+    opacity: 0.6;
+  }
+
+  .project-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .project-card__badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background-color: var(--badge-bg);
+    color: var(--badge-color);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 2px;
+    z-index: 2;
+    line-height: 1.2;
+  }
+
+  .project-card__content {
+    padding: 20px 22px 24px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: space-between;
+    box-sizing: border-box;
+  }
+
+  .project-card__title {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.3;
+    color: var(--title-color);
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+  }
+
+  .project-card__description {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--description-color);
+    margin: 0px 0px 16px;
+    flex: 1;
+  }
+
+  .project-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e5e0;
+  }
+
+  .project-card__meta {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--meta-color);
+  }
+
+  .project-card__cta {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--link-color);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    transition: opacity 0.15s ease;
+  }
+
+  .project-card:hover .project-card__cta {
+    opacity: 0.85;
+  }
+
+  .project-card__arrow {
+    font-size: 14px;
+    line-height: 1;
+    transition: transform 0.15s ease;
+    display: inline-block;
+  }
+
+  .project-card:hover .project-card__arrow {
+    transform: translateX(3px);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Project Card Grid",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Content Settings"
+    },
+    {
+      "type": "metaobject",
+      "metaobject_type": "project",
+      "id": "project",
+      "label": "Specific Project (Optional)"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_all_projects",
+      "label": "Display all projects grid",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "max_projects",
+      "label": "Maximum projects to show",
+      "min": 1,
+      "max": 12,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "CTA Link Text",
+      "default": "SEE PRODUCTS"
+    },
+    {
+      "type": "header",
+      "content": "Grid & Column Layout"
+    },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "label": "Desktop Columns",
+      "min": 1,
+      "max": 6,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "select",
+      "id": "columns_mobile",
+      "label": "Mobile Columns",
+      "options": [
+        {
+          "value": "1",
+          "label": "1 Column"
+        },
+        {
+          "value": "2",
+          "label": "2 Columns"
+        }
+      ],
+      "default": "1"
+    },
+    {
+      "type": "range",
+      "id": "columns_gap",
+      "label": "Desktop Column Gap",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "columns_gap_mobile",
+      "label": "Mobile Column Gap",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "rows_gap",
+      "label": "Row Gap",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "Card Media"
+    },
+    {
+      "type": "select",
+      "id": "image_aspect_ratio",
+      "label": "Image Aspect Ratio",
+      "options": [
+        {
+          "value": "4/3",
+          "label": "4:3 Landscape"
+        },
+        {
+          "value": "16/9",
+          "label": "16:9 Wide"
+        },
+        {
+          "value": "1/1",
+          "label": "1:1 Square"
+        },
+        {
+          "value": "adapt",
+          "label": "Adapt to Image"
+        }
+      ],
+      "default": "4/3"
+    },
+    {
+      "type": "header",
+      "content": "Colors & Styling"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card Background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "image_placeholder_bg",
+      "label": "Photo Placeholder Background",
+      "default": "#e6e5e0"
+    },
+    {
+      "type": "color",
+      "id": "badge_background",
+      "label": "Badge Background",
+      "default": "#1d232c"
+    },
+    {
+      "type": "color",
+      "id": "badge_color",
+      "label": "Badge Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Title Color"
+    },
+    {
+      "type": "color",
+      "id": "description_color",
+      "label": "Description Text Color"
+    },
+    {
+      "type": "color",
+      "id": "meta_color",
+      "label": "Meta Stats Text Color"
+    },
+    {
+      "type": "color",
+      "id": "link_color",
+      "label": "Link & CTA Color"
+    },
+    {
+      "type": "header",
+      "content": "t:content.borders"
+    },
+    {
+      "type": "select",
+      "id": "border",
+      "label": "t:settings.style",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:options.none"
+        },
+        {
+          "value": "solid",
+          "label": "t:options.solid"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "t:settings.thickness",
+      "default": 1,
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "range",
+      "id": "border_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "label": "t:settings.opacity",
+      "default": 100,
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "t:settings.color",
+      "placeholder": "t:settings.default",
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "t:settings.border_radius",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Project Card Grid"
+    }
+  ]
+}
+{% endschema %}
