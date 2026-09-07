@@ -452,7 +452,7 @@
                     "align_baseline": false,
                     "horizontal_alignment_flex_direction_column": "flex-start",
                     "vertical_alignment_flex_direction_column": "center",
-                    "gap": 12,
+                    "gap": 18,
                     "gap_mobile": 12,
                     "width": "fill",
                     "custom_width": 100,
@@ -468,11 +468,11 @@
                     "overlay_color": "#00000026",
                     "overlay_style": "solid",
                     "gradient_direction": "to top",
-                    "border": "none",
+                    "border": "solid",
                     "border_width": 1,
                     "border_opacity": 100,
-                    "border_color": "",
-                    "border_radius": 0,
+                    "border_color": "#E5E5E0",
+                    "border_radius": 3,
                     "link": "",
                     "open_in_new_tab": false,
                     "placeholder": "",
@@ -484,7 +484,40 @@
                     "hide_desktop": false,
                     "custom_css": ""
                   },
-                  "blocks": {}
+                  "blocks": {
+                    "text_JzJeeW": {
+                      "type": "text",
+                      "name": "t:names.heading",
+                      "settings": {
+                        "text": "<p>What You'll Need</p>",
+                        "width": "fit-content",
+                        "max_width": "normal",
+                        "alignment": "left",
+                        "type_preset": "custom",
+                        "font": "var(--font-heading--family)",
+                        "font_size": "0.6875rem",
+                        "font_size_mobile": "",
+                        "weight": "",
+                        "line_height": "normal",
+                        "letter_spacing": "loose",
+                        "case": "none",
+                        "wrap": "pretty",
+                        "text_color": "{{ settings.color_palette.color1 }}",
+                        "highlight_color": "",
+                        "background": false,
+                        "background_color": "#00000026",
+                        "corner_radius": 0,
+                        "padding-block-start": 0,
+                        "padding-block-end": 0,
+                        "padding-inline-start": 0,
+                        "padding-inline-end": 0
+                      },
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "text_JzJeeW"
+                  ]
                 }
               },
               "block_order": [
