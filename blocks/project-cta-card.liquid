@@ -4,6 +4,14 @@
     assign target_project = closest.metaobject.project
   endif
   assign bundle_url = target_project.bundle_url.value | default: target_project.bundle_url | default: '#'
+
+  assign total_project_price = 0
+  assign project_products = target_project.products.value | default: target_project.products
+  for prod in project_products
+    if prod.price != blank
+      assign total_project_price = total_project_price | plus: prod.price
+    endif
+  endfor
 %}
 
 <div
@@ -30,7 +38,9 @@
       </div>
     </div>
     <div class="project-cta-card__actions">
-      <a href="{{ bundle_url }}" class="project-cta-card__button"> Add Complete Kit </a>
+      <a href="{{ bundle_url }}" class="project-cta-card__button">
+        Add Complete Kit{% if total_project_price > 0 %} · {{ total_project_price | money }}{% endif %}
+      </a>
     </div>
   </div>
 </div>
