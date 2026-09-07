@@ -1086,7 +1086,6 @@
                           "name": "Fact Box",
                           "settings": {
                             "product": "{{ closest.product }}",
-                            "show_sample_data": true,
                             "desktop_columns": 2,
                             "mobile_columns": 2,
                             "text_alignment": "center",
@@ -1177,7 +1176,6 @@
                   "name": "Tech Specs",
                   "settings": {
                     "product": "{{ closest.product }}",
-                    "show_sample_data": true,
                     "label_width": 45,
                     "row_padding_y": 14,
                     "col_gap": 24,
