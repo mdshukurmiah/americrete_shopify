@@ -41,6 +41,9 @@
       <a href="{{ bundle_url }}" class="project-cta-card__button">
         Add Complete Kit{% if total_project_price > 0 %} · {{ total_project_price | money }}{% endif %}
       </a>
+      <button type="button" data-action="open-size-for-project" class="project-cta-card__button size-for-project-btn">
+        Size for Your Project
+      </button>
     </div>
   </div>
 </div>
@@ -115,7 +118,14 @@
     opacity: 0.9;
     transform: translateY(-1px);
   }
-
+  .project-cta-card__button.size-for-project-btn {
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
+    margin-top: 8px;
+  }
+  .project-cta-card__button.size-for-project-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
   @media screen and (max-width: 767px) {
     .project-cta-card {
       flex-direction: column;
