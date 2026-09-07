@@ -1,0 +1,351 @@
+{% liquid
+  assign block_settings = block.settings
+
+  assign target_project = metaobject
+  if target_project == blank
+    assign target_project = closest.metaobject.project
+  endif
+  if target_project == blank
+    assign target_project = shop.metaobjects.project.values.first
+  endif
+
+  assign downloads_data = target_project.downloads.value | default: target_project.downloads
+  assign has_files = false
+%}
+
+{% style %}
+  #block-{{ block.id }} .project-downloads-card {
+    --heading-color: {% if block_settings.heading_color != blank %}{{ block_settings.heading_color }}{% else %}#a11b2a{% endif %};
+    --title-color: {% if block_settings.title_color != blank %}{{ block_settings.title_color }}{% else %}#2c3644{% endif %};
+    --arrow-color: {% if block_settings.arrow_color != blank %}{{ block_settings.arrow_color }}{% else %}#a11b2a{% endif %};
+    --icon-bg: {% if block_settings.icon_bg != blank %}{{ block_settings.icon_bg }}{% else %}#f4f4f3{% endif %};
+    --icon-color: {% if block_settings.icon_color != blank %}{{ block_settings.icon_color }}{% else %}#71717a{% endif %};
+    --card-bg: {% if block_settings.card_background != blank %}{{ block_settings.card_background }}{% else %}#ffffff{% endif %};
+    --divider-color: {% if block_settings.divider_color != blank %}{{ block_settings.divider_color }}{% else %}#f1f1f0{% endif %};
+  }
+{% endstyle %}
+
+<div
+  id="block-{{ block.id }}"
+  class="project-downloads-wrapper"
+  {{ block.shopify_attributes }}
+>
+  <div class="project-downloads-card">
+    {% if block_settings.heading != blank %}
+      <div class="project-downloads__heading">{{ block_settings.heading }}</div>
+    {% endif %}
+
+    <div class="project-downloads__list">
+      {% if downloads_data != blank %}
+        {% for item in downloads_data %}
+          {% assign doc_title = '' %}
+          {% assign doc_url = '' %}
+
+          {% comment %} 1. Determine URL {% endcomment %}
+          {% assign doc_url = item.url | default: item.public_url %}
+
+          {% if doc_url == blank and item.file != blank %}
+            {% assign file_obj = item.file.value | default: item.file %}
+            {% assign doc_url = file_obj.url | default: file_obj.public_url %}
+          {% endif %}
+
+          {% if doc_url == blank and item.filename != blank %}
+            {% assign doc_url = item.filename | file_url %}
+          {% endif %}
+
+          {% if doc_url == blank and item != blank %}
+            {% assign item_as_string = item | append: '' %}
+            {% if item_as_string contains 'http://'
+              or item_as_string contains 'https://'
+              or item_as_string contains '//cdn.shopify.com'
+            %}
+              {% assign doc_url = item_as_string %}
+            {% elsif item_as_string contains '.' %}
+              {% assign doc_url = item_as_string | file_url %}
+            {% endif %}
+          {% endif %}
+
+          {% comment %} 2. Determine Title {% endcomment %}
+          {% assign item_alt = item.alt %}
+          {% assign item_filename = item.filename %}
+
+          {% if item_alt != blank and item_alt != item_filename and item_alt != doc_url %}
+            {% assign doc_title = item_alt %}
+          {% elsif item.title != blank %}
+            {% assign doc_title = item.title.value | default: item.title %}
+          {% elsif item.name != blank %}
+            {% assign doc_title = item.name.value | default: item.name %}
+          {% elsif item.label != blank %}
+            {% assign doc_title = item.label %}
+          {% endif %}
+
+          {% if doc_title == blank %}
+            {% assign file_source = item_filename | default: item.name | default: doc_url %}
+            {% assign file_source_str = file_source | append: '' %}
+            {% if file_source_str != blank %}
+              {% assign raw_filename = file_source_str | split: '?' | first | split: '/' | last %}
+              {% assign file_parts = raw_filename | split: '.' %}
+              {% if file_parts.size > 1 %}
+                {% assign ext = file_parts | last %}
+                {% assign ext_with_dot = '.' | append: ext %}
+                {% assign doc_title = raw_filename | remove: ext_with_dot %}
+              {% else %}
+                {% assign doc_title = raw_filename %}
+              {% endif %}
+              {% assign doc_title = doc_title | replace: '-', ' ' | replace: '_', ' ' | strip %}
+            {% endif %}
+          {% endif %}
+
+          {% if doc_title == blank %}
+            {% assign doc_title = 'Download File' %}
+          {% endif %}
+
+          {% if doc_url != blank %}
+            {% assign has_files = true %}
+            <a
+              href="{{ doc_url }}"
+              class="project-download-item"
+              target="_blank"
+              download
+            >
+              <div class="project-download-item__icon">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="8" y1="13" x2="16" y2="13"/>
+                  <line x1="8" y1="17" x2="14" y2="17"/>
+                </svg>
+              </div>
+
+              <div class="project-download-item__title">
+                {{ doc_title }}
+              </div>
+
+              <div class="project-download-item__arrow">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <polyline points="19 12 12 19 5 12"/>
+                </svg>
+              </div>
+            </a>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+
+      {% if has_files == false %}
+        <div class="project-download-item">
+          <div class="project-download-item__icon">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+          <div class="project-download-item__title">Full Application Guide (PDF)</div>
+          <div class="project-download-item__arrow">↓</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .project-downloads-wrapper {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .project-downloads-card {
+    background-color: var(--card-bg, #ffffff);
+    border: 1px solid #e5e5e2;
+    border-radius: 4px;
+    padding: 24px 28px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .project-downloads__heading {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--heading-color, #a11b2a);
+    margin-bottom: 16px;
+    line-height: 1.4;
+  }
+
+  .project-downloads__list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .project-download-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0px 0px 14px;
+    gap: 14px;
+    border-bottom: 1px solid var(--divider-color, #f1f1f0);
+    text-decoration: none;
+    transition: opacity 0.15s ease;
+    cursor: pointer;
+  }
+
+  .project-download-item:last-child {
+    border-bottom: none;
+  }
+
+  .project-download-item:hover {
+    opacity: 0.85;
+  }
+
+  .project-download-item:hover .project-download-item__arrow {
+    transform: translateY(2px);
+  }
+
+  .project-download-item__icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    background-color: var(--icon-bg, #f4f4f3);
+    color: var(--icon-color, #71717a);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .project-download-item__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--title-color, #2c3644);
+    flex: 1;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .project-download-item__arrow {
+    color: var(--arrow-color, #a11b2a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+  }
+
+  @media screen and (max-width: 639px) {
+    .project-downloads-card {
+      padding: 18px 20px;
+    }
+
+    .project-download-item {
+      padding: 12px 0;
+      gap: 10px;
+    }
+
+    .project-download-item__icon {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+    }
+
+    .project-download-item__title {
+      font-size: 12px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Project downloads file",
+  "tag": null,
+  "class": "project-downloads-block-wrapper",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "DOWNLOADS"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading color",
+      "default": "#a11b2a"
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "File title color",
+      "default": "#2c3644"
+    },
+    {
+      "type": "color",
+      "id": "arrow_color",
+      "label": "Arrow color",
+      "default": "#a11b2a"
+    },
+    {
+      "type": "color",
+      "id": "icon_bg",
+      "label": "File icon background",
+      "default": "#f4f4f3"
+    },
+    {
+      "type": "color",
+      "id": "icon_color",
+      "label": "File icon color",
+      "default": "#71717a"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "divider_color",
+      "label": "Divider color",
+      "default": "#f1f1f0"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Project downloads file"
+    }
+  ]
+}
+{% endschema %}
