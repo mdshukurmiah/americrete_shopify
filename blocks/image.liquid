@@ -1,5 +1,3 @@
-
-
 {% liquid
   assign block_settings = block.settings
   assign ratio = 1
@@ -11,6 +9,10 @@
       assign ratio = '4 / 5'
     when 'adapt'
       assign ratio = block_settings.image.aspect_ratio
+    when '4/5'
+      assign ratio = '4/5'
+    when '5/4'
+      assign ratio = '5/4'
   endcase
 
   if ratio == 0 or ratio == null
@@ -151,6 +153,14 @@
         {
           "value": "landscape",
           "label": "t:options.landscape"
+        },
+        {
+          "value": "4/5",
+          "label": "4/5"
+        },
+        {
+          "value": "5/4",
+          "label": "5/4"
         }
       ],
       "default": "adapt"
