@@ -12,15 +12,44 @@
     "main": {
       "type": "main-page",
       "blocks": {
-        "heading": {
+        "text_br448K": {
           "type": "text",
-          "name": "t:names.title",
+          "name": "t:names.heading",
           "settings": {
-            "text": "<h1>{{ closest.page.title }}</h1>",
+            "text": "<p>Shop by Project</p>",
             "width": "100%",
-            "max_width": "normal",
-            "alignment": "left",
-            "type_preset": "h2",
+            "max_width": "none",
+            "alignment": "center",
+            "type_preset": "custom",
+            "font": "var(--font-heading--family)",
+            "font_size": "0.75rem",
+            "font_size_mobile": "",
+            "weight": "",
+            "line_height": "normal",
+            "letter_spacing": "loose",
+            "case": "uppercase",
+            "wrap": "pretty",
+            "text_color": "{{ settings.color_palette.color5 }}",
+            "highlight_color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "text_3tjnUp": {
+          "type": "text",
+          "name": "t:names.heading",
+          "settings": {
+            "text": "<p>Whatever you're building, we've got the system for it.</p>",
+            "width": "100%",
+            "max_width": "none",
+            "alignment": "center",
+            "type_preset": "h3",
             "font": "var(--font-body--family)",
             "font_size": "1rem",
             "font_size_mobile": "",
@@ -41,43 +70,55 @@
           },
           "blocks": {}
         },
-        "page-content": {
-          "type": "page-content",
+        "text_3NWj7q": {
+          "type": "text",
+          "name": "t:names.text",
           "settings": {
-            "text_color": ""
+            "text": "<p>Every Americrete product is engineered to work as part of a system. Pick your project below and we'll show you the exact products, coverage rates, and application steps you need.</p>",
+            "width": "100%",
+            "max_width": "none",
+            "alignment": "center",
+            "type_preset": "custom",
+            "font": "var(--font-body--family)",
+            "font_size": "1rem",
+            "font_size_mobile": "",
+            "weight": "",
+            "line_height": "loose",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "text_color": "",
+            "highlight_color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
           },
           "blocks": {}
         }
       },
       "block_order": [
-        "heading",
-        "page-content"
+        "text_br448K",
+        "text_3tjnUp",
+        "text_3NWj7q"
       ],
-      "disabled": true,
       "settings": {
+        "content_width": "page-width-content",
         "content_direction": "column",
-        "gap": 32,
-        "background_color": "{{ settings.color_palette.background }}",
-        "padding-block-start": 40,
+        "gap": 20,
+        "background_color": "{{ settings.color_palette.foreground }}",
+        "padding-block-start": 60,
         "padding-block-end": 80,
         "custom_mobile_padding": false,
         "padding-block-start-mobile": 0,
         "padding-block-end-mobile": 0
       }
     },
-    "section_FhmEVQ": {
+    "section_eXyCcA": {
       "type": "section",
-      "blocks": {
-        "bss_b2b_solution_form_jbdKeU": {
-          "type": "shopify://apps/bss-b2b-solution/blocks/form/451233f2-9631-4c49-8b6f-057e4ebcde7f",
-          "settings": {
-            "form_id": "35323"
-          }
-        }
-      },
-      "block_order": [
-        "bss_b2b_solution_form_jbdKeU"
-      ],
       "name": "t:names.custom_section",
       "settings": {
         "content_direction": "column",
@@ -85,8 +126,8 @@
         "horizontal_alignment": "flex-start",
         "vertical_alignment": "center",
         "align_baseline": false,
-        "horizontal_alignment_flex_direction_column": "center",
-        "vertical_alignment_flex_direction_column": "flex-start",
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "vertical_alignment_flex_direction_column": "center",
         "gap": 12,
         "section_width": "page-width",
         "section_height": "small",
@@ -105,7 +146,7 @@
         "border_color": "",
         "border_radius": 0,
         "padding-block-start": 0,
-        "padding-block-end": 56,
+        "padding-block-end": 0,
         "custom_mobile_padding": false,
         "padding-block-start-mobile": 0,
         "padding-block-end-mobile": 0
@@ -114,6 +155,6 @@
   },
   "order": [
     "main",
-    "section_FhmEVQ"
+    "section_eXyCcA"
   ]
 }
