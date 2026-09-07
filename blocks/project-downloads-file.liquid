@@ -41,22 +41,62 @@
           {% assign doc_title = '' %}
           {% assign doc_url = '' %}
 
+          {% comment %} 1. Determine URL {% endcomment %}
           {% assign doc_url = item.url | default: item.public_url %}
-          {% if doc_url == blank and item != blank %}
-            {% assign doc_url = item | file_url %}
+
+          {% if doc_url == blank and item.file != blank %}
+            {% assign file_obj = item.file.value | default: item.file %}
+            {% assign doc_url = file_obj.url | default: file_obj.public_url %}
           {% endif %}
 
-          {% if item.alt != blank and item.alt != item.filename %}
-            {% assign doc_title = item.alt %}
-          {% elsif item.filename != blank %}
-            {% assign raw_name = item.filename | split: '?' | first | split: '/' | last %}
-            {% assign name_without_ext = raw_name | split: '.' | first %}
-            {% assign doc_title = name_without_ext | replace: '-', ' ' | replace: '_', ' ' | capitalize %}
-          {% elsif item.name != blank %}
-            {% assign doc_title = item.name %}
+          {% if doc_url == blank and item.filename != blank %}
+            {% assign doc_url = item.filename | file_url %}
+          {% endif %}
+
+          {% if doc_url == blank and item != blank %}
+            {% assign item_as_string = item | append: '' %}
+            {% if item_as_string contains 'http://'
+              or item_as_string contains 'https://'
+              or item_as_string contains '//cdn.shopify.com'
+            %}
+              {% assign doc_url = item_as_string %}
+            {% elsif item_as_string contains '.' %}
+              {% assign doc_url = item_as_string | file_url %}
+            {% endif %}
+          {% endif %}
+
+          {% comment %} 2. Determine Title {% endcomment %}
+          {% assign item_alt = item.alt %}
+          {% assign item_filename = item.filename %}
+
+          {% if item_alt != blank and item_alt != item_filename and item_alt != doc_url %}
+            {% assign doc_title = item_alt %}
           {% elsif item.title != blank %}
-            {% assign doc_title = item.title %}
-          {% else %}
+            {% assign doc_title = item.title.value | default: item.title %}
+          {% elsif item.name != blank %}
+            {% assign doc_title = item.name.value | default: item.name %}
+          {% elsif item.label != blank %}
+            {% assign doc_title = item.label %}
+          {% endif %}
+
+          {% if doc_title == blank %}
+            {% assign file_source = item_filename | default: item.name | default: doc_url %}
+            {% assign file_source_str = file_source | append: '' %}
+            {% if file_source_str != blank %}
+              {% assign raw_filename = file_source_str | split: '?' | first | split: '/' | last %}
+              {% assign file_parts = raw_filename | split: '.' %}
+              {% if file_parts.size > 1 %}
+                {% assign ext = file_parts | last %}
+                {% assign ext_with_dot = '.' | append: ext %}
+                {% assign doc_title = raw_filename | remove: ext_with_dot %}
+              {% else %}
+                {% assign doc_title = raw_filename %}
+              {% endif %}
+              {% assign doc_title = doc_title | replace: '-', ' ' | replace: '_', ' ' | strip %}
+            {% endif %}
+          {% endif %}
+
+          {% if doc_title == blank %}
             {% assign doc_title = 'Download File' %}
           {% endif %}
 
@@ -110,7 +150,7 @@
         {% endfor %}
       {% endif %}
 
-      {% if has_files == false and request.design_mode %}
+      {% if has_files == false %}
         <div class="project-download-item">
           <div class="project-download-item__icon">
             <svg
