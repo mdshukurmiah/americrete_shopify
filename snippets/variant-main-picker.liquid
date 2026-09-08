@@ -72,7 +72,6 @@
             assign longest_value = 0
           endif
         -%}
-
         {%- if product_option.values.size == 1 and variant_style != 'swatch' -%}
           <div
             class="variant-option"
@@ -103,8 +102,24 @@
               {% if product_option_value.size > longest_value and option_id_attribute %}
                 {% assign longest_value = product_option_value.size %}
               {% endif %}
+              {% liquid
+                assign selected_swatch_border_color = 'rgb(' | append: settings.palette_selected_variant_border.rgba | append: ')'
+                assign hover_selected_swatch_border_color = 'var(--color-selected-variant-hover-border)'
+                assign hover_swatch_border_color = 'var(--color-selected-variant-hover-border)'
+                if variant_style == 'swatch' and product_option_value.swatch.image == blank
+                  assign selected_swatch_border_color = 'rgb(' | append: product_option_value.swatch.color.rgb | append: ')'
+                  assign hover_swatch_border_color = 'rgb(' | append: product_option_value.swatch.color.rgb | append: ')'
+                  assign hover_selected_swatch_border_color = 'rgb(' | append: product_option_value.swatch.color.rgb | append: ')'
+                  assign hover_swatch_border_color = 'rgb(' | append: product_option_value.swatch.color.rgb | append: ')'
+                endif
+              %}
               <label
                 class="variant-option__button-label{% if variant_style == 'swatch' %} variant-option__button-label--has-swatch{% endif %}"
+                style="
+                  --color-selected-variant-border: {{ selected_swatch_border_color }};
+                  --color-selected-variant-hover-border: {{ hover_selected_swatch_border_color }};
+                  --color-variant-hover-border: {{ hover_swatch_border_color }}
+                "
               >
                 <input
                   type="radio"

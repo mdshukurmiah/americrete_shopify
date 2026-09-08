@@ -1,0 +1,339 @@
+{% liquid
+  assign section_settings = section.settings
+
+  if section_settings.background_color != blank
+    render 'contrast-override', background_color: section_settings.background_color, section_id: section.id
+  endif
+%}
+
+<div
+  class="section-background{% if section_settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}"
+></div>
+
+<div
+  class="
+    section
+    section--{{ section_settings.section_width }}
+    {% if section_settings.background_color != blank %}color-custom-{{ section.id }}{% endif %}
+    spacing-style
+  "
+  style="
+    {% render 'spacing-style', settings: section_settings %}
+    --columns-desktop: {{ section_settings.columns_desktop | default: 3 }};
+    --columns-mobile: {{ section_settings.columns_mobile | default: 1 }};
+    --columns-gap: {{ section_settings.columns_gap | default: 24 }}px;
+    --columns-gap-mobile: {{ section_settings.columns_gap_mobile | default: 16 }}px;
+    --rows-gap: {{ section_settings.rows_gap | default: 24 }}px;
+    {% if section_settings.card_background != blank %}--card-bg: {{ section_settings.card_background }};{% endif %}
+    {% if section_settings.card_border_color != blank %}--card-border-color: {{ section_settings.card_border_color }};{% endif %}
+    {% if section_settings.quote_color != blank %}--quote-color: {{ section_settings.quote_color }};{% endif %}
+    {% if section_settings.author_name_color != blank %}--author-name-color: {{ section_settings.author_name_color }};{% endif %}
+    {% if section_settings.author_info_color != blank %}--author-info-color: {{ section_settings.author_info_color }};{% endif %}
+    {% if section_settings.avatar_bg != blank %}--avatar-bg: {{ section_settings.avatar_bg }};{% endif %}
+    {% if section_settings.avatar_text_color != blank %}--avatar-text-color: {{ section_settings.avatar_text_color }};{% endif %}
+  "
+  {{ section.shopify_attributes }}
+>
+  <div class="testimonial-section">
+    <div class="testimonial-grid">
+      {% content_for 'blocks' %}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .testimonial-section {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .testimonial-section__header {
+    margin-bottom: 32px;
+  }
+
+  .testimonial-section__header--center {
+    text-align: center;
+  }
+
+  .testimonial-section__header--left {
+    text-align: left;
+  }
+  .testimonial-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--columns-desktop, 3), minmax(0, 1fr));
+    column-gap: var(--columns-gap, 24px);
+    row-gap: var(--rows-gap, 24px);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  @media screen and (max-width: 767px) {
+    .testimonial-grid {
+      grid-template-columns: repeat(var(--columns-mobile, 1), minmax(0, 1fr));
+      column-gap: var(--columns-gap-mobile, 16px);
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Testimonials",
+  "tag": "section",
+  "class": "section-testimonials",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "select",
+      "id": "header_alignment",
+      "label": "Header alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "header",
+      "content": "Layout Settings"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Section width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "Page width"
+        },
+        {
+          "value": "full-width",
+          "label": "Full width"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "label": "Desktop Columns",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "select",
+      "id": "columns_mobile",
+      "label": "Mobile Columns",
+      "options": [
+        {
+          "value": "1",
+          "label": "1 Column"
+        },
+        {
+          "value": "2",
+          "label": "2 Columns"
+        }
+      ],
+      "default": "1"
+    },
+    {
+      "type": "range",
+      "id": "columns_gap",
+      "label": "Desktop Column Gap",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "columns_gap_mobile",
+      "label": "Mobile Column Gap",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "rows_gap",
+      "label": "Row Gap",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "Colors & Styling"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "placeholder": "Default"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "card_border_color",
+      "label": "Card border color",
+      "default": "#e5e5e0"
+    },
+    {
+      "type": "color",
+      "id": "quote_color",
+      "label": "Quote text color",
+      "default": "#374151"
+    },
+    {
+      "type": "color",
+      "id": "author_name_color",
+      "label": "Author name color",
+      "default": "#111827"
+    },
+    {
+      "type": "color",
+      "id": "author_info_color",
+      "label": "Author info color",
+      "default": "#6b7280"
+    },
+    {
+      "type": "color",
+      "id": "avatar_bg",
+      "label": "Avatar circle background",
+      "default": "#e5e4df"
+    },
+    {
+      "type": "color",
+      "id": "avatar_text_color",
+      "label": "Avatar initials color",
+      "default": "#4b5563"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top padding",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "checkbox",
+      "id": "custom_mobile_padding",
+      "label": "Custom mobile padding",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start-mobile",
+      "label": "Mobile top padding",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 24,
+      "visible_if": "{{ section.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end-mobile",
+      "label": "Mobile bottom padding",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 24,
+      "visible_if": "{{ section.settings.custom_mobile_padding }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "@theme"
+    },
+    {
+      "type": "@app"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Testimonials Grid",
+      "blocks": {
+        "group_1": {
+          "type": "group",
+          "settings": {
+            "display": "grid",
+            "desktop_columns": 3,
+            "mobile_columns": 1,
+            "gap": 24
+          },
+          "blocks": {
+            "testimonial_1": {
+              "type": "testimonial",
+              "settings": {
+                "quote": "Placeholder testimonial. Product performance quote from a Pro tier contractor about a specific job win or long-term relationship with Americrete.",
+                "author_name": "Franklin C.",
+                "author_initials": "FC",
+                "author_info": "Owner · West Coast Deck Waterproofing · Long Beach, CA"
+              }
+            },
+            "testimonial_2": {
+              "type": "testimonial",
+              "settings": {
+                "quote": "Placeholder testimonial. Something about the Pro program discount tiers, Net-30 terms, or the customer service experience.",
+                "author_name": "Sarah M.",
+                "author_initials": "SM",
+                "author_info": "Owner · Southwest Roof & Deck · Phoenix, AZ"
+              }
+            },
+            "testimonial_3": {
+              "type": "testimonial",
+              "settings": {
+                "quote": "Placeholder testimonial. Reference to the 10-year warranty coming through when needed, or the tech support responsiveness.",
+                "author_name": "Mike R.",
+                "author_initials": "MR",
+                "author_info": "Foreman · Coastal Concrete Solutions · San Diego, CA"
+              }
+            }
+          },
+          "block_order": ["testimonial_1", "testimonial_2", "testimonial_3"]
+        }
+      },
+      "block_order": ["group_1"]
+    }
+  ]
+}
+{% endschema %}

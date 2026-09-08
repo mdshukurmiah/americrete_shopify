@@ -1,0 +1,234 @@
+{% liquid
+  assign block_settings = block.settings
+
+  assign target_project = metaobject
+  if target_project == blank
+    assign target_project = closest.metaobject.project
+  endif
+  if target_project == blank
+    assign target_project = shop.metaobjects.project.values.first
+  endif
+
+  assign steps_raw = target_project.application_steps.value | default: target_project.application_steps
+%}
+
+{% style %}
+  #block-{{ block.id }} .project-steps {
+    --step-number-color: {% if block_settings.step_number_color != blank %}{{ block_settings.step_number_color }}{% else %}#a11b2a{% endif %};
+    --step-number-bg: {% if block_settings.step_number_bg != blank %}{{ block_settings.step_number_bg }}{% else %}#fef2f2{% endif %};
+    --title-color: {% if block_settings.title_color != blank %}{{ block_settings.title_color }}{% else %}#0f172a{% endif %};
+    --content-color: {% if block_settings.content_color != blank %}{{ block_settings.content_color }}{% else %}#475569{% endif %};
+    --card-bg: {% if block_settings.card_background != blank %}{{ block_settings.card_background }}{% else %}#ffffff{% endif %};
+    --p-code-color: {% if block_settings.p_code_color != blank %}{{ block_settings.p_code_color }}{% else %}#a11b2a{% endif %};
+    --p-code-bg: {% if block_settings.p_code_bg != blank %}{{ block_settings.p_code_bg }}{% else %}#f8fafc{% endif %};
+  }
+{% endstyle %}
+
+<div
+  id="block-{{ block.id }}"
+  class="project-steps-wrapper"
+  {{ block.shopify_attributes }}
+>
+  <div class="project-steps">
+    <div class="project-steps__list">
+      {% if steps_raw != blank %}
+        {% for step in steps_raw %}
+          <div class="project-steps__item">
+            <div class="project-steps__step-number">
+              {% if forloop.index < 10 %}0{% endif -%}
+              {{- forloop.index }}
+            </div>
+            <div class="project-steps__content">
+              {% if step.title != blank %}
+                <h4 class="project-steps__title">{{ step.title }}</h4>
+              {% endif %}
+
+              {% if step.content != blank %}
+                <div class="project-steps__text">{{ step.content }}</div>
+              {% endif %}
+
+              {% if step.p_code != blank %}
+                <div class="project-steps__p-code">
+                  <span class="project-steps__p-code-badge">{{ step.p_code }}</span>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      {% elsif request.design_mode %}
+        <div
+          class="project-steps__placeholder"
+          style="padding: 20px; border: 1px dashed #ccc; text-align: center; color: #666; font-size: 13px;"
+        >
+          <p><strong>Application Steps Block</strong></p>
+          <p>No steps data found in <code>application_steps</code> for this project.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .project-steps-wrapper {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .project-steps {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .project-steps__list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+  }
+
+  .project-steps__item {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 16px;
+    padding: 18px 20px;
+    background-color: var(--card-bg);
+    border-bottom: 1px solid #e5e5e0;
+    box-sizing: border-box;
+    align-items: flex-start;
+  }
+
+  .project-steps__step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--step-number-bg);
+    color: var(--step-number-color);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+  }
+
+  .project-steps__content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .project-steps__title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--title-color, #0f172a);
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .project-steps__text {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--content-color, #475569);
+  }
+
+  .project-steps__p-code {
+    margin-top: 4px;
+  }
+
+  .project-steps__p-code-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 2px;
+    font-size: 11px;
+    color: var(--p-code-color);
+    background-color: var(--p-code-bg);
+    padding: 3px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+  }
+  .project-steps__item:last-child {
+    border: 0;
+  }
+  @media screen and (max-width: 639px) {
+    .project-steps__item {
+      grid-template-columns: 36px 1fr;
+      gap: 12px;
+      padding: 14px 16px;
+    }
+
+    .project-steps__step-number {
+      width: 34px;
+      height: 34px;
+      font-size: 11px;
+    }
+
+    .project-steps__title {
+      font-size: 14px;
+    }
+
+    .project-steps__text {
+      font-size: 12px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Project steps",
+  "tag": null,
+  "class": "project-steps-block-wrapper",
+  "settings": [
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Step title color",
+      "default": "#0f172a"
+    },
+    {
+      "type": "color",
+      "id": "content_color",
+      "label": "Step content color",
+      "default": "#475569"
+    },
+    {
+      "type": "color",
+      "id": "step_number_color",
+      "label": "Step number text color",
+      "default": "#a11b2a"
+    },
+    {
+      "type": "color",
+      "id": "step_number_bg",
+      "label": "Step number background",
+      "default": "#fef2f2"
+    },
+    {
+      "type": "color",
+      "id": "p_code_color",
+      "label": "Products used badge text color",
+      "default": "#a11b2a"
+    },
+    {
+      "type": "color",
+      "id": "p_code_bg",
+      "label": "Products used badge background",
+      "default": "#f8fafc"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card background",
+      "default": "#ffffff"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Project steps"
+    }
+  ]
+}
+{% endschema %}

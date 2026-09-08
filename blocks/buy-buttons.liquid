@@ -234,6 +234,11 @@
             can_add_to_cart: can_add_to_cart,
             form_obj: form
           %}
+
+          {% content_for 'block',
+            type: 'amazon-button',
+            id: 'amazon-button'
+          %}
         </div>
         {%- if block_settings.gift_card_form and product.gift_card? -%}
           </span>
@@ -634,6 +639,10 @@
         },
         "accelerated-checkout": {
           "type": "accelerated-checkout",
+          "static": true
+        },
+        "amazon-button": {
+          "type": "amazon-button",
           "static": true
         }
       }

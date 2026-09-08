@@ -1,5 +1,3 @@
-
-
 {% assign product = closest.product %}
 
 {% capture children %}
@@ -79,6 +77,43 @@
       "default": "portrait",
       "label": "t:settings.aspect_ratio",
       "info": "t:info.aspect_ratio_adjusted"
+    },
+    {
+      "type": "select",
+      "id": "image_fit",
+      "label": "t:settings.media_fit",
+      "options": [
+        {
+          "value": "cover",
+          "label": "t:options.cover"
+        },
+        {
+          "value": "contain",
+          "label": "t:options.contain"
+        }
+      ],
+      "default": "cover"
+    },
+    {
+      "type": "select",
+      "id": "constrain_to_viewport",
+      "options": [
+        {
+          "value": "",
+          "label": "t:options.off"
+        },
+        {
+          "value": "contain",
+          "label": "t:options.maintain_aspect_ratio"
+        },
+        {
+          "value": "cover",
+          "label": "t:options.crop_to_fit"
+        }
+      ],
+      "default": "",
+      "label": "t:settings.limit_media_to_screen_height",
+      "visible_if": "{{ block.settings.image_ratio == 'adapt' }}"
     },
     {
       "type": "header",

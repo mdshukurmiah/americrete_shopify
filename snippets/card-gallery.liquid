@@ -55,13 +55,23 @@
       assign ratio = product.featured_media.preview_image.aspect_ratio | default: '1'
   endcase
 
+  if block_settings.image_fit != blank
+    assign media_fit = block_settings.image_fit
+  elsif block_settings.media_fit != blank
+    assign media_fit = block_settings.media_fit
+  endif
+%}
+
+{% comment %}
   if block_settings.image_ratio == 'adapt' and block_settings.constrain_to_viewport
     if block_settings.constrain_to_viewport != ''
       assign constrain_to_viewport = true
-      assign media_fit = block_settings.constrain_to_viewport
+      if media_fit == blank
+        assign media_fit = block_settings.constrain_to_viewport
+      endif
     endif
   endif
-%}
+{% endcomment %}
 
 <div
   ref="cardGallery"
