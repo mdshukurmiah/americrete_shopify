@@ -26,7 +26,7 @@
     endif
   endif
 
-  # 3. Check fallback: custom.a_plus_images / custom.a_plus_contents
+  # 3. Check fallbacks: custom.a_plus_images / custom.a_plus_contents
   if a_images_value == blank or a_images_value == null
     if target_product.metafields.custom.a_plus_images.value != blank
       assign a_images_value = target_product.metafields.custom.a_plus_images.value
@@ -43,128 +43,158 @@
       assign has_images = true
     endif
   endif
+
+  assign media_width_desktop = '100vw'
+  assign media_width_mobile = '100vw'
+  assign sizes = 'auto, (min-width: 750px) ' | append: media_width_desktop | append: ', ' | append: media_width_mobile
+  assign widths = '240, 352, 832, 1200, 1600, 1920, 2560, 3840'
 %}
 
-{% capture a_plus_content %}
-  {% if has_images %}
-    {% if a_images_value.first != blank or a_images_value.size > 0 %}
-      {% for img in a_images_value %}
-        <div class="a-plus-contents__item">
-          {% if img.width != blank or img.preview_image != blank or img.aspect_ratio != blank %}
-            {{
-              img
-              | image_url: width: 2400
-              | image_tag:
-                loading: 'lazy',
-                widths: '375, 550, 750, 1100, 1500, 2000, 2400',
-                sizes: '100vw',
-                class: 'a-plus-contents__image border-style',
-                alt: img.alt | default: target_product.title
-            }}
-          {% elsif img.url != blank %}
-            <img
-              src="{{ img.url }}"
-              alt="{{ img.alt | default: target_product.title }}"
-              class="a-plus-contents__image border-style"
-              loading="lazy"
-            >
-          {% elsif img != blank %}
-            <img
-              src="{{ img }}"
-              alt="{{ target_product.title }}"
-              class="a-plus-contents__image border-style"
-              loading="lazy"
-            >
-          {% endif %}
-        </div>
-      {% endfor %}
-    {% else %}
-      {% comment %} Single image reference fallback {% endcomment %}
-      <div class="a-plus-contents__item">
-        {% if a_images_value.width != blank or a_images_value.preview_image != blank %}
-          {{
-            a_images_value
-            | image_url: width: 2400
-            | image_tag:
-              loading: 'lazy',
-              widths: '375, 550, 750, 1100, 1500, 2000, 2400',
-              sizes: '100vw',
-              class: 'a-plus-contents__image border-style',
-              alt: a_images_value.alt | default: target_product.title
-          }}
-        {% elsif a_images_value.url != blank %}
-          <img
-            src="{{ a_images_value.url }}"
-            alt="{{ a_images_value.alt | default: target_product.title }}"
-            class="a-plus-contents__image border-style"
-            loading="lazy"
-          >
-        {% endif %}
-      </div>
-    {% endif %}
-  {% elsif request.design_mode %}
-    <div class="a-plus-contents__placeholder">
-      <p class="a-plus-contents__placeholder-title"><strong>A+ Contents Block</strong></p>
-      <p class="a-plus-contents__placeholder-text">
-        No images found in <code>custom.a_images</code> for <em>{{ target_product.title | default: 'selected product' }}</em>.
-      </p>
-      <p class="a-plus-contents__placeholder-hint">Add images to the product's <strong>A+ Images</strong> metafield in Shopify Admin to display them here.</p>
-    </div>
-  {% endif %}
+{% capture class %}
+  a-plus-contents a-plus-contents--{{ block.id }} a-plus-contents--height-{{ block_settings.height }} spacing-style size-style
+{% endcapture %}
+
+{% capture style %}
+  --a-plus-gap: {{ block_settings.gap | default: 20 }}px;
+  {% render 'size-style', settings: block_settings %}
+  {% render 'spacing-style', settings: block_settings %}
 {% endcapture %}
 
 {% if has_images or request.design_mode %}
-  {% render 'contrast-override',
-    background_color: block_settings.background_color,
-    text_color: block_settings.text_color,
-    section_id: block.id
-  %}
-
-  {% style %}
-    #block-{{ block.id }}.a-plus-contents {
-      --a-plus-gap: {{ block_settings.gap | default: 20 }}px;
-      --a-plus-alignment: {{ block_settings.alignment | default: 'center' }};
-      --a-plus-max-width: {{ block_settings.max_width | default: 100 }}%;
-      background-color: {% if block_settings.background_color != blank %}{{ block_settings.background_color }}{% else %}transparent{% endif %};
-    }
-
-    {% if block_settings.custom_css != blank %}
-      {% if block_settings.custom_css contains 'selector' %}
-        {% assign target_selector = '#block-' | append: block.id %}
-        {{ block_settings.custom_css | replace: 'selector', target_selector }}
-      {% else %}
-        #block-{{ block.id }} {
-          {{ block_settings.custom_css }}
-        }
-      {% endif %}
-    {% endif %}
-  {% endstyle %}
-
   <div
-    id="block-{{ block.id }}"
-    class="a-plus-contents border-style spacing-style{% if block_settings.background_color != blank or block_settings.text_color != blank %} color-custom-{{ block.id }}{% endif %}"
-    style="
-      {% render 'spacing-style', settings: block_settings %}
-      {% render 'border-override', settings: block_settings %}
-    "
+    class="{{ class }}"
+    style="{{ style }}"
     {{ block.shopify_attributes }}
   >
     <div class="a-plus-contents__container">
-      {{ a_plus_content }}
+      {% if has_images %}
+        {% if a_images_value.first != blank or a_images_value.size > 0 %}
+          {% for img in a_images_value %}
+            {% liquid
+              assign ratio = 1
+              case block_settings.image_ratio
+                when 'landscape'
+                  assign ratio = '16 / 9'
+                when 'portrait'
+                  assign ratio = '4 / 5'
+                when 'adapt'
+                  assign ratio = img.aspect_ratio
+                when '4/5'
+                  assign ratio = '4/5'
+                when '5/4'
+                  assign ratio = '5/4'
+              endcase
+
+              if ratio == 0 or ratio == null
+                assign ratio = 1
+              endif
+            %}
+            {% capture image_border_style %}
+              --ratio: {{ ratio }};
+              {% render 'border-override', settings: block_settings %}
+            {% endcapture %}
+
+            <div class="a-plus-contents__item">
+              {% if img.width != blank or img.preview_image != blank or img.aspect_ratio != blank %}
+                {{
+                  img
+                  | image_url: width: 3840
+                  | image_tag:
+                    width: img.width,
+                    widths: widths,
+                    height: img.height,
+                    class: 'a-plus-contents__image border-style',
+                    style: image_border_style,
+                    sizes: sizes,
+                    alt: img.alt
+                  | default: target_product.title
+                }}
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          {% liquid
+            assign ratio = 1
+            case block_settings.image_ratio
+              when 'landscape'
+                assign ratio = '16 / 9'
+              when 'portrait'
+                assign ratio = '4 / 5'
+              when 'adapt'
+                assign ratio = a_images_value.aspect_ratio
+              when '4/5'
+                assign ratio = '4/5'
+              when '5/4'
+                assign ratio = '5/4'
+            endcase
+
+            if ratio == 0 or ratio == null
+              assign ratio = 1
+            endif
+          %}
+          {% capture image_border_style %}
+            --ratio: {{ ratio }};
+            {% render 'border-override', settings: block_settings %}
+          {% endcapture %}
+
+          <div class="a-plus-contents__item">
+            {% if a_images_value.width != blank or a_images_value.preview_image != blank %}
+              {{
+                a_images_value
+                | image_url: width: 3840
+                | image_tag:
+                  width: a_images_value.width,
+                  widths: widths,
+                  height: a_images_value.height,
+                  class: 'a-plus-contents__image border-style',
+                  style: image_border_style,
+                  sizes: sizes,
+                  alt: a_images_value.alt
+                | default: target_product.title
+              }}
+            {% endif %}
+          </div>
+        {% endif %}
+      {% elsif request.design_mode %}
+        {% capture image_border_style %}
+          --ratio: 1;
+          {% render 'border-override', settings: block_settings %}
+        {% endcapture %}
+        <div class="placeholder-image border-style size-style" style="{{ image_border_style }}">
+          {{ 'detailed-apparel-1' | placeholder_svg_tag: 'a-plus-contents__placeholder' }}
+        </div>
+      {% endif %}
     </div>
   </div>
 {% endif %}
 
 {% stylesheet %}
-  .a-plus-contents {
+  .a-plus-contents__placeholder {
+    height: 100%;
     width: 100%;
+    object-fit: cover;
+    object-position: center center;
+    overflow: hidden;
     position: relative;
+  }
+
+  .placeholder-image {
+    position: relative;
+    aspect-ratio: var(--ratio);
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .a-plus-contents {
+    display: flex;
+    justify-content: var(--horizontal-alignment, center);
+    width: 100%;
   }
 
   .a-plus-contents__container {
     display: flex;
     flex-direction: column;
-    align-items: var(--a-plus-alignment, center);
+    align-items: center;
     justify-content: center;
     gap: var(--a-plus-gap, 20px);
     width: 100%;
@@ -175,40 +205,16 @@
     justify-content: center;
     align-items: center;
     width: 100%;
-    max-width: var(--a-plus-max-width, 100%);
+  }
+
+  .a-plus-contents--height-fill .a-plus-contents__image {
+    height: 100%;
   }
 
   .a-plus-contents__image {
+    object-fit: cover;
+    aspect-ratio: var(--ratio);
     width: 100%;
-    height: auto;
-    display: block;
-    object-fit: contain;
-  }
-
-  .a-plus-contents__placeholder {
-    padding: 24px;
-    border: 2px dashed #cbd5e1;
-    border-radius: 8px;
-    background-color: #f8fafc;
-    text-align: center;
-    color: #475569;
-    width: 100%;
-  }
-
-  .a-plus-contents__placeholder-title {
-    font-size: 1.1rem;
-    margin-bottom: 8px;
-    color: #0f172a;
-  }
-
-  .a-plus-contents__placeholder-text {
-    font-size: 0.95rem;
-    margin-bottom: 8px;
-  }
-
-  .a-plus-contents__placeholder-hint {
-    font-size: 0.85rem;
-    color: #64748b;
   }
 {% endstylesheet %}
 
@@ -224,8 +230,8 @@
     {
       "type": "product",
       "id": "product",
-      "label": "Product",
-      "info": "Select product to display A+ Images. If left empty, the current page product will be used."
+      "label": "t:settings.product",
+      "info": "Select product to display A+ Images. If blank, current page product is used."
     },
     {
       "type": "text",
@@ -249,34 +255,119 @@
       "default": 20
     },
     {
+      "type": "header",
+      "content": "t:content.size"
+    },
+    {
       "type": "select",
-      "id": "alignment",
-      "label": "Image alignment",
+      "id": "image_ratio",
+      "label": "t:settings.aspect_ratio",
       "options": [
-        { "value": "center", "label": "Center" },
-        { "value": "flex-start", "label": "Left" },
-        { "value": "flex-end", "label": "Right" }
+        {
+          "value": "adapt",
+          "label": "t:options.auto"
+        },
+        {
+          "value": "portrait",
+          "label": "t:options.portrait"
+        },
+        {
+          "value": "square",
+          "label": "t:options.square"
+        },
+        {
+          "value": "landscape",
+          "label": "t:options.landscape"
+        },
+        {
+          "value": "4/5",
+          "label": "4/5"
+        },
+        {
+          "value": "5/4",
+          "label": "5/4"
+        }
       ],
-      "default": "center"
+      "default": "adapt"
+    },
+    {
+      "type": "select",
+      "id": "width",
+      "label": "t:settings.width_desktop",
+      "options": [
+        {
+          "value": "fit-content",
+          "label": "t:options.fit_content"
+        },
+        {
+          "value": "fill",
+          "label": "t:options.fill"
+        },
+        {
+          "value": "custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "fill"
     },
     {
       "type": "range",
-      "id": "max_width",
-      "label": "Maximum image width",
-      "min": 20,
+      "id": "custom_width",
+      "label": "t:settings.custom_width",
+      "min": 0,
       "max": 100,
-      "step": 5,
+      "step": 1,
       "unit": "%",
-      "default": 100
+      "default": 100,
+      "visible_if": "{{ block.settings.width == 'custom' }}"
     },
     {
-      "type": "header",
-      "content": "Appearance"
+      "type": "select",
+      "id": "width_mobile",
+      "label": "t:settings.width_mobile",
+      "options": [
+        {
+          "value": "fit-content",
+          "label": "t:options.fit_content"
+        },
+        {
+          "value": "fill",
+          "label": "t:options.fill"
+        },
+        {
+          "value": "custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "fill"
     },
     {
-      "type": "color",
-      "id": "background_color",
-      "label": "Background color"
+      "type": "range",
+      "id": "custom_width_mobile",
+      "label": "t:settings.custom_width",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.width_mobile == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "height",
+      "label": "t:settings.height",
+      "options": [
+        {
+          "value": "fit",
+          "label": "t:options.fit_content"
+        },
+        {
+          "value": "fill",
+          "label": "t:options.fill"
+        }
+      ],
+      "default": "fit",
+      "visible_if": "{{ block.settings.image_ratio == 'adapt' }}"
     },
     {
       "type": "header",
@@ -285,30 +376,45 @@
     {
       "type": "select",
       "id": "border",
-      "label": "t:settings.border",
+      "label": "t:settings.style",
       "options": [
-        { "value": "none", "label": "t:options.none" },
-        { "value": "solid", "label": "Solid" },
-        { "value": "dashed", "label": "Dashed" },
-        { "value": "dotted", "label": "Dotted" }
+        {
+          "value": "none",
+          "label": "t:options.none"
+        },
+        {
+          "value": "solid",
+          "label": "t:options.solid"
+        }
       ],
       "default": "none"
     },
     {
       "type": "range",
       "id": "border_width",
-      "label": "t:settings.border_width",
       "min": 0,
-      "max": 20,
+      "max": 100,
       "step": 1,
       "unit": "px",
+      "label": "t:settings.thickness",
       "default": 1,
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "range",
+      "id": "border_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "label": "t:settings.opacity",
+      "default": 100,
       "visible_if": "{{ block.settings.border != 'none' }}"
     },
     {
       "type": "color",
       "id": "border_color",
-      "label": "t:settings.border_color",
+      "label": "t:settings.color",
       "placeholder": "t:settings.default",
       "visible_if": "{{ block.settings.border != 'none' }}"
     },
@@ -317,7 +423,7 @@
       "id": "border_radius",
       "label": "t:settings.border_radius",
       "min": 0,
-      "max": 50,
+      "max": 100,
       "step": 1,
       "unit": "px",
       "default": 0
@@ -365,66 +471,6 @@
       "step": 1,
       "unit": "px",
       "default": 0
-    },
-    {
-      "type": "checkbox",
-      "id": "custom_mobile_padding",
-      "label": "Use custom mobile padding",
-      "default": false
-    },
-    {
-      "type": "range",
-      "id": "padding-block-start-mobile",
-      "label": "Top (Mobile)",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 0,
-      "visible_if": "{{ block.settings.custom_mobile_padding }}"
-    },
-    {
-      "type": "range",
-      "id": "padding-block-end-mobile",
-      "label": "Bottom (Mobile)",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 0,
-      "visible_if": "{{ block.settings.custom_mobile_padding }}"
-    },
-    {
-      "type": "range",
-      "id": "padding-inline-start-mobile",
-      "label": "Left (Mobile)",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 0,
-      "visible_if": "{{ block.settings.custom_mobile_padding }}"
-    },
-    {
-      "type": "range",
-      "id": "padding-inline-end-mobile",
-      "label": "Right (Mobile)",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 0,
-      "visible_if": "{{ block.settings.custom_mobile_padding }}"
-    },
-    {
-      "type": "header",
-      "content": "Custom CSS"
-    },
-    {
-      "type": "textarea",
-      "id": "custom_css",
-      "label": "Custom CSS",
-      "info": "Custom CSS applied to this A+ contents block."
     }
   ],
   "presets": [
