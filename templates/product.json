@@ -214,7 +214,7 @@
                   "type": "text",
                   "name": "t:names.heading",
                   "settings": {
-                    "text": "<p>A-3025 · ROOFING & WATERPROOFING</p>",
+                    "text": "<p>{{ closest.product.metafields.additional.product_code.value }}· ROOFING & WATERPROOFING</p>",
                     "width": "fit-content",
                     "max_width": "normal",
                     "alignment": "left",
