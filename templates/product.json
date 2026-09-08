@@ -1340,7 +1340,7 @@
                     "product": "color-roof-sealant",
                     "metafield_key": "additional.documents",
                     "title": "Safety Data Sheets & Product Documentation",
-                    "description": "<p>All A-3025 documentation is downloadable. SDS is required to be on-site for OSHA compliance on commercial jobs.</p>",
+                    "description": "<p>All {{ closest.product.metafields.additional.product_code.value }} documentation is downloadable. SDS is required to be on-site for OSHA compliance on commercial jobs.</p>",
                     "title_font_size": 17,
                     "title_font_weight": "700",
                     "title_color": "",
