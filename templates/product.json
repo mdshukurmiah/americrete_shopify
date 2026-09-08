@@ -2002,7 +2002,7 @@
               "name": "t:names.product_card_media",
               "settings": {
                 "image_ratio": "square",
-                "image_fit": "cover",
+                "image_fit": "contain",
                 "constrain_to_viewport": "",
                 "border": "none",
                 "border_width": 1,
