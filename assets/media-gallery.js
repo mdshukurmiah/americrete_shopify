@@ -108,9 +108,12 @@ export class MediaGallery extends Component {
     const addedSet = new Set();
 
     if (variantData) {
-      // 1. Selected Variant Featured Image
-      if (variantData.featured_media_id) {
-        const featId = String(variantData.featured_media_id);
+      // 1. Selected Variant Featured Image (fallback to product featured media if variant has no featured image)
+      const featId = variantData.featured_media_id
+        ? String(variantData.featured_media_id)
+        : (product_featured_media_id ? String(product_featured_media_id) : null);
+
+      if (featId) {
         targetMediaIds.push(featId);
         addedSet.add(featId);
       }
@@ -126,11 +129,11 @@ export class MediaGallery extends Component {
         });
       }
 
-      // 3. Product Media (excluding product featured media & other variants' media)
+      // 3. Product Media (excluding product featured media if variant has its own featured media & excluding other variants' media)
       const allMediaElements = Array.from(this.querySelectorAll('[data-media-id]'));
       allMediaElements.forEach((el) => {
         const mId = String(el.dataset.mediaId);
-        if (mId === String(product_featured_media_id)) return;
+        if (variantData.featured_media_id && mId === String(product_featured_media_id)) return;
         if (otherVariantMediaIds.has(mId)) return;
         if (!addedSet.has(mId)) {
           targetMediaIds.push(mId);
@@ -160,9 +163,9 @@ export class MediaGallery extends Component {
     // Filter & reorder containers (slideshow slides, thumbnails, grid)
     const containers = [
       this.querySelector('slideshow-slides'),
-      this.querySelector('.slideshow-controls__thumbnails'),
+      ...this.querySelectorAll('.slideshow-controls__thumbnails, .slideshow-controls__dots, .dialog-thumbnails-list'),
       this.querySelector('.media-gallery__grid')
-    ];
+    ].filter(Boolean);
 
     containers.forEach((container) => {
       if (!container) return;
@@ -178,6 +181,7 @@ export class MediaGallery extends Component {
       // Hide all child items first
       children.forEach((child) => {
         child.style.display = 'none';
+        child.setAttribute('hidden', '');
       });
 
       // Show & reorder matching target items
@@ -186,11 +190,13 @@ export class MediaGallery extends Component {
         const child = elMap.get(mId);
         if (child) {
           child.style.display = '';
+          child.removeAttribute('hidden');
           container.appendChild(child);
 
-          if (child.tagName === 'BUTTON' && child.classList.contains('slideshow-control')) {
-            child.setAttribute('on:click', `/select/${idx}`);
-            child.setAttribute('aria-selected', idx === 0 ? 'true' : 'false');
+          const btn = child.tagName === 'BUTTON' ? child : child.querySelector('button.slideshow-control');
+          if (btn) {
+            btn.setAttribute('on:click', `/select/${idx}`);
+            btn.setAttribute('aria-selected', idx === 0 ? 'true' : 'false');
           }
           idx++;
         }
