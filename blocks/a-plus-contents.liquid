@@ -1,0 +1,436 @@
+{% liquid
+  assign block_settings = block.settings
+  assign target_product = block_settings.product | default: product
+  assign a_images_value = null
+
+  # 1. Check custom metafield key setting if specified
+  if block_settings.metafield_key != blank and block_settings.metafield_key contains '.'
+    assign key_parts = block_settings.metafield_key | strip | split: '.'
+    assign custom_ns = key_parts[0]
+    assign custom_key = key_parts[1]
+    assign custom_mf = target_product.metafields[custom_ns][custom_key]
+    if custom_mf.value != blank
+      assign a_images_value = custom_mf.value
+    elsif custom_mf != blank
+      assign a_images_value = custom_mf
+    endif
+  endif
+
+  # 2. Check primary default: custom.a_images (configured in Shopify metafields)
+  if a_images_value == blank or a_images_value == null
+    assign custom_a_images = target_product.metafields.custom.a_images
+    if custom_a_images.value != blank
+      assign a_images_value = custom_a_images.value
+    elsif custom_a_images != blank
+      assign a_images_value = custom_a_images
+    endif
+  endif
+
+  # 3. Check fallback: custom.a_plus_images / custom.a_plus_contents
+  if a_images_value == blank or a_images_value == null
+    if target_product.metafields.custom.a_plus_images.value != blank
+      assign a_images_value = target_product.metafields.custom.a_plus_images.value
+    elsif target_product.metafields.custom.a_plus_contents.value != blank
+      assign a_images_value = target_product.metafields.custom.a_plus_contents.value
+    endif
+  endif
+
+  assign has_images = false
+  if a_images_value != blank
+    if a_images_value.first != blank or a_images_value.size > 0
+      assign has_images = true
+    elsif a_images_value.src != blank or a_images_value.url != blank or a_images_value.aspect_ratio != blank
+      assign has_images = true
+    endif
+  endif
+%}
+
+{% capture a_plus_content %}
+  {% if has_images %}
+    {% if a_images_value.first != blank or a_images_value.size > 0 %}
+      {% for img in a_images_value %}
+        <div class="a-plus-contents__item">
+          {% if img.width != blank or img.preview_image != blank or img.aspect_ratio != blank %}
+            {{
+              img
+              | image_url: width: 2400
+              | image_tag:
+                loading: 'lazy',
+                widths: '375, 550, 750, 1100, 1500, 2000, 2400',
+                sizes: '100vw',
+                class: 'a-plus-contents__image border-style',
+                alt: img.alt | default: target_product.title
+            }}
+          {% elsif img.url != blank %}
+            <img
+              src="{{ img.url }}"
+              alt="{{ img.alt | default: target_product.title }}"
+              class="a-plus-contents__image border-style"
+              loading="lazy"
+            >
+          {% elsif img != blank %}
+            <img
+              src="{{ img }}"
+              alt="{{ target_product.title }}"
+              class="a-plus-contents__image border-style"
+              loading="lazy"
+            >
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      {% comment %} Single image reference fallback {% endcomment %}
+      <div class="a-plus-contents__item">
+        {% if a_images_value.width != blank or a_images_value.preview_image != blank %}
+          {{
+            a_images_value
+            | image_url: width: 2400
+            | image_tag:
+              loading: 'lazy',
+              widths: '375, 550, 750, 1100, 1500, 2000, 2400',
+              sizes: '100vw',
+              class: 'a-plus-contents__image border-style',
+              alt: a_images_value.alt | default: target_product.title
+          }}
+        {% elsif a_images_value.url != blank %}
+          <img
+            src="{{ a_images_value.url }}"
+            alt="{{ a_images_value.alt | default: target_product.title }}"
+            class="a-plus-contents__image border-style"
+            loading="lazy"
+          >
+        {% endif %}
+      </div>
+    {% endif %}
+  {% elsif request.design_mode %}
+    <div class="a-plus-contents__placeholder">
+      <p class="a-plus-contents__placeholder-title"><strong>A+ Contents Block</strong></p>
+      <p class="a-plus-contents__placeholder-text">
+        No images found in <code>custom.a_images</code> for <em>{{ target_product.title | default: 'selected product' }}</em>.
+      </p>
+      <p class="a-plus-contents__placeholder-hint">Add images to the product's <strong>A+ Images</strong> metafield in Shopify Admin to display them here.</p>
+    </div>
+  {% endif %}
+{% endcapture %}
+
+{% if has_images or request.design_mode %}
+  {% render 'contrast-override',
+    background_color: block_settings.background_color,
+    text_color: block_settings.text_color,
+    section_id: block.id
+  %}
+
+  {% style %}
+    #block-{{ block.id }}.a-plus-contents {
+      --a-plus-gap: {{ block_settings.gap | default: 20 }}px;
+      --a-plus-alignment: {{ block_settings.alignment | default: 'center' }};
+      --a-plus-max-width: {{ block_settings.max_width | default: 100 }}%;
+      background-color: {% if block_settings.background_color != blank %}{{ block_settings.background_color }}{% else %}transparent{% endif %};
+    }
+
+    {% if block_settings.custom_css != blank %}
+      {% if block_settings.custom_css contains 'selector' %}
+        {% assign target_selector = '#block-' | append: block.id %}
+        {{ block_settings.custom_css | replace: 'selector', target_selector }}
+      {% else %}
+        #block-{{ block.id }} {
+          {{ block_settings.custom_css }}
+        }
+      {% endif %}
+    {% endif %}
+  {% endstyle %}
+
+  <div
+    id="block-{{ block.id }}"
+    class="a-plus-contents border-style spacing-style{% if block_settings.background_color != blank or block_settings.text_color != blank %} color-custom-{{ block.id }}{% endif %}"
+    style="
+      {% render 'spacing-style', settings: block_settings %}
+      {% render 'border-override', settings: block_settings %}
+    "
+    {{ block.shopify_attributes }}
+  >
+    <div class="a-plus-contents__container">
+      {{ a_plus_content }}
+    </div>
+  </div>
+{% endif %}
+
+{% stylesheet %}
+  .a-plus-contents {
+    width: 100%;
+    position: relative;
+  }
+
+  .a-plus-contents__container {
+    display: flex;
+    flex-direction: column;
+    align-items: var(--a-plus-alignment, center);
+    justify-content: center;
+    gap: var(--a-plus-gap, 20px);
+    width: 100%;
+  }
+
+  .a-plus-contents__item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: var(--a-plus-max-width, 100%);
+  }
+
+  .a-plus-contents__image {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+  }
+
+  .a-plus-contents__placeholder {
+    padding: 24px;
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    text-align: center;
+    color: #475569;
+    width: 100%;
+  }
+
+  .a-plus-contents__placeholder-title {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    color: #0f172a;
+  }
+
+  .a-plus-contents__placeholder-text {
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+  }
+
+  .a-plus-contents__placeholder-hint {
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "A+ contents",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Product & Metafield"
+    },
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Product",
+      "info": "Select product to display A+ Images. If left empty, the current page product will be used."
+    },
+    {
+      "type": "text",
+      "id": "metafield_key",
+      "label": "Metafield key",
+      "default": "custom.a_images",
+      "info": "Metafield namespace and key for A+ images list (e.g., custom.a_images)."
+    },
+    {
+      "type": "header",
+      "content": "Layout & Spacing"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Gap between images",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "select",
+      "id": "alignment",
+      "label": "Image alignment",
+      "options": [
+        { "value": "center", "label": "Center" },
+        { "value": "flex-start", "label": "Left" },
+        { "value": "flex-end", "label": "Right" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Maximum image width",
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color"
+    },
+    {
+      "type": "header",
+      "content": "t:content.borders"
+    },
+    {
+      "type": "select",
+      "id": "border",
+      "label": "t:settings.border",
+      "options": [
+        { "value": "none", "label": "t:options.none" },
+        { "value": "solid", "label": "Solid" },
+        { "value": "dashed", "label": "Dashed" },
+        { "value": "dotted", "label": "Dotted" }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "label": "t:settings.border_width",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 1,
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "t:settings.border_color",
+      "placeholder": "t:settings.default",
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "t:settings.border_radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "checkbox",
+      "id": "custom_mobile_padding",
+      "label": "Use custom mobile padding",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start-mobile",
+      "label": "Top (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end-mobile",
+      "label": "Bottom (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start-mobile",
+      "label": "Left (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end-mobile",
+      "label": "Right (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.custom_mobile_padding }}"
+    },
+    {
+      "type": "header",
+      "content": "Custom CSS"
+    },
+    {
+      "type": "textarea",
+      "id": "custom_css",
+      "label": "Custom CSS",
+      "info": "Custom CSS applied to this A+ contents block."
+    }
+  ],
+  "presets": [
+    {
+      "name": "A+ contents"
+    }
+  ]
+}
+{% endschema %}
