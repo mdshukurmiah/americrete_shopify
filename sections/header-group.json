@@ -68,7 +68,7 @@
             "menu": "main-menu",
             "background_color": "{{ settings.color_palette.background }}",
             "text_color": "{{ settings.color_palette.foreground }}",
-            "type_font_primary_size": "1rem",
+            "type_font_primary_size": "0.875rem",
             "menu_font_style": "inverse",
             "type_font_primary_link": "heading",
             "type_case_primary_link": "uppercase",
