@@ -1,7 +1,20 @@
+{% assign block_settings = block.settings %}
 
+{% if block_settings.custom_css != blank %}
+  {% style %}
+    {% if block_settings.custom_css contains 'selector' %}
+      {% assign target_selector = '#block-' | append: block.id %}
+      {{ block_settings.custom_css | replace: 'selector', target_selector }}
+    {% else %}
+      #block-{{ block.id }} {
+        {{ block_settings.custom_css }}
+      }
+    {% endif %}
+  {% endstyle %}
+{% endif %}
 
-<div>
-  {{ block.settings.custom_liquid }}
+<div id="block-{{ block.id }}" class="custom-liquid-block" {{ block.shopify_attributes }}>
+  {{ block_settings.custom_liquid }}
 </div>
 
 {% schema %}
@@ -14,6 +27,16 @@
       "id": "custom_liquid",
       "label": "t:settings.custom_liquid",
       "info": "t:info.custom_liquid"
+    },
+    {
+      "type": "header",
+      "content": "Custom CSS"
+    },
+    {
+      "type": "textarea",
+      "id": "custom_css",
+      "label": "Custom CSS",
+      "info": "Target block container with 'selector' or enter CSS rules directly."
     }
   ],
   "presets": [
