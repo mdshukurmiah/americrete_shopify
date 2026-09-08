@@ -817,7 +817,9 @@ export class Slideshow extends Component {
   };
 
   get slides() {
-    return this.refs.slides?.filter((slide) => !slide.hasAttribute('hidden') || slide.hasAttribute('reveal'));
+    return this.refs.slides?.filter(
+      (slide) => (!slide.hasAttribute('hidden') && slide.style.display !== 'none') || slide.hasAttribute('reveal')
+    );
   }
 
   /**

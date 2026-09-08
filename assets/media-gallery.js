@@ -160,9 +160,9 @@ export class MediaGallery extends Component {
     // Filter & reorder containers (slideshow slides, thumbnails, grid)
     const containers = [
       this.querySelector('slideshow-slides'),
-      this.querySelector('.slideshow-controls__thumbnails'),
+      ...this.querySelectorAll('.slideshow-controls__thumbnails, .slideshow-controls__dots, .dialog-thumbnails-list'),
       this.querySelector('.media-gallery__grid')
-    ];
+    ].filter(Boolean);
 
     containers.forEach((container) => {
       if (!container) return;
@@ -178,6 +178,7 @@ export class MediaGallery extends Component {
       // Hide all child items first
       children.forEach((child) => {
         child.style.display = 'none';
+        child.setAttribute('hidden', '');
       });
 
       // Show & reorder matching target items
@@ -186,11 +187,13 @@ export class MediaGallery extends Component {
         const child = elMap.get(mId);
         if (child) {
           child.style.display = '';
+          child.removeAttribute('hidden');
           container.appendChild(child);
 
-          if (child.tagName === 'BUTTON' && child.classList.contains('slideshow-control')) {
-            child.setAttribute('on:click', `/select/${idx}`);
-            child.setAttribute('aria-selected', idx === 0 ? 'true' : 'false');
+          const btn = child.tagName === 'BUTTON' ? child : child.querySelector('button.slideshow-control');
+          if (btn) {
+            btn.setAttribute('on:click', `/select/${idx}`);
+            btn.setAttribute('aria-selected', idx === 0 ? 'true' : 'false');
           }
           idx++;
         }
