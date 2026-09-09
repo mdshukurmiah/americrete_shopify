@@ -3,57 +3,6 @@
   assign items = product.metafields.custom.use_cases.value
 %}
 
-{% render 'contrast-override',
-  background_color: block_settings.background_color,
-  text_color: block_settings.text_color,
-  section_id: block.id
-%}
-
-{% style %}
-  #block-{{ block.id }}.use-case-list-block {
-    --use-case-bg: {% if block_settings.card_bg_color != blank %}{{ block_settings.card_bg_color }}{% else %}#f7f7f5{% endif %};
-    --use-case-border-color: {% if block_settings.card_border_color != blank %}{{ block_settings.card_border_color }}{% else %}#e5e7eb{% endif %};
-    --use-case-border-width: {{ block_settings.card_border_width | default: 1 }}px;
-    --use-case-border-radius: {{ block_settings.card_border_radius | default: 6 }}px;
-    --use-case-padding-y: {{ block_settings.card_padding_y | default: 24 }}px;
-    --use-case-padding-x: {{ block_settings.card_padding_x | default: 24 }}px;
-    --use-case-text-align: {{ block_settings.alignment | default: 'left' }};
-
-    --use-case-badge-bg: {% if block_settings.badge_bg_color != blank %}{{ block_settings.badge_bg_color }}{% else %}#1e293b{% endif %};
-    --use-case-badge-color: {% if block_settings.badge_color != blank %}{{ block_settings.badge_color }}{% else %}#ffffff{% endif %};
-    --use-case-badge-size: {{ block_settings.badge_font_size | default: 11 }}px;
-
-    --use-case-title-size: {{ block_settings.title_font_size | default: 18 }}px;
-    --use-case-title-color: {% if block_settings.title_color != blank %}{{ block_settings.title_color }}{% else %}#1e293b{% endif %};
-
-    --use-case-desc-size: {{ block_settings.desc_font_size | default: 14 }}px;
-    --use-case-desc-color: {% if block_settings.desc_color != blank %}{{ block_settings.desc_color }}{% else %}#475569{% endif %};
-
-    --use-case-divider-color: {% if block_settings.divider_color != blank %}{{ block_settings.divider_color }}{% else %}#e2e8f0{% endif %};
-    --use-case-divider-margin: {{ block_settings.divider_spacing | default: 16 }}px;
-
-    --use-case-note-size: {{ block_settings.note_font_size | default: 13 }}px;
-    --use-case-note-color: {% if block_settings.note_color != blank %}{{ block_settings.note_color }}{% else %}#64748b{% endif %};
-
-    --grid-columns-desktop: {{ block_settings.columns_desktop | default: 3 }};
-    --grid-columns-mobile: {{ block_settings.columns_mobile | default: 1 }};
-    --grid-gap-desktop: {{ block_settings.columns_gap | default: 24 }}px;
-    --grid-gap-mobile: {{ block_settings.columns_gap_mobile | default: 16 }}px;
-    --grid-row-gap: {{ block_settings.rows_gap | default: 24 }}px;
-  }
-
-  {% if block_settings.custom_css != blank %}
-    {% if block_settings.custom_css contains 'selector' %}
-      {% assign target_selector = '#block-' | append: block.id %}
-      {{ block_settings.custom_css | replace: 'selector', target_selector }}
-    {% else %}
-      #block-{{ block.id }} {
-        {{ block_settings.custom_css }}
-      }
-    {% endif %}
-  {% endif %}
-{% endstyle %}
-
 {% stylesheet %}
   .use-case-list-block {
     display: block;
@@ -167,66 +116,119 @@
   }
 {% endstylesheet %}
 
-<div
-  id="block-{{ block.id }}"
-  class="use-case-list-block spacing-style{% if block_settings.background_color != blank or block_settings.text_color != blank %} color-custom-{{ block.id }}{% endif %}"
-  style="
-    {% if block_settings.type_preset == 'custom' %}
-      {% render 'typography-style', settings: block_settings %}
-    {% else %}
-      --font-family: var(--font-{{ block_settings.type_preset }}--family);
+{% if items != blank and items.size > 0 %}
+  {% render 'contrast-override',
+    background_color: block_settings.background_color,
+    text_color: block_settings.text_color,
+    section_id: block.id
+  %}
+
+  {% style %}
+    #block-{{ block.id }}.use-case-list-block {
+      --use-case-bg: {% if block_settings.card_bg_color != blank %}{{ block_settings.card_bg_color }}{% else %}#f7f7f5{% endif %};
+      --use-case-border-color: {% if block_settings.card_border_color != blank %}{{ block_settings.card_border_color }}{% else %}#e5e7eb{% endif %};
+      --use-case-border-width: {{ block_settings.card_border_width | default: 1 }}px;
+      --use-case-border-radius: {{ block_settings.card_border_radius | default: 6 }}px;
+      --use-case-padding-y: {{ block_settings.card_padding_y | default: 24 }}px;
+      --use-case-padding-x: {{ block_settings.card_padding_x | default: 24 }}px;
+      --use-case-text-align: {{ block_settings.alignment | default: 'left' }};
+
+      --use-case-badge-bg: {% if block_settings.badge_bg_color != blank %}{{ block_settings.badge_bg_color }}{% else %}#1e293b{% endif %};
+      --use-case-badge-color: {% if block_settings.badge_color != blank %}{{ block_settings.badge_color }}{% else %}#ffffff{% endif %};
+      --use-case-badge-size: {{ block_settings.badge_font_size | default: 11 }}px;
+
+      --use-case-title-size: {{ block_settings.title_font_size | default: 18 }}px;
+      --use-case-title-color: {% if block_settings.title_color != blank %}{{ block_settings.title_color }}{% else %}#1e293b{% endif %};
+
+      --use-case-desc-size: {{ block_settings.desc_font_size | default: 14 }}px;
+      --use-case-desc-color: {% if block_settings.desc_color != blank %}{{ block_settings.desc_color }}{% else %}#475569{% endif %};
+
+      --use-case-divider-color: {% if block_settings.divider_color != blank %}{{ block_settings.divider_color }}{% else %}#e2e8f0{% endif %};
+      --use-case-divider-margin: {{ block_settings.divider_spacing | default: 16 }}px;
+
+      --use-case-note-size: {{ block_settings.note_font_size | default: 13 }}px;
+      --use-case-note-color: {% if block_settings.note_color != blank %}{{ block_settings.note_color }}{% else %}#64748b{% endif %};
+
+      --grid-columns-desktop: {{ block_settings.columns_desktop | default: 3 }};
+      --grid-columns-mobile: {{ block_settings.columns_mobile | default: 1 }};
+      --grid-gap-desktop: {{ block_settings.columns_gap | default: 24 }}px;
+      --grid-gap-mobile: {{ block_settings.columns_gap_mobile | default: 16 }}px;
+      --grid-row-gap: {{ block_settings.rows_gap | default: 24 }}px;
+    }
+
+    {% if block_settings.custom_css != blank %}
+      {% if block_settings.custom_css contains 'selector' %}
+        {% assign target_selector = '#block-' | append: block.id %}
+        {{ block_settings.custom_css | replace: 'selector', target_selector }}
+      {% else %}
+        #block-{{ block.id }} {
+          {{ block_settings.custom_css }}
+        }
+      {% endif %}
     {% endif %}
-    {% render 'spacing-style', settings: block_settings %}
-    {% render 'border-override', settings: block_settings %}
-  "
-  {{ block.shopify_attributes }}
->
-  <div class="use-case-list__grid">
-    {% for item in items %}
-      {% liquid
-        assign badge_val = item.badge.value | default: item.badge
-        assign title_val = item.title.value | default: item.title
-        assign desc_val = item.description | metafield_tag
-        if desc_val == blank or desc_val contains 'metafield-multi_line_text_field' or desc_val contains 'metafield-single_line_text_field'
-          assign desc_val = item.description.value | default: item.description
-        endif
+  {% endstyle %}
 
-        assign note_val = item.note | metafield_tag
-        if note_val == blank or note_val contains 'metafield-multi_line_text_field' or note_val contains 'metafield-single_line_text_field'
-          assign note_val = item.note.value | default: item.note
-        endif
-      %}
+  <div
+    id="block-{{ block.id }}"
+    class="use-case-list-block spacing-style{% if block_settings.background_color != blank or block_settings.text_color != blank %} color-custom-{{ block.id }}{% endif %}"
+    style="
+      {% if block_settings.type_preset == 'custom' %}
+        {% render 'typography-style', settings: block_settings %}
+      {% else %}
+        --font-family: var(--font-{{ block_settings.type_preset }}--family);
+      {% endif %}
+      {% render 'spacing-style', settings: block_settings %}
+      {% render 'border-override', settings: block_settings %}
+    "
+    {{ block.shopify_attributes }}
+  >
+    <div class="use-case-list__grid">
+      {% for item in items %}
+        {% liquid
+          assign badge_val = item.badge.value | default: item.badge
+          assign title_val = item.title.value | default: item.title
+          assign desc_val = item.description | metafield_tag
+          if desc_val == blank or desc_val contains 'metafield-multi_line_text_field' or desc_val contains 'metafield-single_line_text_field'
+            assign desc_val = item.description.value | default: item.description
+          endif
 
-      <div class="use-case-card border-style">
-        {% if badge_val != blank %}
-          <div class="use-case-card__badge-wrap">
-            <span class="use-case-card__badge">{{ badge_val }}</span>
-          </div>
-        {% endif %}
+          assign note_val = item.note | metafield_tag
+          if note_val == blank or note_val contains 'metafield-multi_line_text_field' or note_val contains 'metafield-single_line_text_field'
+            assign note_val = item.note.value | default: item.note
+          endif
+        %}
 
-        {% if title_val != blank %}
-          <h3 class="use-case-card__title">{{ title_val }}</h3>
-        {% endif %}
+        <div class="use-case-card border-style">
+          {% if badge_val != blank %}
+            <div class="use-case-card__badge-wrap">
+              <span class="use-case-card__badge">{{ badge_val }}</span>
+            </div>
+          {% endif %}
 
-        {% if desc_val != blank %}
-          <div class="use-case-card__description rte">
-            {{ desc_val }}
-          </div>
-        {% endif %}
+          {% if title_val != blank %}
+            <h3 class="use-case-card__title">{{ title_val }}</h3>
+          {% endif %}
 
-        {% if block_settings.show_divider %}
-          <div class="use-case-card__divider"></div>
-        {% endif %}
+          {% if desc_val != blank %}
+            <div class="use-case-card__description rte">
+              {{ desc_val }}
+            </div>
+          {% endif %}
 
-        {% if note_val != blank %}
-          <div class="use-case-card__note">
-            {{ note_val }}
-          </div>
-        {% endif %}
-      </div>
-    {% endfor %}
+          {% if block_settings.show_divider %}
+            <div class="use-case-card__divider"></div>
+          {% endif %}
+
+          {% if note_val != blank %}
+            <div class="use-case-card__note">
+              {{ note_val }}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
   </div>
-</div>
+{% endif %}
 
 {% schema %}
 {
