@@ -256,9 +256,41 @@
           }
         }
 
+        hasContent(panel) {
+          if (!panel) return false;
+          const clone = panel.cloneNode(true);
+          clone.querySelectorAll('script, style').forEach((node) => node.remove());
+
+          const visibleText = clone.textContent.trim();
+          if (visibleText.length > 0) return true;
+
+          const hasMediaOrInteractive = !!clone.querySelector(
+            'img, video, audio, iframe, canvas, svg, input, select, textarea, button, a[href]'
+          );
+          return hasMediaOrInteractive;
+        }
+
         initTabs() {
-          const panels = Array.from(this.querySelectorAll(':scope > .advanced-tab__panels > .advanced-tab__panel'));
-          if (panels.length === 0) return;
+          const allPanels = Array.from(
+            this.querySelectorAll(':scope > .advanced-tab__panels > .advanced-tab__panel')
+          );
+
+          const panels = allPanels.filter((panel) => {
+            const contentExists = this.hasContent(panel);
+            if (!contentExists) {
+              panel.style.display = 'none';
+              panel.dataset.isEmpty = 'true';
+            } else {
+              panel.style.display = '';
+              delete panel.dataset.isEmpty;
+            }
+            return contentExists;
+          });
+
+          if (panels.length === 0) {
+            this.navContainer.innerHTML = '';
+            return;
+          }
 
           this.navContainer.innerHTML = '';
 
@@ -285,9 +317,11 @@
 
             if (isActive) {
               panel.classList.add('is-active');
+              panel.style.display = '';
               panel.removeAttribute('hidden');
             } else {
               panel.classList.remove('is-active');
+              panel.style.display = 'none';
               panel.setAttribute('hidden', '');
             }
           });
@@ -354,7 +388,7 @@
           this.observer = new MutationObserver(() => {
             this.initTabs();
           });
-          this.observer.observe(this.panelsContainer, { childList: true, subtree: false });
+          this.observer.observe(this.panelsContainer, { childList: true, subtree: true });
         }
 
         activateTab(blockId) {
@@ -373,11 +407,17 @@
           });
 
           panels.forEach((panel) => {
+            if (panel.dataset.isEmpty === 'true') {
+              panel.style.display = 'none';
+              return;
+            }
             const isTarget = panel.dataset.blockId === blockId;
             panel.classList.toggle('is-active', isTarget);
             if (isTarget) {
+              panel.style.display = '';
               panel.removeAttribute('hidden');
             } else {
+              panel.style.display = 'none';
               panel.setAttribute('hidden', '');
             }
           });
