@@ -1,12 +1,6 @@
 {% liquid
   assign block_settings = block.settings
-
-  assign use_cases = shop.metaobjects.use_case.values
-  if block_settings.use_case != blank
-    assign use_cases = block_settings.use_case
-  elsif product.metafields.custom.use_cases.value != blank
-    assign use_cases = product.metafields.custom.use_cases.value
-  endif
+  assign items = product.metafields.custom.use_cases.value
 %}
 
 {% render 'contrast-override',
@@ -188,7 +182,7 @@
   {{ block.shopify_attributes }}
 >
   <div class="use-case-list__grid">
-    {% for item in use_cases %}
+    {% for item in items %}
       {% liquid
         assign badge_val = item.badge.value | default: item.badge
         assign title_val = item.title.value | default: item.title
